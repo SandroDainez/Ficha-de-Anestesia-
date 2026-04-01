@@ -86,6 +86,43 @@ git push -u origin main
 
 O projeto esta funcional localmente e hoje usa analise "IA" simulada por heuristicas em codigo. Nao ha integracao real com backend, LLM ou servico clinico externo.
 
+## Persistência online com Supabase
+
+1. Configure as variáveis de ambiente com:
+
+   ```
+   flutter run --dart-define=SUPABASE_URL=https://ekzwbjfimrojujookyhi.supabase.co \
+     --dart-define=SUPABASE_ANON_KEY=sb_publishable_m_6gsKJexTpua5tKSWUOxA_I2TuuccE
+   ```
+
+   No Vercel, defina as mesmas chaves (Settings → Environment Variables). O app detecta essas variáveis e passa a armazenar/listar casos diretamente no Supabase.
+
+2. Crie a tabela e as políticas com esse SQL:
+
+   ```sql
+   create table public.anesthesia_cases (
+     id uuid primary key default gen_random_uuid(),
+     created_at timestamptz not null default now(),
+     updated_at timestamptz not null default now(),
+     pre_anesthetic_date text default '',
+     anesthesia_date text default '',
+     status text not null,
+     record jsonb not null
+   );
+   alter table public.anesthesia_cases enable row level security;
+   create policy "allow anon select" on public.anesthesia_cases for select using (true);
+   create policy "allow anon insert" on public.anesthesia_cases for insert with check (true);
+   create policy "allow anon update" on public.anesthesia_cases for update using (true) with check (true);
+   create policy "allow anon delete" on public.anesthesia_cases for delete using (true);
+   ```
+
+3. Agora você terá:
+   - casos sincronizados no Supabase e acessíveis de qualquer dispositivo com as mesmas chaves
+   - fallback para Hive local quando as chaves não estiverem definidas
+   - exportação de PDF/compartilhamento mantida como está
+
+4. Se precisar de tarefas administrativas (migrations, webhooks etc.) use a `service_role` em scripts separados — jamais exponha essa chave no Flutter/web.
+
 ## Pendências conhecidas
 
 - definir escopo de produto e regras clínicas obrigatórias com mais precisão
