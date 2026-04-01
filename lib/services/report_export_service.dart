@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:pdf/pdf.dart';
@@ -167,6 +168,45 @@ class ReportExportService {
             .replaceAll(RegExp(r'^_|_$'), '');
     final date = DateTime.now().toIso8601String().split('T').first;
     return '${baseName.isEmpty ? 'ficha_anestesia' : baseName}_$date.pdf';
+  }
+
+  String buildCaseJson({
+    required AnesthesiaRecord record,
+    required AnesthesiaCaseStatus status,
+    String? caseId,
+  }) {
+    final payload = {
+      'caseId': caseId,
+      'status': status.code,
+      'patient': record.patient.toJson(),
+      'preAnesthetic': record.preAnestheticAssessment.toJson(),
+      'surgery': {
+        'description': record.surgeryDescription,
+        'surgeon': record.surgeonName,
+        'assistants': record.assistantNames,
+      },
+      'airway': record.airway.toJson(),
+      'fluidBalance': record.fluidBalance.toJson(),
+      'hemodynamic': {
+        'points': record.hemodynamicPoints.map((point) => point.toJson()).toList(),
+        'markers': record.hemodynamicMarkers.map((marker) => marker.toJson()).toList(),
+      },
+      'drugs': {
+        'technique': record.anesthesiaTechnique,
+        'drugs': record.drugs,
+        'adjuncts': record.adjuncts,
+        'otherMedications': record.otherMedications,
+        'vasoactive': record.vasoactiveDrugs,
+      },
+      'events': record.events,
+      'anesthesiologist': {
+        'name': record.anesthesiologistName,
+        'crm': record.anesthesiologistCrm,
+        'details': record.anesthesiologistDetails,
+      },
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+    return const JsonEncoder.withIndent('  ').convert(payload);
   }
 
   pw.Widget _buildHeader({

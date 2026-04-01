@@ -12,6 +12,7 @@ class FooterBar extends StatelessWidget {
     required this.onExportPressed,
     required this.onVerifyPressed,
     required this.onFinalizePressed,
+    required this.onExportJsonPressed,
   });
 
   final String anesthesiologistName;
@@ -21,6 +22,7 @@ class FooterBar extends StatelessWidget {
   final Future<void> Function() onExportPressed;
   final Future<void> Function() onVerifyPressed;
   final Future<void> Function() onFinalizePressed;
+  final Future<void> Function() onExportJsonPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +47,16 @@ class FooterBar extends StatelessWidget {
             subtitle: 'Salvar ou compartilhar',
             color: const Color(0xFF5A6F86),
             onPressed: onExportPressed,
+          ),
+        ),
+        SizedBox(
+          width: 280,
+          child: PrimaryFooterButton(
+            key: const Key('export-case-json-button'),
+            label: 'EXPORTAR JSON',
+            subtitle: 'Dados estruturados',
+            color: const Color(0xFF5A6F86),
+            onPressed: onExportJsonPressed,
           ),
         ),
         SizedBox(

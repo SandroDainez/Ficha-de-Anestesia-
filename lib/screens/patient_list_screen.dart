@@ -6,6 +6,8 @@ import '../models/anesthesia_record.dart';
 import '../models/patient.dart';
 import '../services/record_storage_service.dart';
 import '../services/report_export_service.dart';
+import '../services/supabase_service.dart';
+import '../widgets/json_export_dialog.dart';
 import 'anesthesia_screen.dart';
 import 'pre_anesthetic_screen.dart';
 
@@ -144,6 +146,21 @@ class _PatientListScreenState extends State<PatientListScreen> {
     );
   }
 
+  Future<void> _exportCaseJson(AnesthesiaCase caseFile) async {
+    final jsonText = _reportExportService.buildCaseJson(
+      record: caseFile.record,
+      status: caseFile.status,
+      caseId: caseFile.id,
+    );
+    await showDialog<void>(
+      context: context,
+      builder: (_) => JsonExportDialog(
+        json: jsonText,
+        subject: 'Ficha ${caseFile.displayName}',
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final preAnestheticCases = _cases
@@ -188,6 +205,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
                             onOpenAnesthesia: () =>
                                 _openAnesthesiaRecord(caseFile: item),
                             onExport: () => _exportCase(item),
+                            onExportJson: () => _exportCaseJson(item),
                             onDelete: () => _deleteCase(item),
                           ),
                         )
@@ -206,6 +224,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
                             onOpenAnesthesia: () =>
                                 _openAnesthesiaRecord(caseFile: item),
                             onExport: () => _exportCase(item),
+                            onExportJson: () => _exportCaseJson(item),
                             onDelete: () => _deleteCase(item),
                           ),
                         )
@@ -224,6 +243,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
                             onOpenAnesthesia: () =>
                                 _openAnesthesiaRecord(caseFile: item),
                             onExport: () => _exportCase(item),
+                            onExportJson: () => _exportCaseJson(item),
                             onDelete: () => _deleteCase(item),
                           ),
                         )
@@ -395,6 +415,7 @@ class _CaseTile extends StatelessWidget {
     required this.onOpenAnesthesia,
     required this.onExport,
     required this.onDelete,
+    required this.onExportJson,
   });
 
   final AnesthesiaCase caseFile;
@@ -402,6 +423,7 @@ class _CaseTile extends StatelessWidget {
   final VoidCallback onOpenAnesthesia;
   final VoidCallback onExport;
   final VoidCallback onDelete;
+  final VoidCallback onExportJson;
 
   @override
   Widget build(BuildContext context) {
@@ -412,6 +434,7 @@ class _CaseTile extends StatelessWidget {
       AnesthesiaCaseStatus.finalized => const Color(0xFF168B79),
     };
     final populationLabel = patient.population.label;
+    final supabaseOnline = SupabaseService.instance.isConfigured;
     final summaryParts = <String>[
       if (patient.age > 0) '${patient.age} anos',
       if (patient.weightKg > 0) '${patient.weightKg.toStringAsFixed(0)} kg',
@@ -476,6 +499,24 @@ class _CaseTile extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Icon(
+                supabaseOnline ? Icons.cloud_done : Icons.cloud_off,
+                size: 16,
+                color: supabaseOnline ? const Color(0xFF169653) : const Color(0xFFB07A1E),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                supabaseOnline ? 'Sincronizado no Supabase' : 'Sem conexão Supabase',
+                style: TextStyle(
+                  color: supabaseOnline ? const Color(0xFF169653) : const Color(0xFFB07A1E),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 14),
           Wrap(
             spacing: 12,
@@ -501,6 +542,11 @@ class _CaseTile extends StatelessWidget {
                 onPressed: onExport,
                 icon: const Icon(Icons.picture_as_pdf_outlined),
                 label: const Text('Exportar PDF'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onExportJson,
+                icon: const Icon(Icons.code_outlined),
+                label: const Text('Exportar JSON'),
               ),
               TextButton.icon(
                 onPressed: onDelete,

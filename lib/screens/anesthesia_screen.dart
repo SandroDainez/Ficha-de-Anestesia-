@@ -25,6 +25,7 @@ import '../widgets/event_list_widget.dart';
 import '../widgets/header_widget.dart';
 import '../widgets/intraoperative_entry_dialogs.dart';
 import '../widgets/hemodynamic_chart_card.dart';
+import '../widgets/json_export_dialog.dart';
 import '../widgets/page_container.dart';
 import '../widgets/surgery_info_dialog.dart';
 
@@ -862,6 +863,20 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     );
   }
 
+  Future<void> _exportCaseJson() async {
+    final jsonText = _reportExportService.buildCaseJson(
+      record: _record,
+      status: _persistedCaseStatus,
+      caseId: widget.caseId,
+    );
+    final subject = 'Ficha de ${_record.patient.name.isNotEmpty ? _record.patient.name : 'paciente'}';
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (_) => JsonExportDialog(json: jsonText, subject: subject),
+    );
+  }
+
   Future<void> _previewPdf(Uint8List bytes) async {
     await Printing.layoutPdf(onLayout: (_) async => bytes);
   }
@@ -1636,6 +1651,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                       onExportPressed: _exportCasePdf,
                       onVerifyPressed: _runAiAnalysis,
                       onFinalizePressed: _finalizarCaso,
+                      onExportJsonPressed: _exportCaseJson,
                     ),
                   ],
                 ),

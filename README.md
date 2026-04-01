@@ -119,7 +119,7 @@ O projeto esta funcional localmente e hoje usa analise "IA" simulada por heurist
 3. Agora você terá:
    - casos sincronizados no Supabase e acessíveis de qualquer dispositivo com as mesmas chaves
    - fallback para Hive local quando as chaves não estiverem definidas
-   - exportação de PDF/compartilhamento mantida como está
+   - exportação de PDF e também JSON (botão novo no rodapé e na lista de casos) para baixar/enviar por email ou WhatsApp
 
 4. Se precisar de tarefas administrativas (migrations, webhooks etc.) use a `service_role` em scripts separados — jamais exponha essa chave no Flutter/web.
 
