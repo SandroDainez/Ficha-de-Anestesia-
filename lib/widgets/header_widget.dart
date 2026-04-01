@@ -10,12 +10,20 @@ class TopBarWidget extends StatelessWidget {
     required this.caseStage,
     required this.recordStatus,
     required this.highlightMessage,
+    required this.preAnestheticDateLabel,
+    required this.anesthesiaDateLabel,
+    this.onPreAnestheticDateTap,
+    this.onAnesthesiaDateTap,
   });
 
   final VoidCallback onPreAnestheticTap;
   final String caseStage;
   final String recordStatus;
   final String highlightMessage;
+  final String preAnestheticDateLabel;
+  final String anesthesiaDateLabel;
+  final VoidCallback? onPreAnestheticDateTap;
+  final VoidCallback? onAnesthesiaDateTap;
 
   @override
   Widget build(BuildContext context) {
@@ -43,31 +51,30 @@ class TopBarWidget extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: UiColors.info.withAlpha(18),
-                  borderRadius: BorderRadius.circular(UiRadius.md),
-                ),
-                child: const Icon(
-                  Icons.monitor_heart_outlined,
-                  color: UiColors.info,
-                ),
-              ),
+              const _GabsBrandLogo(size: 44),
               const SizedBox(width: UiSpace.sm),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Ficha de Anestesia',
+                    'GABS',
                     style: TextStyle(
                       color: UiColors.textPrimary,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 20,
+                      letterSpacing: 0.4,
                     ),
                   ),
                   const SizedBox(height: 2),
+                  const Text(
+                    'Grupo de Anestesiologistas da Baixada Santista',
+                    style: TextStyle(
+                      color: UiColors.textSecondary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
                   Text(
                     highlightMessage,
                     style: const TextStyle(
@@ -93,6 +100,18 @@ class TopBarWidget extends StatelessWidget {
                 label: caseStage,
                 color: UiColors.info,
                 icon: Icons.play_circle_outline,
+              ),
+              _TopBarPill(
+                label: 'Consulta: $preAnestheticDateLabel',
+                color: UiColors.warning,
+                icon: Icons.event_note_outlined,
+                onTap: onPreAnestheticDateTap,
+              ),
+              _TopBarPill(
+                label: 'Anestesia: $anesthesiaDateLabel',
+                color: UiColors.accent,
+                icon: Icons.schedule_outlined,
+                onTap: onAnesthesiaDateTap,
               ),
               FilledButton.icon(
                 onPressed: onPreAnestheticTap,
@@ -123,15 +142,17 @@ class _TopBarPill extends StatelessWidget {
     required this.label,
     required this.color,
     required this.icon,
+    this.onTap,
   });
 
   final String label;
   final Color color;
   final IconData icon;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final content = Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
         color: color.withAlpha(18),
@@ -152,6 +173,35 @@ class _TopBarPill extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+
+    if (onTap == null) return content;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(UiRadius.pill),
+        child: content,
+      ),
+    );
+  }
+}
+
+class _GabsBrandLogo extends StatelessWidget {
+  const _GabsBrandLogo({required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(UiRadius.md),
+      child: Image.asset(
+        'assets/images/gabs_logo.png',
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
       ),
     );
   }

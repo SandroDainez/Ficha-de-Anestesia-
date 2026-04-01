@@ -120,7 +120,7 @@ void main() {
   ) async {
     await pumpScreen(tester, buildRecord());
 
-    expect(find.text('Ficha de Anestesia'), findsOneWidget);
+    expect(find.text('GABS'), findsOneWidget);
     expect(find.text('Maria Souza'), findsOneWidget);
     expect(find.text('Colecistectomia'), findsOneWidget);
     expect(find.text('Time-out finalizado'), findsOneWidget);
@@ -387,6 +387,179 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('saves monitoring items through the monitoring dialog', (
+    WidgetTester tester,
+  ) async {
+    await pumpScreen(tester, buildRecord());
+
+    await tester.tap(find.text('Nenhum item de monitorização'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(FilterChip, 'ECG (5 derivações)'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilterChip, 'SpO₂'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Salvar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ECG (5 derivações), SpO₂'), findsOneWidget);
+    expect(find.textContaining('Sugeridos ausentes:'), findsOneWidget);
+  });
+
+  testWidgets('saves venous access through the dialog', (
+    WidgetTester tester,
+  ) async {
+    await pumpScreen(tester, buildRecord());
+
+    await tester.ensureVisible(find.byKey(const Key('venous-access-entry')));
+    await tester.tap(find.byKey(const Key('venous-access-entry')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Editar Acesso venoso'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).first, 'MSE');
+    await tester.tap(find.widgetWithText(ChoiceChip, '18'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Adicionar AVP'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Salvar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('AVP MSE - 18G'), findsOneWidget);
+    expect(find.text('1 acesso registrado'), findsOneWidget);
+  });
+
+  testWidgets('saves arterial access through the dialog', (
+    WidgetTester tester,
+  ) async {
+    await pumpScreen(tester, buildRecord());
+
+    await tester.ensureVisible(find.byKey(const Key('arterial-access-entry')));
+    await tester.tap(find.byKey(const Key('arterial-access-entry')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Editar Acesso arterial'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).first, 'radial esquerda 20G');
+    await tester.tap(find.widgetWithText(FilledButton, 'Adicionar PAI'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Salvar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('PAI - radial esquerda 20G'), findsWidgets);
+    expect(find.text('1 acesso registrado'), findsOneWidget);
+  });
+
+  testWidgets('saves prophylactic antibiotic through the dialog', (
+    WidgetTester tester,
+  ) async {
+    await pumpScreen(tester, buildRecord());
+
+    await tester.ensureVisible(find.byKey(const Key('antibiotic-entry')));
+    await tester.tap(find.byKey(const Key('antibiotic-entry')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Editar Antibiótico profilaxia'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('catalog-dose-field-Cefazolina')),
+      '2 g',
+    );
+    await tester.enterText(
+      find.byKey(const Key('catalog-time-field-Cefazolina')),
+      '07:45',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Salvar'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Cefazolina'), findsWidgets);
+    expect(find.textContaining('07:45'), findsWidgets);
+  });
+
+  testWidgets('saves other medications through the dialog', (
+    WidgetTester tester,
+  ) async {
+    await pumpScreen(tester, buildRecord());
+
+    await tester.ensureVisible(find.byKey(const Key('other-medications-entry')));
+    await tester.tap(find.byKey(const Key('other-medications-entry')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Editar Outras medicações'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('catalog-dose-field-Dexametasona')),
+      '8 mg',
+    );
+    await tester.enterText(
+      find.byKey(const Key('catalog-time-field-Dexametasona')),
+      '08:10',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Salvar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Dexametasona'), findsWidgets);
+    expect(find.textContaining('Inicial: 8 mg'), findsOneWidget);
+  });
+
+  testWidgets('saves vasoactive drugs through the dialog', (
+    WidgetTester tester,
+  ) async {
+    await pumpScreen(tester, buildRecord());
+
+    await tester.ensureVisible(find.byKey(const Key('vasoactive-entry')));
+    await tester.tap(find.byKey(const Key('vasoactive-entry')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Editar Drogas vasoativas'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('vasoactive-dose-field-Etilefrina')),
+      '10 mg',
+    );
+    await tester.enterText(
+      find.byKey(const Key('vasoactive-time-field-Etilefrina')),
+      '08:30',
+    );
+    await tester.enterText(
+      find.byKey(const Key('vasoactive-repeat-field-Etilefrina')),
+      '5 mg 08:45',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Salvar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Etilefrina'), findsWidgets);
+    expect(find.textContaining('Inicial: 10 mg'), findsOneWidget);
+    expect(find.textContaining('Repiques: 5 mg 08:45'), findsOneWidget);
+  });
+
+  testWidgets('adds FC through manual hemodynamic entry dialog', (
+    WidgetTester tester,
+  ) async {
+    final record = buildRecord().copyWith(
+      hemodynamicPoints: const [],
+      hemodynamicMarkers: const [
+        HemodynamicMarker(
+          label: 'Início da anestesia',
+          time: 0,
+          clockTime: '08:00:00',
+          recordedAtIso: '2026-03-31T08:00:00.000',
+        ),
+      ],
+    );
+
+    await pumpScreen(tester, record);
+
+    await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'FC'));
+    await tester.tap(find.widgetWithText(ChoiceChip, 'FC'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('hemo-manual-entry-button')));
+    await tester.tap(find.byKey(const Key('hemo-manual-entry-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Lançar FC'), findsWidgets);
+    await tester.enterText(find.byType(TextField).last, '88');
+    await tester.tap(find.widgetWithText(FilledButton, 'Salvar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('88'), findsWidgets);
   });
 
   testWidgets('completes time-out flow through the surgery dialog', (

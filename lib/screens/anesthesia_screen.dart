@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:printing/printing.dart';
 
+import '../models/anesthesia_case.dart';
 import '../models/anesthesia_record.dart';
 import '../models/airway.dart';
 import '../models/fluid_balance.dart';
@@ -12,6 +14,7 @@ import '../services/ai_record_analysis_service.dart';
 import '../services/hemodynamic_record_service.dart';
 import '../services/record_validation_service.dart';
 import '../services/record_storage_service.dart';
+import '../services/report_export_service.dart';
 import 'pre_anesthetic_screen.dart';
 import '../widgets/anesthesia_basic_dialogs.dart';
 import '../widgets/anesthesia_footer_widget.dart';
@@ -259,11 +262,21 @@ class AnesthesiaScreen extends StatefulWidget {
     this.initialRecord,
     this.loadPersistedRecord = false,
     this.autoOpenPreAnesthetic = false,
+    this.caseId,
+    this.initialCaseStatus = AnesthesiaCaseStatus.inProgress,
+    this.createdAtIso,
+    this.initialPreAnestheticDate = '',
+    this.initialAnesthesiaDate = '',
   });
 
   final AnesthesiaRecord? initialRecord;
   final bool loadPersistedRecord;
   final bool autoOpenPreAnesthetic;
+  final String? caseId;
+  final AnesthesiaCaseStatus initialCaseStatus;
+  final String? createdAtIso;
+  final String initialPreAnestheticDate;
+  final String initialAnesthesiaDate;
 
   @override
   State<AnesthesiaScreen> createState() => _AnesthesiaScreenState();
@@ -338,12 +351,16 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   final RecordValidationService _validationService =
       const RecordValidationService();
   final RecordStorageService _storageService = RecordStorageService();
+  final ReportExportService _reportExportService = const ReportExportService();
 
   late final AnesthesiaRecord _initialRecord;
   late AnesthesiaRecord _record;
+  late AnesthesiaCaseStatus _caseStatus;
   late List<String> _venousAccesses;
   late List<String> _arterialAccesses;
   late List<String> _monitoringItems;
+  late String _preAnestheticDate;
+  late String _anesthesiaDate;
   String _inlineHemodynamicType = 'PAS';
   bool _inlineHemodynamicRemoveMode = false;
   Timer? _hemodynamicTicker;
@@ -595,17 +612,70 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   String get _recordStatusLabel {
+    if (_caseStatus == AnesthesiaCaseStatus.finalized) {
+      return 'Finalizado';
+    }
     if (_missingRequiredFields.isEmpty && !_hasPendingTimeOut) {
       return 'Ficha segura';
     }
     return 'Em preenchimento';
   }
 
+  String _nowLabel() {
+    final now = DateTime.now();
+    final day = now.day.toString().padLeft(2, '0');
+    final month = now.month.toString().padLeft(2, '0');
+    final year = now.year.toString();
+    final hour = now.hour.toString().padLeft(2, '0');
+    final minute = now.minute.toString().padLeft(2, '0');
+    return '$day/$month/$year $hour:$minute';
+  }
+
+  String get _displayPreAnestheticDate =>
+      _preAnestheticDate.trim().isEmpty ? 'Toque para informar' : _preAnestheticDate;
+
+  String get _displayAnesthesiaDate =>
+      _anesthesiaDate.trim().isEmpty ? 'Toque para informar' : _anesthesiaDate;
+
   String get _topHighlightMessage {
+    if (_caseStatus == AnesthesiaCaseStatus.finalized) {
+      return 'Caso finalizado e guardado no arquivo local.';
+    }
     if (_missingRequiredFields.isEmpty && !_hasPendingTimeOut) {
       return 'Registro pronto para condução e revisão.';
     }
     return 'Priorize pendências críticas antes de seguir.';
+  }
+
+  AnesthesiaCaseStatus get _persistedCaseStatus {
+    if (_caseStatus == AnesthesiaCaseStatus.finalized) {
+      return AnesthesiaCaseStatus.finalized;
+    }
+
+    final hasPreAnesthetic =
+        _record.preAnestheticAssessment.asaClassification.trim().isNotEmpty ||
+        _record.preAnestheticAssessment.anestheticPlan.trim().isNotEmpty ||
+        _record.preAnestheticAssessment.comorbidities.isNotEmpty ||
+        _record.preAnestheticAssessment.currentMedications.isNotEmpty ||
+        _record.preAnestheticAssessment.allergyDescription.trim().isNotEmpty;
+
+    final hasIntraoperativeContent =
+        _record.surgeryDescription.trim().isNotEmpty ||
+        _record.surgeonName.trim().isNotEmpty ||
+        _record.airway.device.trim().isNotEmpty ||
+        _record.anesthesiaTechnique.trim().isNotEmpty ||
+        _record.drugs.isNotEmpty ||
+        _record.events.isNotEmpty ||
+        _record.hemodynamicMarkers.isNotEmpty ||
+        _record.hemodynamicPoints.isNotEmpty;
+
+    if (hasIntraoperativeContent) {
+      return AnesthesiaCaseStatus.inProgress;
+    }
+    if (hasPreAnesthetic) {
+      return AnesthesiaCaseStatus.preAnesthetic;
+    }
+    return _caseStatus;
   }
 
   Future<void> _addHemodynamicMarker(String label) async {
@@ -670,9 +740,14 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     super.initState();
     _initialRecord = widget.initialRecord ?? const AnesthesiaRecord.empty();
     _record = _migrateLegacyHemodynamics(_initialRecord);
+    _caseStatus = widget.initialCaseStatus;
     _venousAccesses = List<String>.from(_record.venousAccesses);
     _arterialAccesses = List<String>.from(_record.arterialAccesses);
-    _monitoringItems = [];
+    _monitoringItems = List<String>.from(_record.monitoringItems);
+    _preAnestheticDate = widget.initialPreAnestheticDate;
+    _anesthesiaDate = widget.initialAnesthesiaDate.trim().isEmpty
+        ? _nowLabel()
+        : widget.initialAnesthesiaDate;
     if (widget.loadPersistedRecord) {
       _loadPersistedRecord();
     }
@@ -700,12 +775,30 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       _record = _migrateLegacyHemodynamics(storedRecord);
       _venousAccesses = List<String>.from(_record.venousAccesses);
       _arterialAccesses = List<String>.from(_record.arterialAccesses);
+      _monitoringItems = List<String>.from(_record.monitoringItems);
     });
     _startHemodynamicTickerIfNeeded();
   }
 
   Future<void> _persistRecord() async {
-    await _storageService.saveRecord(_record);
+    final caseId = widget.caseId;
+    if (caseId == null) {
+      await _storageService.saveRecord(_record);
+      return;
+    }
+
+    final now = DateTime.now().toIso8601String();
+    await _storageService.upsertCase(
+      AnesthesiaCase(
+        id: caseId,
+        createdAtIso: widget.createdAtIso ?? now,
+        updatedAtIso: now,
+        preAnestheticDate: _preAnestheticDate,
+        anesthesiaDate: _anesthesiaDate,
+        status: _persistedCaseStatus,
+        record: _record,
+      ),
+    );
   }
 
   void _startHemodynamicTickerIfNeeded() {
@@ -739,13 +832,51 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     );
   }
 
-  Future<void> _finalizarCaso() async {
+  Future<void> _exportCasePdf() async {
+    FocusScope.of(context).unfocus();
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('Gerando PDF da ficha...'),
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(milliseconds: 900),
+      ),
+    );
+
+    final bytes = await _reportExportService.buildCasePdf(
+      record: _record,
+      status: _persistedCaseStatus,
+      caseId: widget.caseId,
+    );
+    if (!mounted) return;
+    messenger.clearSnackBars();
+
+    final filename = _reportExportService.buildFileName(_record);
     await showDialog<void>(
+      context: context,
+      builder: (_) => _ExportCaseDialog(
+        onPreviewPressed: () => _previewPdf(bytes),
+        onSharePressed: () => _sharePdf(bytes, filename),
+      ),
+    );
+  }
+
+  Future<void> _previewPdf(Uint8List bytes) async {
+    await Printing.layoutPdf(onLayout: (_) async => bytes);
+  }
+
+  Future<void> _sharePdf(Uint8List bytes, String filename) async {
+    await Printing.sharePdf(bytes: bytes, filename: filename);
+  }
+
+  Future<void> _finalizarCaso() async {
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Finalizar caso'),
         content: const Text(
-          'Caso anestésico pronto para finalização e geração do relatório.',
+          'A ficha será marcada como finalizada e ficará guardada no arquivo local para reabertura posterior.',
         ),
         actions: [
           TextButton(
@@ -753,12 +884,21 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             child: const Text('Cancelar'),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Confirmar'),
           ),
         ],
       ),
     );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _caseStatus = AnesthesiaCaseStatus.finalized;
+    });
+    await _persistRecord();
+    if (!mounted) return;
+    Navigator.of(context).pop();
   }
 
   Future<void> _showPreAnestheticDialog() async {
@@ -767,6 +907,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         builder: (_) => PreAnestheticScreen(
           patient: _record.patient,
           initialAssessment: _record.preAnestheticAssessment,
+          initialConsultationDate: _preAnestheticDate.trim().isEmpty
+              ? _nowLabel()
+              : _preAnestheticDate,
         ),
       ),
     );
@@ -796,6 +939,47 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             ? _record.anesthesiaTechnique
             : result.assessment.anestheticPlan.trim(),
       );
+      _preAnestheticDate = result.consultationDate.trim();
+    });
+    await _persistRecord();
+  }
+
+  Future<void> _editPreAnestheticDate() async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => SingleFieldDialog(
+        title: 'Data da consulta pré-anestésica',
+        label: 'Consulta pré-anestésica',
+        initialValue: _preAnestheticDate.trim().isEmpty
+            ? _nowLabel()
+            : _preAnestheticDate,
+        hintText: 'dd/mm/aaaa hh:mm',
+      ),
+    );
+
+    if (result == null) return;
+    setState(() {
+      _preAnestheticDate = result.trim();
+    });
+    await _persistRecord();
+  }
+
+  Future<void> _editAnesthesiaDate() async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => SingleFieldDialog(
+        title: 'Data da anestesia / cirurgia',
+        label: 'Anestesia / cirurgia',
+        initialValue: _anesthesiaDate.trim().isEmpty
+            ? _nowLabel()
+            : _anesthesiaDate,
+        hintText: 'dd/mm/aaaa hh:mm',
+      ),
+    );
+
+    if (result == null) return;
+    setState(() {
+      _anesthesiaDate = result.trim();
     });
     await _persistRecord();
   }
@@ -1212,7 +1396,41 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     if (result == null) return;
     setState(() {
       _monitoringItems = result;
+      _record = _record.copyWith(monitoringItems: result);
     });
+    await _persistRecord();
+  }
+
+  Future<void> _openManualHemodynamicEntry() async {
+    if (!_hasAnesthesiaStartMarker || _inlineHemodynamicRemoveMode) return;
+
+    final label = switch (_inlineHemodynamicType) {
+      'SpO2' => 'SpO₂ (%)',
+      'FC' => 'FC (bpm)',
+      'PAI' => 'PAI (mmHg)',
+      'PAS' => 'PAS (mmHg)',
+      'PAD' => 'PAD (mmHg)',
+      _ => 'Valor',
+    };
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => SingleFieldDialog(
+        title: 'Lançar $_inlineHemodynamicType',
+        label: label,
+        initialValue: '',
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
+        ],
+        hintText: 'Digite o valor e salve',
+      ),
+    );
+
+    if (result == null) return;
+    final value = double.tryParse(result.replaceAll(',', '.'));
+    if (value == null) return;
+    await _addInlineHemodynamicPoint(value);
   }
 
   Future<void> _editEventos() async {
@@ -1368,6 +1586,10 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                       caseStage: _caseStageLabel,
                       recordStatus: _recordStatusLabel,
                       highlightMessage: _topHighlightMessage,
+                      preAnestheticDateLabel: _displayPreAnestheticDate,
+                      anesthesiaDateLabel: _displayAnesthesiaDate,
+                      onPreAnestheticDateTap: _editPreAnestheticDate,
+                      onAnesthesiaDateTap: _editAnesthesiaDate,
                     ),
                     const SizedBox(height: 10),
                     AnesthesiaHeaderWidget(
@@ -1411,6 +1633,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                       anesthesiologistCrm: _record.anesthesiologistCrm,
                       anesthesiologistDetails: _record.anesthesiologistDetails,
                       onDoctorTap: _editAnesthesiologist,
+                      onExportPressed: _exportCasePdf,
                       onVerifyPressed: _runAiAnalysis,
                       onFinalizePressed: _finalizarCaso,
                     ),
@@ -1856,6 +2079,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             ? '1 acesso registrado'
             : '${_venousAccesses.length} acessos registrados';
     return _buildCompactOperationalCard(
+      key: const Key('venous-access-card'),
+      tapKey: const Key('venous-access-entry'),
       title: 'Acesso venoso',
       titleColor: _accessRowColor,
       icon: Icons.vaccines_outlined,
@@ -1876,6 +2101,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             ? '1 acesso registrado'
             : '${_arterialAccesses.length} acessos registrados';
     return _buildCompactOperationalCard(
+      key: const Key('arterial-access-card'),
+      tapKey: const Key('arterial-access-entry'),
       title: 'Acesso arterial',
       titleColor: _accessRowColor,
       icon: Icons.timeline_outlined,
@@ -1900,6 +2127,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             ? '${_monitoringItems.length} item(ns) ativos'
             : 'Sugeridos ausentes: ${missingRecommended.join(', ')}';
     return _buildCompactOperationalCard(
+      key: const Key('monitoring-card'),
+      tapKey: const Key('monitoring-entry'),
       title: 'Monitorização',
       titleColor: _accessRowColor,
       icon: Icons.monitor_heart_outlined,
@@ -1955,6 +2184,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           _inlineHemodynamicRemoveMode = !_inlineHemodynamicRemoveMode;
         });
       },
+      onManualEntry: _openManualHemodynamicEntry,
       onSelectType: (type) {
         setState(() => _inlineHemodynamicType = type);
       },
@@ -2189,6 +2419,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                 return '$dose • $time';
               }();
     return _buildCompactOperationalCard(
+      key: const Key('antibiotic-entry-card'),
+      tapKey: const Key('antibiotic-entry'),
       title: 'Antibiótico profilaxia',
       titleColor: _timeoutRowColor,
       icon: Icons.medical_services_outlined,
@@ -2396,11 +2628,13 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return KeyedSubtree(
       key: _otherMedicationsSectionKey,
       child: PanelCard(
+        key: const Key('other-medications-card'),
         title: 'Outras medicações',
         titleColor: _medicationsRowColor,
         icon: Icons.healing_outlined,
         minHeight: 168,
         child: InkWell(
+          key: const Key('other-medications-entry'),
           borderRadius: BorderRadius.circular(18),
           onTap: _editOtherMedications,
           child: Column(
@@ -2442,11 +2676,13 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return KeyedSubtree(
       key: _vasoactiveSectionKey,
       child: PanelCard(
+        key: const Key('vasoactive-card'),
         title: 'Drogas vasoativas',
         titleColor: _medicationsRowColor,
         icon: Icons.show_chart_outlined,
         minHeight: 168,
         child: InkWell(
+          key: const Key('vasoactive-entry'),
           borderRadius: BorderRadius.circular(18),
           onTap: _editVasoactiveDrugs,
           child: Column(
@@ -4103,6 +4339,48 @@ class _FluidEntryList extends StatelessWidget {
               ),
             ),
           ),
+      ],
+    );
+  }
+}
+
+class _ExportCaseDialog extends StatelessWidget {
+  const _ExportCaseDialog({
+    required this.onPreviewPressed,
+    required this.onSharePressed,
+  });
+
+  final Future<void> Function() onPreviewPressed;
+  final Future<void> Function() onSharePressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Exportar ficha'),
+      content: const Text(
+        'Você pode visualizar ou imprimir o PDF, ou compartilhar/salvar o arquivo no computador, WhatsApp ou email.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        OutlinedButton.icon(
+          onPressed: () async {
+            Navigator.of(context).pop();
+            await onPreviewPressed();
+          },
+          icon: const Icon(Icons.picture_as_pdf_outlined),
+          label: const Text('Visualizar / imprimir'),
+        ),
+        FilledButton.icon(
+          onPressed: () async {
+            Navigator.of(context).pop();
+            await onSharePressed();
+          },
+          icon: const Icon(Icons.share_outlined),
+          label: const Text('Compartilhar / salvar'),
+        ),
       ],
     );
   }

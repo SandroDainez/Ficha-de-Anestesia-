@@ -9,10 +9,12 @@ class PreAnestheticScreen extends StatefulWidget {
     super.key,
     required this.patient,
     required this.initialAssessment,
+    required this.initialConsultationDate,
   });
 
   final Patient patient;
   final PreAnestheticAssessment initialAssessment;
+  final String initialConsultationDate;
 
   @override
   State<PreAnestheticScreen> createState() => _PreAnestheticScreenState();
@@ -199,6 +201,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   late final TextEditingController _asaNotesController;
   late final TextEditingController _otherAnestheticPlanController;
   late final TextEditingController _otherRestrictionsController;
+  late final TextEditingController _consultationDateController;
 
   late Set<String> _selectedComorbidities;
   late Set<String> _selectedMedications;
@@ -218,6 +221,16 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   String _selectedLiquidFasting = '';
   String _selectedAsa = '';
   late PatientPopulation _selectedPopulation;
+
+  String _defaultNowLabel() {
+    final now = DateTime.now();
+    final day = now.day.toString().padLeft(2, '0');
+    final month = now.month.toString().padLeft(2, '0');
+    final year = now.year.toString();
+    final hour = now.hour.toString().padLeft(2, '0');
+    final minute = now.minute.toString().padLeft(2, '0');
+    return '$day/$month/$year $hour:$minute';
+  }
 
   String get _solidFastingLabel {
     return switch (_selectedPopulation) {
@@ -556,6 +569,11 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     _otherRestrictionsController = TextEditingController(
       text: assessment.otherRestrictions,
     );
+    _consultationDateController = TextEditingController(
+      text: widget.initialConsultationDate.trim().isEmpty
+          ? _defaultNowLabel()
+          : widget.initialConsultationDate,
+    );
 
     _selectedComorbidities = assessment.comorbidities
         .where(_allComorbidityOptions.contains)
@@ -644,6 +662,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     _asaNotesController.dispose();
     _otherAnestheticPlanController.dispose();
     _otherRestrictionsController.dispose();
+    _consultationDateController.dispose();
     super.dispose();
   }
 
@@ -818,6 +837,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       PreAnestheticScreenResult(
         patient: updatedPatient,
         assessment: updatedAssessment,
+        consultationDate: _consultationDateController.text.trim(),
       ),
     );
   }
@@ -856,6 +876,14 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                 TextField(
                   controller: _nameController,
                   decoration: const InputDecoration(labelText: 'Nome'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _consultationDateController,
+                  decoration: const InputDecoration(
+                    labelText: 'Data da consulta pré-anestésica',
+                    hintText: 'dd/mm/aaaa hh:mm',
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -1691,10 +1719,12 @@ class PreAnestheticScreenResult {
   const PreAnestheticScreenResult({
     required this.patient,
     required this.assessment,
+    required this.consultationDate,
   });
 
   final Patient patient;
   final PreAnestheticAssessment assessment;
+  final String consultationDate;
 }
 
 class _AirwayReferenceCard extends StatelessWidget {

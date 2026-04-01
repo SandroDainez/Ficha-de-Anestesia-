@@ -590,6 +590,7 @@ class _AdjunctsDialogState extends State<AdjunctsDialog> {
                         children: [
                           Expanded(
                             child: TextField(
+                              key: Key('catalog-dose-field-$name'),
                               controller: _doseControllers[name],
                               decoration: const InputDecoration(
                                 labelText: 'Dose inicial',
@@ -601,6 +602,7 @@ class _AdjunctsDialogState extends State<AdjunctsDialog> {
                           SizedBox(
                             width: 110,
                             child: TextField(
+                              key: Key('catalog-time-field-$name'),
                               controller: _timeControllers[name],
                               decoration: const InputDecoration(
                                 labelText: 'Horário',
@@ -612,6 +614,7 @@ class _AdjunctsDialogState extends State<AdjunctsDialog> {
                       ),
                       const SizedBox(height: 8),
                       TextField(
+                        key: Key('catalog-repeat-field-$name'),
                         controller: _repeatControllers[name],
                         decoration: const InputDecoration(
                           labelText: 'Repiques / novas doses',
@@ -620,6 +623,7 @@ class _AdjunctsDialogState extends State<AdjunctsDialog> {
                       ),
                       const SizedBox(height: 8),
                       TextField(
+                        key: Key('catalog-infusion-field-$name'),
                         controller: _infusionControllers[name],
                         decoration: const InputDecoration(
                           labelText: 'Infusão contínua',
@@ -631,6 +635,7 @@ class _AdjunctsDialogState extends State<AdjunctsDialog> {
                 );
               }),
               TextField(
+                key: const Key('catalog-other-items-field'),
                 controller: _otherItemsController,
                 maxLines: 4,
                 decoration: const InputDecoration(
@@ -792,6 +797,7 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
                         children: [
                           Expanded(
                             child: TextField(
+                              key: Key('catalog-dose-field-$name'),
                               controller: _doseControllers[name],
                               decoration: const InputDecoration(
                                 labelText: 'Dose inicial',
@@ -803,6 +809,7 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
                           SizedBox(
                             width: 110,
                             child: TextField(
+                              key: Key('catalog-time-field-$name'),
                               controller: _timeControllers[name],
                               decoration: const InputDecoration(
                                 labelText: 'Horário',
@@ -814,6 +821,7 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
                       ),
                       const SizedBox(height: 8),
                       TextField(
+                        key: Key('catalog-repeat-field-$name'),
                         controller: _repeatControllers[name],
                         decoration: const InputDecoration(
                           labelText: 'Repiques / novas doses',
@@ -822,6 +830,7 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
                       ),
                       const SizedBox(height: 8),
                       TextField(
+                        key: Key('catalog-infusion-field-$name'),
                         controller: _infusionControllers[name],
                         decoration: const InputDecoration(
                           labelText: 'Infusão contínua',
@@ -833,6 +842,7 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
                 );
               }),
               TextField(
+                key: const Key('catalog-other-items-field'),
                 controller: _otherItemsController,
                 maxLines: 4,
                 decoration: const InputDecoration(
@@ -992,6 +1002,7 @@ class _VasoactiveDrugsDialogState extends State<VasoactiveDrugsDialog> {
                         children: [
                           Expanded(
                             child: TextField(
+                              key: Key('vasoactive-dose-field-$name'),
                               controller: _doseControllers[name],
                               decoration: const InputDecoration(
                                 labelText: 'Dose inicial',
@@ -1003,6 +1014,7 @@ class _VasoactiveDrugsDialogState extends State<VasoactiveDrugsDialog> {
                           SizedBox(
                             width: 110,
                             child: TextField(
+                              key: Key('vasoactive-time-field-$name'),
                               controller: _timeControllers[name],
                               decoration: const InputDecoration(
                                 labelText: 'Horário',
@@ -1014,6 +1026,7 @@ class _VasoactiveDrugsDialogState extends State<VasoactiveDrugsDialog> {
                       ),
                       const SizedBox(height: 8),
                       TextField(
+                        key: Key('vasoactive-repeat-field-$name'),
                         controller: _repeatControllers[name],
                         decoration: const InputDecoration(
                           labelText: 'Repiques intermitentes',
@@ -1022,6 +1035,7 @@ class _VasoactiveDrugsDialogState extends State<VasoactiveDrugsDialog> {
                       ),
                       const SizedBox(height: 8),
                       TextField(
+                        key: Key('vasoactive-infusion-field-$name'),
                         controller: _infusionControllers[name],
                         decoration: const InputDecoration(
                           labelText: 'Infusão contínua',
@@ -1033,6 +1047,7 @@ class _VasoactiveDrugsDialogState extends State<VasoactiveDrugsDialog> {
                 );
               }),
               TextField(
+                key: const Key('vasoactive-other-items-field'),
                 controller: _otherItemsController,
                 maxLines: 4,
                 decoration: const InputDecoration(

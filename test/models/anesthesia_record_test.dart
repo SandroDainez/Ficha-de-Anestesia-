@@ -109,6 +109,7 @@ void main() {
       fastingHours: '8',
       venousAccesses: ['Jelco 18G MSD'],
       arterialAccesses: ['Radial esquerda'],
+      monitoringItems: ['ECG (5 derivações)', 'SpO₂'],
       surgicalSize: 'Medio porte',
       surgeryDescription: 'Colecistectomia',
       surgeonName: 'Dr. Silva',
@@ -135,6 +136,7 @@ void main() {
     expect(restored.vasoactiveDrugs, ['Efedrina|10 mg|08:20']);
     expect(restored.prophylacticAntibiotics, ['Cefazolina|2 g|07:45']);
     expect(restored.fastingHours, '8');
+    expect(restored.monitoringItems, ['ECG (5 derivações)', 'SpO₂']);
     expect(restored.timeOutCompleted, isTrue);
   });
 }

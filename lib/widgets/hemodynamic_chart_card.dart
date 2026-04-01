@@ -24,6 +24,7 @@ class HemodynamicChartCard extends StatelessWidget {
     required this.onAddAnesthesiaStart,
     required this.onAddSurgeryStart,
     required this.onToggleRemoveMode,
+    required this.onManualEntry,
     required this.onSelectType,
     required this.onQuickSpo2,
     required this.onPointTap,
@@ -48,6 +49,7 @@ class HemodynamicChartCard extends StatelessWidget {
   final VoidCallback onAddAnesthesiaStart;
   final VoidCallback onAddSurgeryStart;
   final VoidCallback onToggleRemoveMode;
+  final VoidCallback onManualEntry;
   final ValueChanged<String> onSelectType;
   final ValueChanged<double> onQuickSpo2;
   final ValueChanged<HemodynamicPoint>? onPointTap;
@@ -195,6 +197,32 @@ class HemodynamicChartCard extends StatelessWidget {
                       ],
                     ],
                   ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    FilledButton.tonalIcon(
+                      key: const Key('hemo-manual-entry-button'),
+                      onPressed: hasAnesthesiaStartMarker &&
+                              !inlineHemodynamicRemoveMode
+                          ? onManualEntry
+                          : null,
+                      icon: const Icon(Icons.add_chart_outlined),
+                      label: Text(
+                        'Lançar ${inlineHemodynamicType == 'SpO2' ? 'SpO₂' : inlineHemodynamicType}',
+                      ),
+                    ),
+                    if (!inlineHemodynamicRemoveMode)
+                      Text(
+                        'Você também pode tocar no gráfico para registrar.',
+                        style: const TextStyle(
+                          color: Color(0xFF7A8EA5),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Text(

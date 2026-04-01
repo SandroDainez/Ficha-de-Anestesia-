@@ -9,6 +9,7 @@ class FooterBar extends StatelessWidget {
     required this.anesthesiologistCrm,
     required this.anesthesiologistDetails,
     required this.onDoctorTap,
+    required this.onExportPressed,
     required this.onVerifyPressed,
     required this.onFinalizePressed,
   });
@@ -17,6 +18,7 @@ class FooterBar extends StatelessWidget {
   final String anesthesiologistCrm;
   final String anesthesiologistDetails;
   final Future<void> Function() onDoctorTap;
+  final Future<void> Function() onExportPressed;
   final Future<void> Function() onVerifyPressed;
   final Future<void> Function() onFinalizePressed;
 
@@ -33,6 +35,16 @@ class FooterBar extends StatelessWidget {
             crm: anesthesiologistCrm,
             details: anesthesiologistDetails,
             onTap: onDoctorTap,
+          ),
+        ),
+        SizedBox(
+          width: 280,
+          child: PrimaryFooterButton(
+            key: const Key('export-case-button'),
+            label: 'EXPORTAR PDF',
+            subtitle: 'Salvar ou compartilhar',
+            color: const Color(0xFF5A6F86),
+            onPressed: onExportPressed,
           ),
         ),
         SizedBox(

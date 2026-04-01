@@ -25,6 +25,7 @@ class AnesthesiaRecord {
     required this.fastingHours,
     required this.venousAccesses,
     required this.arterialAccesses,
+    required this.monitoringItems,
     required this.surgicalSize,
     required this.surgeryDescription,
     required this.surgeonName,
@@ -56,6 +57,7 @@ class AnesthesiaRecord {
         fastingHours = '',
         venousAccesses = const [],
         arterialAccesses = const [],
+        monitoringItems = const [],
         surgicalSize = '',
         surgeryDescription = '',
         surgeonName = '',
@@ -85,6 +87,7 @@ class AnesthesiaRecord {
   final String fastingHours;
   final List<String> venousAccesses;
   final List<String> arterialAccesses;
+  final List<String> monitoringItems;
   final String surgicalSize;
   final String surgeryDescription;
   final String surgeonName;
@@ -115,6 +118,7 @@ class AnesthesiaRecord {
     String? fastingHours,
     List<String>? venousAccesses,
     List<String>? arterialAccesses,
+    List<String>? monitoringItems,
     String? surgicalSize,
     String? surgeryDescription,
     String? surgeonName,
@@ -147,6 +151,7 @@ class AnesthesiaRecord {
       fastingHours: fastingHours ?? this.fastingHours,
       venousAccesses: venousAccesses ?? this.venousAccesses,
       arterialAccesses: arterialAccesses ?? this.arterialAccesses,
+      monitoringItems: monitoringItems ?? this.monitoringItems,
       surgicalSize: surgicalSize ?? this.surgicalSize,
       surgeryDescription: surgeryDescription ?? this.surgeryDescription,
       surgeonName: surgeonName ?? this.surgeonName,
@@ -184,6 +189,7 @@ class AnesthesiaRecord {
       'fastingHours': fastingHours,
       'venousAccesses': venousAccesses,
       'arterialAccesses': arterialAccesses,
+      'monitoringItems': monitoringItems,
       'surgicalSize': surgicalSize,
       'surgeryDescription': surgeryDescription,
       'surgeonName': surgeonName,
@@ -263,6 +269,9 @@ class AnesthesiaRecord {
           .map((item) => item.toString())
           .toList(),
       arterialAccesses: (json['arterialAccesses'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .toList(),
+      monitoringItems: (json['monitoringItems'] as List<dynamic>? ?? const [])
           .map((item) => item.toString())
           .toList(),
       surgicalSize: json['surgicalSize'] as String? ?? '',

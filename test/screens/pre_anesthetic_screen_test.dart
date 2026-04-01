@@ -25,6 +25,7 @@ void main() {
             population: PatientPopulation.pediatric,
           ),
           initialAssessment: const PreAnestheticAssessment.empty(),
+          initialConsultationDate: '',
         ),
       ),
     );
@@ -61,6 +62,7 @@ void main() {
             birthWeightKg: 2.8,
           ),
           initialAssessment: const PreAnestheticAssessment.empty(),
+          initialConsultationDate: '',
         ),
       ),
     );
@@ -109,6 +111,7 @@ void main() {
             medications: [],
           ),
           initialAssessment: const PreAnestheticAssessment.empty(),
+          initialConsultationDate: '',
         ),
       ),
     );
@@ -147,6 +150,7 @@ void main() {
             medications: [],
           ),
           initialAssessment: const PreAnestheticAssessment.empty(),
+          initialConsultationDate: '',
         ),
       ),
     );
@@ -187,6 +191,7 @@ void main() {
             medications: [],
           ),
           initialAssessment: const PreAnestheticAssessment.empty(),
+          initialConsultationDate: '',
         ),
       ),
     );
