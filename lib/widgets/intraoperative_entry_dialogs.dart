@@ -1,0 +1,1059 @@
+import 'package:flutter/material.dart';
+
+class DrugInfusionsDialog extends StatefulWidget {
+  const DrugInfusionsDialog({
+    super.key,
+    required this.initialItems,
+  });
+
+  final List<String> initialItems;
+
+  @override
+  State<DrugInfusionsDialog> createState() => _DrugInfusionsDialogState();
+}
+
+class _DrugInfusionsDialogState extends State<DrugInfusionsDialog> {
+  static const List<String> _hypnotics = [
+    'Propofol',
+    'Etomidato',
+    'Cetamina',
+  ];
+  static const List<String> _analgesics = [
+    'Fentanil',
+    'Alfentanil',
+    'Sufentanil',
+    'Remifentanil',
+  ];
+  static const List<String> _neuromuscularBlockers = [
+    'Rocurônio',
+    'Cisatracúrio',
+    'Atracúrio',
+    'Succinilcolina',
+  ];
+  static const List<String> _drugNames = [
+    ..._hypnotics,
+    ..._analgesics,
+    ..._neuromuscularBlockers,
+  ];
+  static const Map<String, String> _defaultDoseLabels = {
+    'Propofol': '1,5-2,5 mg/kg',
+    'Etomidato': '0,2-0,3 mg/kg',
+    'Cetamina': '1-2 mg/kg',
+    'Fentanil': '2-5 mcg/kg',
+    'Alfentanil': '10-30 mcg/kg',
+    'Sufentanil': '0,2-0,5 mcg/kg',
+    'Remifentanil': '0,5-1 mcg/kg',
+    'Rocurônio': '0,6-1,2 mg/kg',
+    'Cisatracúrio': '0,1-0,2 mg/kg',
+    'Atracúrio': '0,4-0,5 mg/kg',
+    'Succinilcolina': '1-1,5 mg/kg',
+  };
+
+  late final Map<String, TextEditingController> _doseControllers;
+  late final Map<String, TextEditingController> _timeControllers;
+  late final Map<String, TextEditingController> _repeatControllers;
+  late final Map<String, TextEditingController> _infusionControllers;
+  late final TextEditingController _otherHypnoticsController;
+  late final TextEditingController _otherAnalgesicsController;
+  late final TextEditingController _otherBlockersController;
+
+  @override
+  void initState() {
+    super.initState();
+    final parsed = <String, List<String>>{};
+    final others = <String>[];
+    for (final item in widget.initialItems) {
+      final parts = item.split('|');
+      final name = parts.isEmpty ? '' : parts.first;
+      if (_drugNames.contains(name)) {
+        parsed[name] = [
+          parts.length > 1 ? parts[1] : '',
+          parts.length > 2 ? parts[2] : '',
+          parts.length > 3 ? parts[3] : '',
+          parts.length > 4 ? parts[4] : '',
+        ];
+      } else if (item.trim().isNotEmpty) {
+        others.add(item);
+      }
+    }
+
+    _doseControllers = {
+      for (final name in _drugNames)
+        name: TextEditingController(text: parsed[name]?[0] ?? ''),
+    };
+    _timeControllers = {
+      for (final name in _drugNames)
+        name: TextEditingController(text: parsed[name]?[1] ?? ''),
+    };
+    _repeatControllers = {
+      for (final name in _drugNames)
+        name: TextEditingController(text: parsed[name]?[2] ?? ''),
+    };
+    _infusionControllers = {
+      for (final name in _drugNames)
+        name: TextEditingController(text: parsed[name]?[3] ?? ''),
+    };
+    _otherHypnoticsController = TextEditingController();
+    _otherAnalgesicsController = TextEditingController();
+    _otherBlockersController = TextEditingController(text: others.join('\n'));
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _doseControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in _timeControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in _repeatControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in _infusionControllers.values) {
+      controller.dispose();
+    }
+    _otherHypnoticsController.dispose();
+    _otherAnalgesicsController.dispose();
+    _otherBlockersController.dispose();
+    super.dispose();
+  }
+
+  List<String> _lines(String value) {
+    return value
+        .split('\n')
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+  }
+
+  List<String> _buildResult() {
+    final selected = _drugNames
+        .where(
+          (name) =>
+              _doseControllers[name]!.text.trim().isNotEmpty ||
+              _timeControllers[name]!.text.trim().isNotEmpty ||
+              _repeatControllers[name]!.text.trim().isNotEmpty ||
+              _infusionControllers[name]!.text.trim().isNotEmpty,
+        )
+        .map(
+          (name) => '$name|${_doseControllers[name]!.text.trim()}|'
+              '${_timeControllers[name]!.text.trim()}|'
+              '${_repeatControllers[name]!.text.trim()}|'
+              '${_infusionControllers[name]!.text.trim()}',
+        )
+        .toList();
+
+    final others = [
+      ..._lines(_otherHypnoticsController.text),
+      ..._lines(_otherAnalgesicsController.text),
+      ..._lines(_otherBlockersController.text),
+    ];
+
+    return [...selected, ...others];
+  }
+
+  Widget _buildDrugSection({
+    required String title,
+    required List<String> drugs,
+    required TextEditingController otherController,
+    required String otherKeyPrefix,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: Color(0xFF17324D),
+            fontWeight: FontWeight.w800,
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: 10),
+        ...drugs.map(
+          (name) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$name (${_defaultDoseLabels[name] ?? 'dose padrão'})',
+                  style: const TextStyle(
+                    color: Color(0xFF17324D),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        key: Key('drug-dose-field-$name'),
+                        controller: _doseControllers[name],
+                        decoration: const InputDecoration(
+                          labelText: 'Dose inicial',
+                          hintText: 'Ex: 150 mg',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    SizedBox(
+                      width: 110,
+                      child: TextField(
+                        key: Key('drug-time-field-$name'),
+                        controller: _timeControllers[name],
+                        decoration: const InputDecoration(
+                          labelText: 'Horário',
+                          hintText: '08:12',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _repeatControllers[name],
+                  decoration: const InputDecoration(
+                    labelText: 'Repiques / novas doses',
+                    hintText: 'Ex: 50 mcg 08:20; 50 mcg 08:35',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _infusionControllers[name],
+                  decoration: const InputDecoration(
+                    labelText: 'Infusão contínua',
+                    hintText: 'Ex: 0,08 mcg/kg/min às 08:40',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        TextField(
+          key: Key('drug-other-items-field-$otherKeyPrefix'),
+          controller: otherController,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            labelText: 'Outros',
+            hintText: 'Um item por linha',
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Editar Indução (Drogas)'),
+      content: SizedBox(
+        width: 640,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildDrugSection(
+                title: 'Hipnóticos',
+                drugs: _hypnotics,
+                otherController: _otherHypnoticsController,
+                otherKeyPrefix: 'hypnotics',
+              ),
+              const SizedBox(height: 18),
+              _buildDrugSection(
+                title: 'Analgésicos',
+                drugs: _analgesics,
+                otherController: _otherAnalgesicsController,
+                otherKeyPrefix: 'analgesics',
+              ),
+              const SizedBox(height: 18),
+              _buildDrugSection(
+                title: 'Bloqueadores neuromusculares',
+                drugs: _neuromuscularBlockers,
+                otherController: _otherBlockersController,
+                otherKeyPrefix: 'blockers',
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          key: const Key('drug-save-button'),
+          onPressed: () => Navigator.of(context).pop(_buildResult()),
+          child: const Text('Salvar'),
+        ),
+      ],
+    );
+  }
+}
+
+class EventsDialog extends StatefulWidget {
+  const EventsDialog({
+    super.key,
+    required this.initialItems,
+  });
+
+  final List<String> initialItems;
+
+  @override
+  State<EventsDialog> createState() => _EventsDialogState();
+}
+
+class _EventsDialogState extends State<EventsDialog> {
+  static const List<String> _commonEvents = [
+    'Indução',
+    'Intubação',
+    'Incisão cirúrgica',
+    'Hipotensão',
+    'Bradicardia',
+    'Extubação',
+  ];
+
+  late List<String> _items;
+  late String _selectedEvent;
+  late final TextEditingController _timeController;
+  late final TextEditingController _detailsController;
+
+  @override
+  void initState() {
+    super.initState();
+    _items = List<String>.from(widget.initialItems);
+    _selectedEvent = '';
+    _timeController = TextEditingController();
+    _detailsController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _timeController.dispose();
+    _detailsController.dispose();
+    super.dispose();
+  }
+
+  void _addItem() {
+    final event = _selectedEvent.isNotEmpty
+        ? _selectedEvent
+        : _detailsController.text.trim();
+    if (event.isEmpty) return;
+
+    final encoded =
+        '${_timeController.text.trim()}|$event|${_detailsController.text.trim()}';
+    setState(() {
+      _items = [..._items, encoded];
+      _timeController.clear();
+      _detailsController.clear();
+      _selectedEvent = '';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Editar Eventos'),
+      content: SizedBox(
+        width: 620,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _commonEvents
+                    .map(
+                      (item) => ChoiceChip(
+                        label: Text(item),
+                        selected: _selectedEvent == item,
+                        onSelected: (_) {
+                          setState(() => _selectedEvent = item);
+                        },
+                      ),
+                    )
+                    .toList(),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  SizedBox(
+                    width: 100,
+                    child: TextField(
+                      key: const Key('event-time-field'),
+                      controller: _timeController,
+                      decoration: const InputDecoration(labelText: 'Horário'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      key: const Key('event-details-field'),
+                      controller: _detailsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Detalhes / outros',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton.icon(
+                  key: const Key('event-add-button'),
+                  onPressed: _addItem,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Adicionar evento'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              ..._items.asMap().entries.map(
+                (item) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(item.value.replaceAll('|', ' • ')),
+                  trailing: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _items.removeAt(item.key);
+                      });
+                    },
+                    icon: const Icon(Icons.delete_outline),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          key: const Key('event-save-button'),
+          onPressed: () => Navigator.of(context).pop(_items),
+          child: const Text('Salvar'),
+        ),
+      ],
+    );
+  }
+}
+
+class AdjunctsDialog extends StatefulWidget {
+  const AdjunctsDialog({
+    super.key,
+    required this.initialItems,
+  });
+
+  final List<String> initialItems;
+
+  @override
+  State<AdjunctsDialog> createState() => _AdjunctsDialogState();
+}
+
+class _AdjunctsDialogState extends State<AdjunctsDialog> {
+  static const List<String> _adjunctNames = [
+    'Sulfato de Mg',
+    'Cetamina',
+    'Clonidina',
+    'Metadona',
+    'Dexmedetomidina (Precedex)',
+    'Lidocaína',
+  ];
+  static const Map<String, String> _defaultDoseLabels = {
+    'Sulfato de Mg': '30-50 mg/kg',
+    'Cetamina': '0,1-0,5 mg/kg',
+    'Clonidina': '1-2 mcg/kg',
+    'Metadona': '0,1-0,2 mg/kg',
+    'Dexmedetomidina (Precedex)': '0,5-1 mcg/kg',
+    'Lidocaína': '1-1,5 mg/kg',
+  };
+
+  late final Map<String, TextEditingController> _doseControllers;
+  late final Map<String, TextEditingController> _timeControllers;
+  late final Map<String, TextEditingController> _repeatControllers;
+  late final Map<String, TextEditingController> _infusionControllers;
+  late final TextEditingController _otherItemsController;
+
+  @override
+  void initState() {
+    super.initState();
+    final parsed = <String, List<String>>{};
+    final others = <String>[];
+    for (final item in widget.initialItems) {
+      final parts = item.split('|');
+      if (parts.isEmpty) continue;
+      if (_adjunctNames.contains(parts[0])) {
+        parsed[parts[0]] = [
+          parts.length > 1 ? parts[1] : '',
+          parts.length > 2 ? parts[2] : '',
+          parts.length > 3 ? parts[3] : '',
+          parts.length > 4 ? parts[4] : '',
+        ];
+      } else if (item.trim().isNotEmpty) {
+        others.add(item);
+      }
+    }
+
+    _doseControllers = {
+      for (final name in _adjunctNames)
+        name: TextEditingController(text: parsed[name]?[0] ?? ''),
+    };
+    _timeControllers = {
+      for (final name in _adjunctNames)
+        name: TextEditingController(text: parsed[name]?[1] ?? ''),
+    };
+    _repeatControllers = {
+      for (final name in _adjunctNames)
+        name: TextEditingController(text: parsed[name]?[2] ?? ''),
+    };
+    _infusionControllers = {
+      for (final name in _adjunctNames)
+        name: TextEditingController(text: parsed[name]?[3] ?? ''),
+    };
+    _otherItemsController = TextEditingController(text: others.join('\n'));
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _doseControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in _timeControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in _repeatControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in _infusionControllers.values) {
+      controller.dispose();
+    }
+    _otherItemsController.dispose();
+    super.dispose();
+  }
+
+  List<String> _buildResult() {
+    final selected = _adjunctNames
+        .where(
+          (name) =>
+              _doseControllers[name]!.text.trim().isNotEmpty ||
+              _timeControllers[name]!.text.trim().isNotEmpty ||
+              _repeatControllers[name]!.text.trim().isNotEmpty ||
+              _infusionControllers[name]!.text.trim().isNotEmpty,
+        )
+        .map(
+          (name) => '$name|${_doseControllers[name]!.text.trim()}|'
+              '${_timeControllers[name]!.text.trim()}|'
+              '${_repeatControllers[name]!.text.trim()}|'
+              '${_infusionControllers[name]!.text.trim()}',
+        )
+        .toList();
+
+    final others = _otherItemsController.text
+        .split('\n')
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+
+    return [...selected, ...others];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Editar Adjuvantes'),
+      content: SizedBox(
+        width: 620,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ..._adjunctNames.map((name) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$name (${_defaultDoseLabels[name] ?? 'dose padrão'})',
+                        style: const TextStyle(
+                          color: Color(0xFF17324D),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _doseControllers[name],
+                              decoration: const InputDecoration(
+                                labelText: 'Dose inicial',
+                                hintText: 'Ex: 100 mg',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          SizedBox(
+                            width: 110,
+                            child: TextField(
+                              controller: _timeControllers[name],
+                              decoration: const InputDecoration(
+                                labelText: 'Horário',
+                                hintText: '08:30',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _repeatControllers[name],
+                        decoration: const InputDecoration(
+                          labelText: 'Repiques / novas doses',
+                          hintText: 'Ex: 25 mg 09:10; 25 mg 09:30',
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _infusionControllers[name],
+                        decoration: const InputDecoration(
+                          labelText: 'Infusão contínua',
+                          hintText: 'Se aplicável',
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              TextField(
+                controller: _otherItemsController,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  labelText: 'Outros',
+                  hintText: 'Um item por linha',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_buildResult()),
+          child: const Text('Salvar'),
+        ),
+      ],
+    );
+  }
+}
+
+class CatalogMedicationDialog extends StatefulWidget {
+  const CatalogMedicationDialog({
+    super.key,
+    required this.title,
+    required this.catalogItems,
+    required this.initialItems,
+  });
+
+  final String title;
+  final Map<String, String> catalogItems;
+  final List<String> initialItems;
+
+  @override
+  State<CatalogMedicationDialog> createState() => _CatalogMedicationDialogState();
+}
+
+class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
+  late final Map<String, TextEditingController> _doseControllers;
+  late final Map<String, TextEditingController> _timeControllers;
+  late final Map<String, TextEditingController> _repeatControllers;
+  late final Map<String, TextEditingController> _infusionControllers;
+  late final TextEditingController _otherItemsController;
+
+  @override
+  void initState() {
+    super.initState();
+    final parsed = <String, List<String>>{};
+    final others = <String>[];
+    for (final item in widget.initialItems) {
+      final parts = item.split('|');
+      if (parts.isEmpty) continue;
+      if (widget.catalogItems.containsKey(parts[0])) {
+        parsed[parts[0]] = [
+          parts.length > 1 ? parts[1] : '',
+          parts.length > 2 ? parts[2] : '',
+          parts.length > 3 ? parts[3] : '',
+          parts.length > 4 ? parts[4] : '',
+        ];
+      } else if (item.trim().isNotEmpty) {
+        others.add(item);
+      }
+    }
+
+    _doseControllers = {
+      for (final name in widget.catalogItems.keys)
+        name: TextEditingController(text: parsed[name]?[0] ?? ''),
+    };
+    _timeControllers = {
+      for (final name in widget.catalogItems.keys)
+        name: TextEditingController(text: parsed[name]?[1] ?? ''),
+    };
+    _repeatControllers = {
+      for (final name in widget.catalogItems.keys)
+        name: TextEditingController(text: parsed[name]?[2] ?? ''),
+    };
+    _infusionControllers = {
+      for (final name in widget.catalogItems.keys)
+        name: TextEditingController(text: parsed[name]?[3] ?? ''),
+    };
+    _otherItemsController = TextEditingController(text: others.join('\n'));
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _doseControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in _timeControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in _repeatControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in _infusionControllers.values) {
+      controller.dispose();
+    }
+    _otherItemsController.dispose();
+    super.dispose();
+  }
+
+  List<String> _buildResult() {
+    final selected = widget.catalogItems.keys
+        .where(
+          (name) =>
+              _doseControllers[name]!.text.trim().isNotEmpty ||
+              _timeControllers[name]!.text.trim().isNotEmpty ||
+              _repeatControllers[name]!.text.trim().isNotEmpty ||
+              _infusionControllers[name]!.text.trim().isNotEmpty,
+        )
+        .map(
+          (name) => '$name|${_doseControllers[name]!.text.trim()}|'
+              '${_timeControllers[name]!.text.trim()}|'
+              '${_repeatControllers[name]!.text.trim()}|'
+              '${_infusionControllers[name]!.text.trim()}',
+        )
+        .toList();
+
+    final others = _otherItemsController.text
+        .split('\n')
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+
+    return [...selected, ...others];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.title),
+      content: SizedBox(
+        width: 640,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ...widget.catalogItems.entries.map((entry) {
+                final name = entry.key;
+                final defaultDose = entry.value;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$name ($defaultDose)',
+                        style: const TextStyle(
+                          color: Color(0xFF17324D),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _doseControllers[name],
+                              decoration: const InputDecoration(
+                                labelText: 'Dose inicial',
+                                hintText: 'Ex: 1 g',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          SizedBox(
+                            width: 110,
+                            child: TextField(
+                              controller: _timeControllers[name],
+                              decoration: const InputDecoration(
+                                labelText: 'Horário',
+                                hintText: '08:30',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _repeatControllers[name],
+                        decoration: const InputDecoration(
+                          labelText: 'Repiques / novas doses',
+                          hintText: 'Ex: repetir às 12:00',
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _infusionControllers[name],
+                        decoration: const InputDecoration(
+                          labelText: 'Infusão contínua',
+                          hintText: 'Se aplicável',
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              TextField(
+                controller: _otherItemsController,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  labelText: 'Outros',
+                  hintText: 'Um item por linha',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_buildResult()),
+          child: const Text('Salvar'),
+        ),
+      ],
+    );
+  }
+}
+
+class VasoactiveDrugsDialog extends StatefulWidget {
+  const VasoactiveDrugsDialog({
+    super.key,
+    required this.catalogItems,
+    required this.initialItems,
+  });
+
+  final Map<String, String> catalogItems;
+  final List<String> initialItems;
+
+  @override
+  State<VasoactiveDrugsDialog> createState() => _VasoactiveDrugsDialogState();
+}
+
+class _VasoactiveDrugsDialogState extends State<VasoactiveDrugsDialog> {
+  late final Map<String, TextEditingController> _doseControllers;
+  late final Map<String, TextEditingController> _timeControllers;
+  late final Map<String, TextEditingController> _repeatControllers;
+  late final Map<String, TextEditingController> _infusionControllers;
+  late final TextEditingController _otherItemsController;
+
+  @override
+  void initState() {
+    super.initState();
+    final parsed = <String, List<String>>{};
+    final others = <String>[];
+    for (final item in widget.initialItems) {
+      final parts = item.split('|');
+      if (parts.isEmpty) continue;
+      if (widget.catalogItems.containsKey(parts[0])) {
+        parsed[parts[0]] = [
+          parts.length > 1 ? parts[1] : '',
+          parts.length > 2 ? parts[2] : '',
+          parts.length > 3 ? parts[3] : '',
+          parts.length > 4 ? parts[4] : '',
+        ];
+      } else if (item.trim().isNotEmpty) {
+        others.add(item);
+      }
+    }
+
+    _doseControllers = {
+      for (final name in widget.catalogItems.keys)
+        name: TextEditingController(text: parsed[name]?[0] ?? ''),
+    };
+    _timeControllers = {
+      for (final name in widget.catalogItems.keys)
+        name: TextEditingController(text: parsed[name]?[1] ?? ''),
+    };
+    _repeatControllers = {
+      for (final name in widget.catalogItems.keys)
+        name: TextEditingController(text: parsed[name]?[2] ?? ''),
+    };
+    _infusionControllers = {
+      for (final name in widget.catalogItems.keys)
+        name: TextEditingController(text: parsed[name]?[3] ?? ''),
+    };
+    _otherItemsController = TextEditingController(text: others.join('\n'));
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _doseControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in _timeControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in _repeatControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in _infusionControllers.values) {
+      controller.dispose();
+    }
+    _otherItemsController.dispose();
+    super.dispose();
+  }
+
+  List<String> _buildResult() {
+    final selected = widget.catalogItems.keys
+        .where(
+          (name) =>
+              _doseControllers[name]!.text.trim().isNotEmpty ||
+              _timeControllers[name]!.text.trim().isNotEmpty ||
+              _repeatControllers[name]!.text.trim().isNotEmpty ||
+              _infusionControllers[name]!.text.trim().isNotEmpty,
+        )
+        .map(
+          (name) => '$name|${_doseControllers[name]!.text.trim()}|'
+              '${_timeControllers[name]!.text.trim()}|'
+              '${_repeatControllers[name]!.text.trim()}|'
+              '${_infusionControllers[name]!.text.trim()}',
+        )
+        .toList();
+
+    final others = _otherItemsController.text
+        .split('\n')
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+
+    return [...selected, ...others];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Editar Drogas vasoativas'),
+      content: SizedBox(
+        width: 760,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ...widget.catalogItems.entries.map((entry) {
+                final name = entry.key;
+                final defaultDose = entry.value;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$name ($defaultDose)',
+                        style: const TextStyle(
+                          color: Color(0xFF17324D),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _doseControllers[name],
+                              decoration: const InputDecoration(
+                                labelText: 'Dose inicial',
+                                hintText: 'Ex: 10 mg',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          SizedBox(
+                            width: 110,
+                            child: TextField(
+                              controller: _timeControllers[name],
+                              decoration: const InputDecoration(
+                                labelText: 'Horário',
+                                hintText: '08:30',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _repeatControllers[name],
+                        decoration: const InputDecoration(
+                          labelText: 'Repiques intermitentes',
+                          hintText: 'Ex: 5 mg 08:40; 5 mg 08:55',
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _infusionControllers[name],
+                        decoration: const InputDecoration(
+                          labelText: 'Infusão contínua',
+                          hintText: 'Ex: 0,06 mcg/kg/min às 08:45',
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              TextField(
+                controller: _otherItemsController,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  labelText: 'Outros',
+                  hintText: 'Um item por linha',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_buildResult()),
+          child: const Text('Salvar'),
+        ),
+      ],
+    );
+  }
+}

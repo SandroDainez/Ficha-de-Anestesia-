@@ -1,0 +1,1779 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import '../models/patient.dart';
+import '../models/pre_anesthetic_assessment.dart';
+
+class PreAnestheticScreen extends StatefulWidget {
+  const PreAnestheticScreen({
+    super.key,
+    required this.patient,
+    required this.initialAssessment,
+  });
+
+  final Patient patient;
+  final PreAnestheticAssessment initialAssessment;
+
+  @override
+  State<PreAnestheticScreen> createState() => _PreAnestheticScreenState();
+}
+
+class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
+  static const List<String> _comorbiditiesOptions = [
+    'HAS',
+    'DM',
+    'Cardiopatia',
+    'Asma',
+    'Pneumopatia',
+    'DPOC',
+    'Doença coronariana',
+    'Insuficiência renal',
+    'Apneia do sono',
+    'Obesidade',
+  ];
+  static const List<String> _pediatricComorbidityOptions = [
+    'Prematuridade',
+    'Cardiopatia congênita',
+    'IVAS recente',
+    'Asma/broncoespasmo',
+    'Apneia prévia',
+  ];
+  static const List<String> _neonatalComorbidityOptions = [
+    'Prematuridade',
+    'Cardiopatia congênita',
+    'Apneia/bradicardia',
+    'Suporte ventilatório recente',
+    'Displasia broncopulmonar',
+  ];
+  static const List<String> _medicationOptions = [
+    'AAS',
+    'Clopidogrel',
+    'Losartana',
+    'Metformina',
+    'Insulina',
+    'Beta-bloqueador',
+    'Anticoagulante',
+    'Corticoide',
+  ];
+  static const List<String> _pediatricMedicationOptions = [
+    'Broncodilatador',
+    'Corticoide inalatório',
+    'Anticonvulsivante',
+  ];
+  static const List<String> _neonatalMedicationOptions = [
+    'Cafeína',
+    'Prostaglandina',
+    'Diurético',
+    'Anticonvulsivante',
+  ];
+  static const List<String> _smokingOptions = ['Não', 'Ex-tabagista', 'Sim'];
+  static const List<String> _alcoholOptions = ['Não', 'Social', 'Frequente'];
+  static const List<_OptionDetail> _metsOptions = [
+    _OptionDetail('1 MET', 'Restrito a autocuidado'),
+    _OptionDetail('2-3 METs', 'Caminha dentro de casa'),
+    _OptionDetail('4 METs', 'Sobe 1 lance de escada'),
+    _OptionDetail('>4 METs', 'Boa capacidade funcional'),
+    _OptionDetail('>10 METs', 'Exercício vigoroso'),
+  ];
+  static const List<String> _mallampatiOptions = ['I', 'II', 'III', 'IV'];
+  static const List<_AirwayReference> _mallampatiReferences = [
+    _AirwayReference(
+      grade: 'I',
+      description: 'Palato mole, fauces, uvula e pilares visiveis.',
+      technique: 'Laringoscopia direta usualmente adequada.',
+    ),
+    _AirwayReference(
+      grade: 'II',
+      description: 'Palato mole, fauces e parte da uvula visiveis.',
+      technique: 'Laringoscopia direta ou videolaringoscopio conforme contexto.',
+    ),
+    _AirwayReference(
+      grade: 'III',
+      description: 'Palato mole e base da uvula visiveis.',
+      technique: 'Preferir videolaringoscopio e planejar via aerea dificil.',
+    ),
+    _AirwayReference(
+      grade: 'IV',
+      description: 'Somente palato duro visivel.',
+      technique: 'Videolaringoscopio/fibroscopia e estrategia de resgate pronta.',
+    ),
+  ];
+  static const List<String> _mouthOpeningOptions = [
+    '> 3 dedos (> 5 cm)',
+    '2-3 dedos (3-5 cm)',
+    '< 2 dedos (< 3 cm)',
+  ];
+  static const List<String> _neckMobilityOptions = [
+    'Preservada',
+    'Limitada',
+    'Muito limitada',
+  ];
+  static const List<String> _dentitionOptions = [
+    'Sem prótese',
+    'Prótese móvel',
+    'Dentição frágil',
+    'Sem dentes',
+  ];
+  static const List<String> _difficultAirwayPredictorOptions = [
+    'Mallampati III/IV',
+    'Abertura oral reduzida',
+    'Mobilidade cervical limitada',
+    'Distância tireomentoniana reduzida',
+    'Micrognatia/retrognatia',
+    'Pescoço curto',
+    'Obesidade',
+  ];
+  static const List<String> _difficultVentilationPredictorOptions = [
+    'Barba',
+    'Obesidade',
+    'Sem dentes',
+    'Apneia do sono',
+    'Ronco importante',
+    'Idade > 55 anos',
+    'Limitação mandibular',
+  ];
+  static const List<String> _complementaryExamOptions = [
+    'ECG',
+    'Hemograma',
+    'Coagulograma',
+    'Creatinina',
+    'Glicemia',
+    'Eletrólitos',
+    'Rx tórax',
+    'Ecocardiograma',
+  ];
+  static const List<String> _pediatricComplementaryExamOptions = [
+    'Hemoglobina',
+    'Gasometria',
+    'Ecocardiograma',
+  ];
+  static const List<String> _neonatalComplementaryExamOptions = [
+    'Hemoglobina',
+    'Gasometria',
+    'Glicemia',
+    'Eletrólitos',
+    'Ecocardiograma',
+  ];
+  static const List<String> _solidFastingOptions = ['<6h', '6-8h', '>8h'];
+  static const List<String> _liquidFastingOptions = ['<2h', '2-4h', '>4h'];
+  static const List<String> _asaOptions = ['I', 'II', 'III', 'IV', 'V', 'VI'];
+  static const List<String> _anestheticPlanOptions = [
+    'Anestesia geral balanceada',
+    'Raquianestesia',
+    'Peridural',
+    'Bloqueio periférico',
+    'Sedação',
+  ];
+  static const List<String> _restrictionOptions = [
+    'Não aceita transfusão',
+    'Acompanhante obrigatório',
+    'Recusa sedação',
+    'Recusa opioide',
+    'Recusa anestesia regional',
+  ];
+
+  late final TextEditingController _nameController;
+  late final TextEditingController _ageController;
+  late final TextEditingController _weightController;
+  late final TextEditingController _heightController;
+  late final TextEditingController _postnatalAgeController;
+  late final TextEditingController _gestationalAgeController;
+  late final TextEditingController _correctedGestationalAgeController;
+  late final TextEditingController _birthWeightController;
+  late final TextEditingController _allergyController;
+  late final TextEditingController _metsNotesController;
+  late final TextEditingController _physicalExamController;
+  late final TextEditingController _acController;
+  late final TextEditingController _fcController;
+  late final TextEditingController _paController;
+  late final TextEditingController _apController;
+  late final TextEditingController _otherAirwayController;
+  late final TextEditingController _otherDifficultAirwayPredictorsController;
+  late final TextEditingController
+      _otherDifficultVentilationPredictorsController;
+  late final TextEditingController _otherComorbiditiesController;
+  late final TextEditingController _otherMedicationsController;
+  late final TextEditingController _otherHabitsController;
+  late final TextEditingController _otherComplementaryExamsController;
+  late final TextEditingController _fastingNotesController;
+  late final TextEditingController _asaNotesController;
+  late final TextEditingController _otherAnestheticPlanController;
+  late final TextEditingController _otherRestrictionsController;
+
+  late Set<String> _selectedComorbidities;
+  late Set<String> _selectedMedications;
+  late Set<String> _selectedExamItems;
+  late Set<String> _selectedAnestheticPlans;
+  late Set<String> _selectedRestrictions;
+  late Set<String> _selectedDifficultAirwayPredictors;
+  late Set<String> _selectedDifficultVentilationPredictors;
+  String _smokingStatus = '';
+  String _alcoholStatus = '';
+  String _selectedMets = '';
+  String _selectedMallampati = '';
+  String _selectedMouthOpening = '';
+  String _selectedNeckMobility = '';
+  String _selectedDentition = '';
+  String _selectedSolidFasting = '';
+  String _selectedLiquidFasting = '';
+  String _selectedAsa = '';
+  late PatientPopulation _selectedPopulation;
+
+  String get _solidFastingLabel {
+    return switch (_selectedPopulation) {
+      PatientPopulation.adult => 'Sólidos / refeição leve',
+      PatientPopulation.pediatric => 'Sólidos / fórmula / leite não humano',
+      PatientPopulation.neonatal => 'Fórmula / leite não humano',
+    };
+  }
+
+  String get _liquidFastingLabel {
+    return switch (_selectedPopulation) {
+      PatientPopulation.neonatal => 'Leite materno / líquidos claros',
+      _ => 'Líquidos claros',
+    };
+  }
+
+  List<String> get _fastingGuidanceLines {
+    switch (_selectedPopulation) {
+      case PatientPopulation.adult:
+        return const [
+          'Líquidos claros: até 2 h.',
+          'Refeição leve: 6 h.',
+          'Refeição gordurosa ou carne: 8 h ou mais.',
+        ];
+      case PatientPopulation.pediatric:
+        return const [
+          'Líquidos claros: até 2 h.',
+          'Leite materno: 4 h.',
+          'Fórmula infantil, leite não humano e refeição leve: 6 h.',
+        ];
+      case PatientPopulation.neonatal:
+        return const [
+          'Líquidos claros: até 2 h.',
+          'Leite materno: 4 h.',
+          'Fórmula infantil ou leite não humano: 6 h.',
+        ];
+    }
+  }
+
+  List<String> get _profileComorbidityOptions {
+    switch (_selectedPopulation) {
+      case PatientPopulation.adult:
+        return _comorbiditiesOptions;
+      case PatientPopulation.pediatric:
+        return [
+          ..._comorbiditiesOptions,
+          ..._pediatricComorbidityOptions,
+        ];
+      case PatientPopulation.neonatal:
+        return [
+          ..._neonatalComorbidityOptions,
+        ];
+    }
+  }
+
+  List<String> get _allComorbidityOptions {
+    return {
+      ..._comorbiditiesOptions,
+      ..._pediatricComorbidityOptions,
+      ..._neonatalComorbidityOptions,
+    }.toList();
+  }
+
+  List<String> get _profileMedicationOptions {
+    switch (_selectedPopulation) {
+      case PatientPopulation.adult:
+        return _medicationOptions;
+      case PatientPopulation.pediatric:
+        return {
+          ..._medicationOptions,
+          ..._pediatricMedicationOptions,
+        }.toList();
+      case PatientPopulation.neonatal:
+        return [
+          ..._neonatalMedicationOptions,
+        ];
+    }
+  }
+
+  List<String> get _allMedicationOptions {
+    return {
+      ..._medicationOptions,
+      ..._pediatricMedicationOptions,
+      ..._neonatalMedicationOptions,
+    }.toList();
+  }
+
+  String get _medicationGuidanceTitle {
+    return switch (_selectedPopulation) {
+      PatientPopulation.adult => 'Revisão medicamentosa',
+      PatientPopulation.pediatric => 'Foco pediátrico',
+      PatientPopulation.neonatal => 'Foco neonatal',
+    };
+  }
+
+  List<String> get _medicationGuidanceLines {
+    switch (_selectedPopulation) {
+      case PatientPopulation.adult:
+        return const [
+          'Registrar antiagregantes, anticoagulantes, antidiabéticos, anti-hipertensivos e corticoides.',
+        ];
+      case PatientPopulation.pediatric:
+        return const [
+          'Rever broncodilatadores, corticoides inalatórios, anticonvulsivantes e medicações de uso contínuo.',
+        ];
+      case PatientPopulation.neonatal:
+        return const [
+          'Rever cafeína, prostaglandina, diuréticos, anticonvulsivantes e drogas em uso recente na UTI.',
+        ];
+    }
+  }
+
+  List<String> get _profileComplementaryExamOptions {
+    switch (_selectedPopulation) {
+      case PatientPopulation.adult:
+        return _complementaryExamOptions;
+      case PatientPopulation.pediatric:
+        return {
+          ..._complementaryExamOptions,
+          ..._pediatricComplementaryExamOptions,
+        }.toList();
+      case PatientPopulation.neonatal:
+        return _neonatalComplementaryExamOptions;
+    }
+  }
+
+  List<String> get _allComplementaryExamOptions {
+    return {
+      ..._complementaryExamOptions,
+      ..._pediatricComplementaryExamOptions,
+      ..._neonatalComplementaryExamOptions,
+    }.toList();
+  }
+
+  String get _examGuidanceTitle {
+    return switch (_selectedPopulation) {
+      PatientPopulation.adult => 'Exames complementares',
+      PatientPopulation.pediatric => 'Exames por contexto clínico',
+      PatientPopulation.neonatal => 'Exames por contexto neonatal',
+    };
+  }
+
+  List<String> get _examGuidanceLines {
+    switch (_selectedPopulation) {
+      case PatientPopulation.adult:
+        return const [
+          'Solicitar exames apenas se alterarem conduta perioperatória.',
+        ];
+      case PatientPopulation.pediatric:
+        return const [
+          'Em criança, exames não são rotineiros; considerar conforme doença de base, prematuridade e porte do procedimento.',
+        ];
+      case PatientPopulation.neonatal:
+        return const [
+          'No neonato, priorizar glicemia, hemoglobina, gasometria, eletrólitos e ecocardiograma conforme quadro clínico.',
+        ];
+    }
+  }
+
+  String _physicalExamField(String label, String source) {
+    final match = RegExp(
+      '^$label\\s*:\\s*(.+)\$',
+      caseSensitive: false,
+      multiLine: true,
+    ).firstMatch(source);
+    return match?.group(1)?.trim() ?? '';
+  }
+
+  String _physicalExamOther(String source) {
+    return source
+        .split('\n')
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .where(
+          (line) => !RegExp(r'^(AC|FC|PA|AP)\s*:', caseSensitive: false)
+              .hasMatch(line),
+        )
+        .join('\n');
+  }
+
+  String _buildPhysicalExamSummary() {
+    final parts = <String>[
+      if (_acController.text.trim().isNotEmpty) 'AC: ${_acController.text.trim()}',
+      if (_fcController.text.trim().isNotEmpty) 'FC: ${_fcController.text.trim()}',
+      if (_paController.text.trim().isNotEmpty) 'PA: ${_paController.text.trim()}',
+      if (_apController.text.trim().isNotEmpty) 'AP: ${_apController.text.trim()}',
+      if (_physicalExamController.text.trim().isNotEmpty) _physicalExamController.text.trim(),
+    ];
+    return parts.join('\n');
+  }
+
+  void _syncMallampatiPredictor() {
+    const predictor = 'Mallampati III/IV';
+    if (_selectedMallampati == 'III' || _selectedMallampati == 'IV') {
+      _selectedDifficultAirwayPredictors.add(predictor);
+    } else {
+      _selectedDifficultAirwayPredictors.remove(predictor);
+    }
+  }
+
+  void _syncMouthOpeningPredictor() {
+    const predictor = 'Abertura oral reduzida';
+    if (_selectedMouthOpening == '2-3 dedos (3-5 cm)' ||
+        _selectedMouthOpening == '< 2 dedos (< 3 cm)') {
+      _selectedDifficultAirwayPredictors.add(predictor);
+    } else {
+      _selectedDifficultAirwayPredictors.remove(predictor);
+    }
+  }
+
+  void _syncNeckMobilityPredictor() {
+    const predictor = 'Mobilidade cervical limitada';
+    if (_selectedNeckMobility == 'Limitada' ||
+        _selectedNeckMobility == 'Muito limitada') {
+      _selectedDifficultAirwayPredictors.add(predictor);
+    } else {
+      _selectedDifficultAirwayPredictors.remove(predictor);
+    }
+  }
+
+  void _syncAirwayPredictors() {
+    _syncMallampatiPredictor();
+    _syncMouthOpeningPredictor();
+    _syncNeckMobilityPredictor();
+  }
+
+  String get _antecedentGuidanceTitle {
+    return switch (_selectedPopulation) {
+      PatientPopulation.adult => 'Foco do pré-anestésico',
+      PatientPopulation.pediatric => 'Foco pediátrico',
+      PatientPopulation.neonatal => 'Foco neonatal',
+    };
+  }
+
+  List<String> get _antecedentGuidanceLines {
+    switch (_selectedPopulation) {
+      case PatientPopulation.adult:
+        return const [
+          'Pesquisar comorbidades, medicações em uso, alergias e restrições.',
+          'Exames complementares apenas quando alterarem a condução perioperatória.',
+        ];
+      case PatientPopulation.pediatric:
+        return const [
+          'Rever IVAS recente, asma/broncoespasmo, prematuridade e cardiopatia congênita.',
+          'Valorizar história de complicações anestésicas e sintomas respiratórios atuais.',
+        ];
+      case PatientPopulation.neonatal:
+        return const [
+          'Rever prematuridade, episódios de apneia/bradicardia e necessidade recente de suporte respiratório.',
+          'Valorizar cardiopatia congênita, idade gestacional e idade pós-natal.',
+        ];
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final assessment = widget.initialAssessment;
+    _nameController = TextEditingController(text: widget.patient.name);
+    _ageController = TextEditingController(
+      text: widget.patient.age > 0 ? widget.patient.age.toString() : '',
+    );
+    _weightController = TextEditingController(
+      text: widget.patient.weightKg > 0
+          ? widget.patient.weightKg.toStringAsFixed(0)
+          : '',
+    );
+    _heightController = TextEditingController(
+      text: widget.patient.heightMeters > 0
+          ? widget.patient.heightMeters.toStringAsFixed(2).replaceAll('.', ',')
+          : '',
+    );
+    _postnatalAgeController = TextEditingController(
+      text: widget.patient.postnatalAgeDays > 0
+          ? widget.patient.postnatalAgeDays.toString()
+          : '',
+    );
+    _gestationalAgeController = TextEditingController(
+      text: widget.patient.gestationalAgeWeeks > 0
+          ? widget.patient.gestationalAgeWeeks.toString()
+          : '',
+    );
+    _correctedGestationalAgeController = TextEditingController(
+      text: widget.patient.correctedGestationalAgeWeeks > 0
+          ? widget.patient.correctedGestationalAgeWeeks.toString()
+          : '',
+    );
+    _birthWeightController = TextEditingController(
+      text: widget.patient.birthWeightKg > 0
+          ? widget.patient.birthWeightKg.toStringAsFixed(2).replaceAll('.', ',')
+          : '',
+    );
+    _allergyController = TextEditingController(
+      text: assessment.allergyDescription,
+    );
+    _metsNotesController = TextEditingController();
+    _acController = TextEditingController(
+      text: _physicalExamField('AC', assessment.physicalExam),
+    );
+    _fcController = TextEditingController(
+      text: _physicalExamField('FC', assessment.physicalExam),
+    );
+    _paController = TextEditingController(
+      text: _physicalExamField('PA', assessment.physicalExam),
+    );
+    _apController = TextEditingController(
+      text: _physicalExamField('AP', assessment.physicalExam),
+    );
+    _physicalExamController = TextEditingController(
+      text: _physicalExamOther(assessment.physicalExam),
+    );
+    _otherAirwayController = TextEditingController(
+      text: assessment.otherAirwayDetails,
+    );
+    _otherDifficultAirwayPredictorsController = TextEditingController(
+      text: assessment.otherDifficultAirwayPredictors,
+    );
+    _otherDifficultVentilationPredictorsController = TextEditingController(
+      text: assessment.otherDifficultVentilationPredictors,
+    );
+    _otherComorbiditiesController = TextEditingController(
+      text: assessment.otherComorbidities,
+    );
+    _otherMedicationsController = TextEditingController(
+      text: assessment.otherMedications,
+    );
+    _otherHabitsController = TextEditingController(text: assessment.otherHabits);
+    _otherComplementaryExamsController = TextEditingController(
+      text: assessment.otherComplementaryExams,
+    );
+    _fastingNotesController = TextEditingController(text: assessment.fastingNotes);
+    _asaNotesController = TextEditingController(text: assessment.asaNotes);
+    _otherAnestheticPlanController = TextEditingController(
+      text: assessment.otherAnestheticPlan,
+    );
+    _otherRestrictionsController = TextEditingController(
+      text: assessment.otherRestrictions,
+    );
+
+    _selectedComorbidities = assessment.comorbidities
+        .where(_allComorbidityOptions.contains)
+        .toSet();
+    _selectedMedications = assessment.currentMedications
+        .where(_allMedicationOptions.contains)
+        .toSet();
+    _selectedExamItems = assessment.complementaryExamItems
+        .where(_allComplementaryExamOptions.contains)
+        .toSet();
+    _selectedAnestheticPlans = assessment.anestheticPlan
+        .split('\n')
+        .map((item) => item.trim())
+        .where(_anestheticPlanOptions.contains)
+        .toSet();
+    _selectedRestrictions = assessment.restrictionItems
+        .where(_restrictionOptions.contains)
+        .toSet();
+    _selectedDifficultAirwayPredictors = assessment.difficultAirwayPredictors
+        .where(_difficultAirwayPredictorOptions.contains)
+        .toSet();
+    _selectedDifficultVentilationPredictors = assessment
+        .difficultVentilationPredictors
+        .where(_difficultVentilationPredictorOptions.contains)
+        .toSet();
+    _smokingStatus = _smokingOptions.contains(assessment.smokingStatus)
+        ? assessment.smokingStatus
+        : '';
+    _alcoholStatus = _alcoholOptions.contains(assessment.alcoholStatus)
+        ? assessment.alcoholStatus
+        : '';
+    _selectedMets = _metsOptions.any((item) => item.value == assessment.mets)
+        ? assessment.mets
+        : '';
+    _selectedMallampati = _mallampatiOptions.contains(assessment.airway.mallampati)
+        ? assessment.airway.mallampati
+        : '';
+    _selectedMouthOpening = _mouthOpeningOptions.contains(assessment.mouthOpening)
+        ? assessment.mouthOpening
+        : '';
+    _selectedNeckMobility = _neckMobilityOptions.contains(assessment.neckMobility)
+        ? assessment.neckMobility
+        : '';
+    _selectedDentition = _dentitionOptions.contains(assessment.dentition)
+        ? assessment.dentition
+        : '';
+    _selectedSolidFasting = _solidFastingOptions.contains(assessment.fastingSolids)
+        ? assessment.fastingSolids
+        : '';
+    _selectedLiquidFasting =
+        _liquidFastingOptions.contains(assessment.fastingLiquids)
+            ? assessment.fastingLiquids
+            : '';
+    _selectedAsa = _asaOptions.contains(assessment.asaClassification)
+        ? assessment.asaClassification
+        : widget.patient.asa;
+    _selectedPopulation = widget.patient.population;
+    _syncAirwayPredictors();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _ageController.dispose();
+    _weightController.dispose();
+    _heightController.dispose();
+    _postnatalAgeController.dispose();
+    _gestationalAgeController.dispose();
+    _correctedGestationalAgeController.dispose();
+    _birthWeightController.dispose();
+    _allergyController.dispose();
+    _metsNotesController.dispose();
+    _physicalExamController.dispose();
+    _acController.dispose();
+    _fcController.dispose();
+    _paController.dispose();
+    _apController.dispose();
+    _otherAirwayController.dispose();
+    _otherDifficultAirwayPredictorsController.dispose();
+    _otherDifficultVentilationPredictorsController.dispose();
+    _otherComorbiditiesController.dispose();
+    _otherMedicationsController.dispose();
+    _otherHabitsController.dispose();
+    _otherComplementaryExamsController.dispose();
+    _fastingNotesController.dispose();
+    _asaNotesController.dispose();
+    _otherAnestheticPlanController.dispose();
+    _otherRestrictionsController.dispose();
+    super.dispose();
+  }
+
+  List<String> _lines(String value) {
+    return value
+        .split('\n')
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+  }
+
+  Widget _sectionLabel(String label) {
+    return Text(
+      label,
+      style: const TextStyle(
+        color: Color(0xFF17324D),
+        fontWeight: FontWeight.w800,
+      ),
+    );
+  }
+
+  Widget _buildFilterChips({
+    required List<String> options,
+    required Set<String> selectedValues,
+    required ValueChanged<String> onToggle,
+    Color color = const Color(0xFF2B76D2),
+  }) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: options.map((option) {
+        final selected = selectedValues.contains(option);
+        return FilterChip(
+          label: Text(option),
+          selected: selected,
+          onSelected: (_) => onToggle(option),
+          selectedColor: color.withAlpha(36),
+          checkmarkColor: color,
+          side: BorderSide(
+            color: selected ? color : const Color(0xFFD6E1ED),
+          ),
+          labelStyle: TextStyle(
+            color: selected ? color : const Color(0xFF4F6378),
+            fontWeight: FontWeight.w700,
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildChoiceChips({
+    required List<String> options,
+    required String selectedValue,
+    required ValueChanged<String> onSelected,
+    Color color = const Color(0xFF169653),
+  }) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: options.map((option) {
+        final selected = selectedValue == option;
+        return ChoiceChip(
+          label: Text(option),
+          selected: selected,
+          onSelected: (_) => onSelected(option),
+          selectedColor: color.withAlpha(32),
+          side: BorderSide(
+            color: selected ? color : const Color(0xFFD6E1ED),
+          ),
+          labelStyle: TextStyle(
+            color: selected ? color : const Color(0xFF4F6378),
+            fontWeight: FontWeight.w700,
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  void _saveAndReturn() {
+    _syncAirwayPredictors();
+    final medications = [
+      ..._selectedMedications,
+      ..._lines(_otherMedicationsController.text),
+    ];
+    final anestheticPlanLines = [
+      ..._selectedAnestheticPlans,
+      ..._lines(_otherAnestheticPlanController.text),
+    ];
+    final restrictionLines = [
+      ..._selectedRestrictions,
+      ..._lines(_otherRestrictionsController.text),
+    ];
+    final complementaryExamLines = [
+      ..._selectedExamItems,
+      ..._lines(_otherComplementaryExamsController.text),
+    ];
+    final metsValue = _selectedMets.isEmpty
+        ? _metsNotesController.text.trim()
+        : _selectedMets;
+
+    final updatedPatient = widget.patient.copyWith(
+      name: _nameController.text.trim(),
+      age: int.tryParse(_ageController.text.trim()) ?? widget.patient.age,
+      weightKg: double.tryParse(_weightController.text.replaceAll(',', '.')) ??
+          widget.patient.weightKg,
+      heightMeters:
+          double.tryParse(_heightController.text.replaceAll(',', '.')) ??
+              widget.patient.heightMeters,
+      population: _selectedPopulation,
+      postnatalAgeDays:
+          int.tryParse(_postnatalAgeController.text.trim()) ??
+              widget.patient.postnatalAgeDays,
+      gestationalAgeWeeks:
+          int.tryParse(_gestationalAgeController.text.trim()) ??
+              widget.patient.gestationalAgeWeeks,
+      correctedGestationalAgeWeeks:
+          int.tryParse(_correctedGestationalAgeController.text.trim()) ??
+              widget.patient.correctedGestationalAgeWeeks,
+      birthWeightKg:
+          double.tryParse(_birthWeightController.text.replaceAll(',', '.')) ??
+              widget.patient.birthWeightKg,
+      asa: _selectedAsa,
+      allergies: _allergyController.text.trim().isEmpty
+          ? const []
+          : [_allergyController.text.trim()],
+      restrictions: restrictionLines,
+      medications: medications,
+    );
+
+    final updatedAssessment = widget.initialAssessment.copyWith(
+      comorbidities: _selectedComorbidities.toList(),
+      otherComorbidities: _otherComorbiditiesController.text.trim(),
+      currentMedications: medications,
+      otherMedications: _otherMedicationsController.text.trim(),
+      allergyDescription: _allergyController.text.trim(),
+      smokingStatus: _smokingStatus,
+      alcoholStatus: _alcoholStatus,
+      otherHabits: _otherHabitsController.text.trim(),
+      mets: metsValue,
+      physicalExam: _buildPhysicalExamSummary(),
+      airway: widget.initialAssessment.airway.copyWith(
+        mallampati: _selectedMallampati,
+      ),
+      mouthOpening: _selectedMouthOpening,
+      neckMobility: _selectedNeckMobility,
+      dentition: _selectedDentition,
+      difficultAirwayPredictors:
+          _selectedDifficultAirwayPredictors.toList(),
+      otherDifficultAirwayPredictors:
+          _otherDifficultAirwayPredictorsController.text.trim(),
+      difficultVentilationPredictors:
+          _selectedDifficultVentilationPredictors.toList(),
+      otherDifficultVentilationPredictors:
+          _otherDifficultVentilationPredictorsController.text.trim(),
+      otherAirwayDetails: _otherAirwayController.text.trim(),
+      complementaryExamItems: _selectedExamItems.toList(),
+      complementaryExams: complementaryExamLines.join('\n'),
+      otherComplementaryExams: _otherComplementaryExamsController.text.trim(),
+      fastingSolids: _selectedSolidFasting,
+      fastingLiquids: _selectedLiquidFasting,
+      fastingNotes: _fastingNotesController.text.trim(),
+      asaClassification: _selectedAsa,
+      asaNotes: _asaNotesController.text.trim(),
+      anestheticPlan: anestheticPlanLines.join('\n'),
+      otherAnestheticPlan: _otherAnestheticPlanController.text.trim(),
+      restrictionItems: _selectedRestrictions.toList(),
+      patientRestrictions: restrictionLines.join('\n'),
+      otherRestrictions: _otherRestrictionsController.text.trim(),
+    );
+
+    Navigator.of(context).pop(
+      PreAnestheticScreenResult(
+        patient: updatedPatient,
+        assessment: updatedAssessment,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Consulta Pré-Anestésica')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _SectionCard(
+            title: 'Identificação do paciente',
+            initiallyExpanded: true,
+            child: Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: PatientPopulation.values
+                        .map(
+                          (item) => ChoiceChip(
+                            label: Text(item.label),
+                            selected: _selectedPopulation == item,
+                            onSelected: (_) {
+                              setState(() => _selectedPopulation = item);
+                            },
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(labelText: 'Nome'),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _ageController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        decoration: InputDecoration(
+                          labelText: _selectedPopulation == PatientPopulation.neonatal
+                              ? 'Idade (anos, se aplicável)'
+                              : 'Idade (anos)',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: _weightController,
+                        keyboardType:
+                            const TextInputType.numberWithOptions(decimal: true),
+                        decoration: const InputDecoration(labelText: 'Peso (kg)'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: _heightController,
+                        keyboardType:
+                            const TextInputType.numberWithOptions(decimal: true),
+                        decoration: const InputDecoration(labelText: 'Altura (m)'),
+                      ),
+                    ),
+                  ],
+                ),
+                if (_selectedPopulation != PatientPopulation.adult) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _postnatalAgeController,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          decoration: const InputDecoration(
+                            labelText: 'Idade pós-natal (dias)',
+                          ),
+                        ),
+                      ),
+                      if (_selectedPopulation == PatientPopulation.neonatal) ...[
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextField(
+                            controller: _birthWeightController,
+                            keyboardType:
+                                const TextInputType.numberWithOptions(decimal: true),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'[0-9,.]'),
+                              ),
+                            ],
+                            decoration: const InputDecoration(
+                              labelText: 'Peso ao nascer (kg)',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+                if (_selectedPopulation == PatientPopulation.neonatal) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _gestationalAgeController,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          decoration: const InputDecoration(
+                            labelText: 'IG ao nascer (semanas)',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: _correctedGestationalAgeController,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          decoration: const InputDecoration(
+                            labelText: 'IG corrigida (semanas)',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+          _SectionCard(
+            title: 'Antecedentes',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFE),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE5ECF6)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _antecedentGuidanceTitle,
+                        style: const TextStyle(
+                          color: Color(0xFF2B76D2),
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      ..._antecedentGuidanceLines.map(
+                        (line) => Padding(
+                          padding: const EdgeInsets.only(bottom: 2),
+                          child: Text(
+                            line,
+                            style: const TextStyle(
+                              color: Color(0xFF5D7288),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _buildFilterChips(
+                  options: _profileComorbidityOptions,
+                  selectedValues: _selectedComorbidities,
+                  color: const Color(0xFFCC7A00),
+                  onToggle: (value) {
+                    setState(() {
+                      if (_selectedComorbidities.contains(value)) {
+                        _selectedComorbidities.remove(value);
+                      } else {
+                        _selectedComorbidities.add(value);
+                      }
+                    });
+                  },
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _otherComorbiditiesController,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'Outros',
+                    hintText: 'Descreva antecedentes não listados',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _SectionCard(
+            title: 'Medicações em uso',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFE),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE5ECF6)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _medicationGuidanceTitle,
+                        style: const TextStyle(
+                          color: Color(0xFF2B76D2),
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      ..._medicationGuidanceLines.map(
+                        (line) => Padding(
+                          padding: const EdgeInsets.only(bottom: 2),
+                          child: Text(
+                            line,
+                            style: const TextStyle(
+                              color: Color(0xFF5D7288),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _buildFilterChips(
+                  options: _profileMedicationOptions,
+                  selectedValues: _selectedMedications,
+                  onToggle: (value) {
+                    setState(() {
+                      if (_selectedMedications.contains(value)) {
+                        _selectedMedications.remove(value);
+                      } else {
+                        _selectedMedications.add(value);
+                      }
+                    });
+                  },
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _otherMedicationsController,
+                  minLines: 2,
+                  maxLines: 5,
+                  decoration: const InputDecoration(
+                    labelText: 'Outros',
+                    hintText: 'Inclua dose, frequência e medicações não listadas',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _SectionCard(
+            title: 'Alergias',
+            child: TextField(
+              controller: _allergyController,
+              minLines: 2,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                labelText: 'Descrição das alergias',
+              ),
+            ),
+          ),
+          _SectionCard(
+            title: 'Hábitos',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _sectionLabel('Tabagismo'),
+                const SizedBox(height: 8),
+                _buildChoiceChips(
+                  options: _smokingOptions,
+                  selectedValue: _smokingStatus,
+                  onSelected: (value) => setState(() => _smokingStatus = value),
+                ),
+                const SizedBox(height: 14),
+                _sectionLabel('Álcool'),
+                const SizedBox(height: 8),
+                _buildChoiceChips(
+                  options: _alcoholOptions,
+                  selectedValue: _alcoholStatus,
+                  onSelected: (value) => setState(() => _alcoholStatus = value),
+                  color: const Color(0xFF8A5DD3),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _otherHabitsController,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'Outros',
+                    hintText: 'Ex: vape, drogas ilícitas, atividade física',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _SectionCard(
+            title: 'Avaliação funcional (METs)',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _metsOptions.map((option) {
+                    final selected = _selectedMets == option.value;
+                    return ChoiceChip(
+                      label: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(option.value),
+                          Text(
+                            option.description,
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                        ],
+                      ),
+                      selected: selected,
+                      onSelected: (_) {
+                        setState(() {
+                          _selectedMets = option.value;
+                        });
+                      },
+                      selectedColor: const Color(0xFF2B76D2).withAlpha(28),
+                      side: BorderSide(
+                        color: selected
+                            ? const Color(0xFF2B76D2)
+                            : const Color(0xFFD6E1ED),
+                      ),
+                      labelStyle: TextStyle(
+                        color: selected
+                            ? const Color(0xFF2B76D2)
+                            : const Color(0xFF4F6378),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _metsNotesController,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'Outros',
+                    hintText: 'Descreva limitação funcional, dispneia, angina',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _SectionCard(
+            title: 'Exame físico',
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _acController,
+                        decoration: const InputDecoration(
+                          labelText: 'AC',
+                          hintText: 'RCR 2T, sem sopros',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: _fcController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        decoration: const InputDecoration(
+                          labelText: 'FC',
+                          hintText: 'bpm',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: _paController,
+                        decoration: const InputDecoration(
+                          labelText: 'PA',
+                          hintText: '120/80 mmHg',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _apController,
+                  decoration: const InputDecoration(
+                    labelText: 'AP',
+                    hintText: 'MV presente, sem ruídos adventícios',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _physicalExamController,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'Outros achados',
+                    hintText: 'Temperatura, perfusão, edema, estado geral e outros dados relevantes',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _SectionCard(
+            title: 'Avaliação de via aérea',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _sectionLabel('Mallampati'),
+                const SizedBox(height: 8),
+                _buildChoiceChips(
+                  options: _mallampatiOptions,
+                  selectedValue: _selectedMallampati,
+                  onSelected: (value) {
+                    setState(() {
+                      _selectedMallampati = value;
+                      _syncAirwayPredictors();
+                    });
+                  },
+                  color: const Color(0xFF8A5DD3),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Referencia rapida de Mallampati (classe e significado)',
+                  style: TextStyle(
+                    color: Color(0xFF17324D),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ..._mallampatiReferences.map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _AirwayReferenceCard(reference: item),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _sectionLabel('Abertura oral'),
+                const SizedBox(height: 8),
+                _buildChoiceChips(
+                  options: _mouthOpeningOptions,
+                  selectedValue: _selectedMouthOpening,
+                  onSelected: (value) {
+                    setState(() {
+                      _selectedMouthOpening = value;
+                      _syncAirwayPredictors();
+                    });
+                  },
+                  color: const Color(0xFF2B76D2),
+                ),
+                const SizedBox(height: 14),
+                _sectionLabel('Mobilidade cervical'),
+                const SizedBox(height: 8),
+                _buildChoiceChips(
+                  options: _neckMobilityOptions,
+                  selectedValue: _selectedNeckMobility,
+                  onSelected: (value) {
+                    setState(() {
+                      _selectedNeckMobility = value;
+                      _syncAirwayPredictors();
+                    });
+                  },
+                  color: const Color(0xFF169653),
+                ),
+                const SizedBox(height: 14),
+                _sectionLabel('Dentição / prótese'),
+                const SizedBox(height: 8),
+                _buildChoiceChips(
+                  options: _dentitionOptions,
+                  selectedValue: _selectedDentition,
+                  onSelected: (value) {
+                    setState(() => _selectedDentition = value);
+                  },
+                  color: const Color(0xFFCC7A00),
+                ),
+                const SizedBox(height: 14),
+                _sectionLabel('Preditores de via aérea difícil'),
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFE),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE5ECF6)),
+                  ),
+                  child: const Text(
+                    'Referência rápida: distância tireomentoniana menor que 6 cm sugere maior risco de laringoscopia/intubação difícil.',
+                    style: TextStyle(
+                      color: Color(0xFF5D7288),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _buildFilterChips(
+                  options: _difficultAirwayPredictorOptions,
+                  selectedValues: _selectedDifficultAirwayPredictors,
+                  color: const Color(0xFFEA5455),
+                  onToggle: (value) {
+                    setState(() {
+                      if (_selectedDifficultAirwayPredictors.contains(value)) {
+                        _selectedDifficultAirwayPredictors.remove(value);
+                      } else {
+                        _selectedDifficultAirwayPredictors.add(value);
+                      }
+                    });
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _otherDifficultAirwayPredictorsController,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'Outros - via aérea difícil',
+                    hintText: 'Descreva outros preditores relevantes',
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _sectionLabel('Preditores de ventilação difícil'),
+                const SizedBox(height: 8),
+                _buildFilterChips(
+                  options: _difficultVentilationPredictorOptions,
+                  selectedValues: _selectedDifficultVentilationPredictors,
+                  color: const Color(0xFFCC7A00),
+                  onToggle: (value) {
+                    setState(() {
+                      if (_selectedDifficultVentilationPredictors
+                          .contains(value)) {
+                        _selectedDifficultVentilationPredictors.remove(value);
+                      } else {
+                        _selectedDifficultVentilationPredictors.add(value);
+                      }
+                    });
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller:
+                      _otherDifficultVentilationPredictorsController,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'Outros - ventilação difícil',
+                    hintText: 'Descreva outros preditores relevantes',
+                  ),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _otherAirwayController,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'Outros',
+                    hintText: 'Ex: barba, limitação mandibular, pescoço curto',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _SectionCard(
+            title: 'Exames complementares',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFE),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE5ECF6)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _examGuidanceTitle,
+                        style: const TextStyle(
+                          color: Color(0xFF2B76D2),
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      ..._examGuidanceLines.map(
+                        (line) => Padding(
+                          padding: const EdgeInsets.only(bottom: 2),
+                          child: Text(
+                            line,
+                            style: const TextStyle(
+                              color: Color(0xFF5D7288),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _buildFilterChips(
+                  options: _profileComplementaryExamOptions,
+                  selectedValues: _selectedExamItems,
+                  color: const Color(0xFF2B76D2),
+                  onToggle: (value) {
+                    setState(() {
+                      if (_selectedExamItems.contains(value)) {
+                        _selectedExamItems.remove(value);
+                      } else {
+                        _selectedExamItems.add(value);
+                      }
+                    });
+                  },
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _otherComplementaryExamsController,
+                  minLines: 2,
+                  maxLines: 5,
+                  decoration: const InputDecoration(
+                    labelText: 'Outros',
+                    hintText: 'Descreva alterações relevantes ou exames adicionais',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _SectionCard(
+            title: 'Jejum',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFE),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE5ECF6)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Referência rápida de jejum',
+                        style: const TextStyle(
+                          color: Color(0xFF2B76D2),
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      ..._fastingGuidanceLines.map(
+                        (line) => Padding(
+                          padding: const EdgeInsets.only(bottom: 2),
+                          child: Text(
+                            line,
+                            style: const TextStyle(
+                              color: Color(0xFF5D7288),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _sectionLabel('$_solidFastingLabel (horas)'),
+                const SizedBox(height: 8),
+                _buildChoiceChips(
+                  options: _solidFastingOptions,
+                  selectedValue: _selectedSolidFasting,
+                  onSelected: (value) {
+                    setState(() => _selectedSolidFasting = value);
+                  },
+                  color: const Color(0xFFCC7A00),
+                ),
+                const SizedBox(height: 14),
+                _sectionLabel('$_liquidFastingLabel (horas)'),
+                const SizedBox(height: 8),
+                _buildChoiceChips(
+                  options: _liquidFastingOptions,
+                  selectedValue: _selectedLiquidFasting,
+                  onSelected: (value) {
+                    setState(() => _selectedLiquidFasting = value);
+                  },
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _fastingNotesController,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    labelText: 'Observações do jejum',
+                    hintText: _selectedPopulation == PatientPopulation.neonatal
+                        ? 'Ex: horário da última mamada, fórmula, glicemia'
+                        : 'Ex: jejum inadequado, horário da última refeição',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _SectionCard(
+            title: 'Classificação ASA',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildChoiceChips(
+                  options: _asaOptions,
+                  selectedValue: _selectedAsa,
+                  onSelected: (value) => setState(() => _selectedAsa = value),
+                  color: const Color(0xFFCC3D3D),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _asaNotesController,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'Outros',
+                    hintText: 'Justifique a classificação ASA quando necessário',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _SectionCard(
+            title: 'Plano anestésico',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildFilterChips(
+                  options: _anestheticPlanOptions,
+                  selectedValues: _selectedAnestheticPlans,
+                  color: const Color(0xFF8A5DD3),
+                  onToggle: (value) {
+                    setState(() {
+                      if (_selectedAnestheticPlans.contains(value)) {
+                        _selectedAnestheticPlans.remove(value);
+                      } else {
+                        _selectedAnestheticPlans.add(value);
+                      }
+                    });
+                  },
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _otherAnestheticPlanController,
+                  minLines: 2,
+                  maxLines: 5,
+                  decoration: const InputDecoration(
+                    labelText: 'Outros',
+                    hintText: 'Detalhe analgesia, bloqueios e condutas adicionais',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _SectionCard(
+            title: 'Restrições do paciente',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildFilterChips(
+                  options: _restrictionOptions,
+                  selectedValues: _selectedRestrictions,
+                  color: const Color(0xFFCC3D3D),
+                  onToggle: (value) {
+                    setState(() {
+                      if (_selectedRestrictions.contains(value)) {
+                        _selectedRestrictions.remove(value);
+                      } else {
+                        _selectedRestrictions.add(value);
+                      }
+                    });
+                  },
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _otherRestrictionsController,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'Outros',
+                    hintText: 'Inclua recusas, crenças e preferências adicionais',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          FilledButton.icon(
+            onPressed: _saveAndReturn,
+            icon: const Icon(Icons.save_outlined),
+            label: const Text('Salvar e enviar para ficha de anestesia'),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(56),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({
+    required this.title,
+    required this.child,
+    this.initiallyExpanded = false,
+  });
+
+  final String title;
+  final Widget child;
+  final bool initiallyExpanded;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      child: ExpansionTile(
+        initiallyExpanded: initiallyExpanded,
+        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        expandedCrossAxisAlignment: CrossAxisAlignment.start,
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.w800),
+        ),
+        children: [child],
+      ),
+    );
+  }
+}
+
+class PreAnestheticScreenResult {
+  const PreAnestheticScreenResult({
+    required this.patient,
+    required this.assessment,
+  });
+
+  final Patient patient;
+  final PreAnestheticAssessment assessment;
+}
+
+class _AirwayReferenceCard extends StatelessWidget {
+  const _AirwayReferenceCard({
+    required this.reference,
+  });
+
+  final _AirwayReference reference;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFE),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5ECF6)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF8A5DD3).withAlpha(22),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  'Mallampati ${reference.grade}',
+                  style: TextStyle(
+                    color: const Color(0xFF8A5DD3),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            reference.description,
+            style: const TextStyle(
+              color: Color(0xFF5D7288),
+              fontWeight: FontWeight.w600,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Tecnica sugerida: ${reference.technique}',
+            style: const TextStyle(
+              color: Color(0xFF17324D),
+              fontWeight: FontWeight.w700,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OptionDetail {
+  const _OptionDetail(this.value, this.description);
+
+  final String value;
+  final String description;
+}
+
+class _AirwayReference {
+  const _AirwayReference({
+    required this.grade,
+    required this.description,
+    required this.technique,
+  });
+
+  final String grade;
+  final String description;
+  final String technique;
+}

@@ -1,0 +1,1094 @@
+import 'package:flutter/material.dart';
+
+import '../models/hemodynamic_point.dart';
+
+class PanelCard extends StatelessWidget {
+  const PanelCard({
+    super.key,
+    required this.title,
+    required this.titleColor,
+    required this.icon,
+    required this.child,
+    this.trailing,
+    this.fillChild = false,
+    this.minHeight,
+    this.isAttention = false,
+  });
+
+  final String title;
+  final Color titleColor;
+  final IconData icon;
+  final Widget child;
+  final Widget? trailing;
+  final bool fillChild;
+  final double? minHeight;
+  final bool isAttention;
+
+  @override
+  Widget build(BuildContext context) {
+    final headerBackground = isAttention
+        ? Color.alphaBlend(
+            const Color(0x14F0A11F),
+            titleColor.withAlpha(18),
+          )
+        : titleColor.withAlpha(18);
+    final headerDivider = isAttention
+        ? Color.alphaBlend(
+            const Color(0x40F0A11F),
+            titleColor.withAlpha(48),
+          )
+        : titleColor.withAlpha(48);
+
+    return Container(
+      width: double.infinity,
+      constraints:
+          minHeight == null ? null : BoxConstraints(minHeight: minHeight!),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isAttention
+              ? const Color(0xFFF2C879)
+              : const Color(0xFFBCD0E4),
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D17324D),
+            blurRadius: 14,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
+              color: headerBackground,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(13),
+                topRight: Radius.circular(13),
+              ),
+              border: Border(
+                bottom: BorderSide(color: headerDivider),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: 15, color: titleColor),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    title.toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: titleColor,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                trailing ?? const SizedBox.shrink(),
+              ],
+            ),
+          ),
+          if (fillChild)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: child,
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: child,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class SoftTag extends StatelessWidget {
+  const SoftTag({
+    super.key,
+    required this.text,
+    required this.color,
+    required this.textColor,
+  });
+
+  final String text;
+  final Color color;
+  final Color textColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class DetailLine extends StatelessWidget {
+  const DetailLine({
+    super.key,
+    required this.label,
+    required this.value,
+    this.accent,
+  });
+
+  final String label;
+  final String value;
+  final Widget? accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final isPlaceholder = value.trim().isEmpty ||
+        value.trim() == '--' ||
+        value.toLowerCase().contains('toque para preencher');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Color(0xFF72859A),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            accent ?? const SizedBox.shrink(),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            color: isPlaceholder
+                ? const Color(0xFF7E92A8)
+                : const Color(0xFF17324D),
+            fontWeight: isPlaceholder ? FontWeight.w700 : FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class BulletLine extends StatelessWidget {
+  const BulletLine({
+    super.key,
+    required this.text,
+    required this.color,
+  });
+
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(Icons.circle, size: 9, color: color),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: Color(0xFF17324D),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class CheckLine extends StatelessWidget {
+  const CheckLine({
+    super.key,
+    required this.text,
+  });
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 18,
+          height: 18,
+          decoration: BoxDecoration(
+            color: const Color(0xFFEAF2FF),
+            borderRadius: BorderRadius.circular(5),
+          ),
+          child: const Icon(Icons.check, size: 14, color: Color(0xFF2B76D2)),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: Color(0xFF17324D),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class AddButton extends StatelessWidget {
+  const AddButton({
+    super.key,
+    required this.label,
+    this.onTap,
+  });
+
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF7FAFF),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: const Color(0xFFD9E5F5)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.add,
+                size: 14,
+                color: Color(0xFF2B76D2),
+              ),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF2B76D2),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class StatusHint extends StatelessWidget {
+  const StatusHint({
+    super.key,
+    required this.text,
+    this.icon = Icons.edit_outlined,
+  });
+
+  final String text;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7FAFE),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE0EAF3)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 15,
+            color: const Color(0xFF8AA0B5),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                color: Color(0xFF7B8EA2),
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ExpandBadge extends StatelessWidget {
+  const ExpandBadge({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      children: [
+        Icon(Icons.open_in_full, size: 14, color: Color(0xFF7D93AA)),
+        SizedBox(width: 4),
+        Text(
+          'Expandir',
+          style: TextStyle(
+            color: Color(0xFF7D93AA),
+            fontWeight: FontWeight.w700,
+            fontSize: 11,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class LegendRow extends StatelessWidget {
+  const LegendRow({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          LegendDot(label: 'PAS (∨)', color: Color(0xFF365FD5)),
+          SizedBox(width: 14),
+          LegendDot(label: 'PAD (∧)', color: Color(0xFF6B8DF2)),
+          SizedBox(width: 14),
+          LegendDot(label: 'PAM (m)', color: Color(0xFF2747B8)),
+          SizedBox(width: 14),
+          LegendDot(label: 'FC (•)', color: Color(0xFFEA5455)),
+          SizedBox(width: 14),
+          LegendDot(label: 'SpO₂ (S)', color: Color(0xFF16A96B)),
+          SizedBox(width: 14),
+          LegendDot(label: 'PAI', color: Color(0xFF5B6B7A)),
+        ],
+      ),
+    );
+  }
+}
+
+class LegendDot extends StatelessWidget {
+  const LegendDot({
+    super.key,
+    required this.label,
+    required this.color,
+  });
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(999),
+          ),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF6F8298),
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class HemodynamicChart extends StatelessWidget {
+  const HemodynamicChart({
+    super.key,
+    required this.points,
+    required this.markers,
+    required this.selectedType,
+    this.onPointTap,
+    this.onChartTap,
+  });
+
+  final List<HemodynamicPoint> points;
+  final List<HemodynamicMarker> markers;
+  final String selectedType;
+  final ValueChanged<HemodynamicPoint>? onPointTap;
+  final ValueChanged<double>? onChartTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final chartSize = Size(constraints.maxWidth, constraints.maxHeight);
+        final layout = HemodynamicChartLayout(
+          points: points,
+          markers: markers,
+          size: chartSize,
+        );
+
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapUp: (onPointTap == null && onChartTap == null)
+              ? null
+              : (details) {
+                  final point = layout.hitTest(details.localPosition);
+                  if (point != null && onPointTap != null) {
+                    onPointTap?.call(point);
+                  } else {
+                    onChartTap?.call(
+                      layout.valueForY(details.localPosition.dy, selectedType),
+                    );
+                  }
+                },
+          child: CustomPaint(
+            painter: _ChartPainter(layout),
+            size: chartSize,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class HemodynamicChartLayout {
+  HemodynamicChartLayout({
+    required this.points,
+    required this.markers,
+    required this.size,
+  });
+
+  final List<HemodynamicPoint> points;
+  final List<HemodynamicMarker> markers;
+  final Size size;
+
+  static const double leftPadding = 34;
+  static const double rightPadding = 12;
+  static const double topPadding = 34;
+  static const double bottomPadding = 38;
+  static const double bandGap = 14;
+
+  double get minTime => 0;
+  double get maxTime {
+    final double pointMax = points.isEmpty
+        ? 0
+        : points.map((item) => item.time).reduce((a, b) => a > b ? a : b);
+    final double markerMax = markers.isEmpty
+        ? 0
+        : markers.map((item) => item.time).reduce((a, b) => a > b ? a : b);
+    final maxValue = pointMax > markerMax ? pointMax : markerMax;
+    if (maxValue <= 180) return 180.0;
+    final blocksOf15 = (maxValue / 15).ceil();
+    return blocksOf15 * 15.0;
+  }
+
+  double get chartWidth => size.width - leftPadding - rightPadding;
+  double get spo2Top => topPadding;
+  double get stepHeight =>
+      (size.height - topPadding - bottomPadding - bandGap) / 23;
+  double get spo2Height => stepHeight * 6;
+  double get spo2Bottom => spo2Top + spo2Height;
+  double get hemoTop => spo2Bottom + bandGap;
+  double get hemoHeight => stepHeight * 17;
+
+  double xForTime(double time) {
+    if (maxTime <= minTime) return leftPadding;
+    return leftPadding + ((time - minTime) / (maxTime - minTime)) * chartWidth;
+  }
+
+  double yForValue(double value, [String type = 'FC']) {
+    if (type == 'SpO2') {
+      final clamped = value.clamp(70, 100);
+      return spo2Top + spo2Height - ((clamped - 70) / 30) * spo2Height;
+    }
+
+    final clamped = value.clamp(0, 200);
+    return hemoTop + hemoHeight - (clamped / 200) * hemoHeight;
+  }
+
+  double valueForY(double y, String type) {
+    if (type == 'SpO2') {
+      final usableY = (y - spo2Top).clamp(0, spo2Height);
+      final raw = 100 - (usableY / spo2Height) * 30;
+      return raw.clamp(70, 100).roundToDouble();
+    }
+
+    final usableY = (y - hemoTop).clamp(0, hemoHeight);
+    final raw = 200 - (usableY / hemoHeight) * 200;
+    final snapped = (raw / 10).round() * 10;
+    return snapped.clamp(0, 200).toDouble();
+  }
+
+  Offset offsetForPoint(HemodynamicPoint point) {
+    return Offset(xForTime(point.time), yForValue(point.value, point.type));
+  }
+
+  HemodynamicPoint? hitTest(Offset position) {
+    for (final point in points.reversed) {
+      final offset = offsetForPoint(point);
+      if ((offset - position).distance <= 22) {
+        return point;
+      }
+    }
+    return null;
+  }
+}
+
+class _ChartPainter extends CustomPainter {
+  _ChartPainter(this.layout);
+
+  final HemodynamicChartLayout layout;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final grid = Paint()
+      ..color = const Color(0xFFE7EEF6)
+      ..strokeWidth = 1;
+    final timeGridMinor = Paint()
+      ..color = const Color(0xFFE6EEF7)
+      ..strokeWidth = 1;
+    final timeGridMajor = Paint()
+      ..color = const Color(0xFFC9D8E8)
+      ..strokeWidth = 1.4;
+    final axis = Paint()
+      ..color = const Color(0xFF8EA5BF)
+      ..strokeWidth = 1.5;
+    final separatorPaint = Paint()
+      ..color = const Color(0xFFC8D6E5)
+      ..strokeWidth = 1.2;
+    final axisText = TextPainter(textDirection: TextDirection.ltr);
+
+    for (var value = 70; value <= 100; value += 10) {
+      final y = layout.yForValue(value.toDouble(), 'SpO2');
+      canvas.drawLine(
+        Offset(HemodynamicChartLayout.leftPadding, y),
+        Offset(size.width - HemodynamicChartLayout.rightPadding, y),
+        grid,
+      );
+      axisText.text = TextSpan(
+        text: value.toString(),
+        style: const TextStyle(
+          color: Color(0xFF16A96B),
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+        ),
+      );
+      axisText.layout();
+      axisText.paint(canvas, Offset(0, y - (axisText.height / 2)));
+    }
+
+    for (var value = 0; value <= 200; value += 10) {
+      final y = layout.yForValue(value.toDouble(), 'FC');
+      canvas.drawLine(
+        Offset(HemodynamicChartLayout.leftPadding, y),
+        Offset(size.width - HemodynamicChartLayout.rightPadding, y),
+        grid,
+      );
+      axisText.text = TextSpan(
+        text: value.toString(),
+        style: const TextStyle(
+          color: Color(0xFF7A8EA4),
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+        ),
+      );
+      axisText.layout();
+      axisText.paint(canvas, Offset(0, y - (axisText.height / 2)));
+    }
+
+    canvas.drawLine(
+      Offset(HemodynamicChartLayout.leftPadding, layout.spo2Bottom + 7),
+      Offset(size.width - HemodynamicChartLayout.rightPadding, layout.spo2Bottom + 7),
+      separatorPaint,
+    );
+
+    axisText.text = const TextSpan(
+      text: 'SpO₂',
+      style: TextStyle(
+        color: Color(0xFF16A96B),
+        fontSize: 11,
+        fontWeight: FontWeight.w800,
+      ),
+    );
+    axisText.layout();
+    axisText.paint(canvas, const Offset(38, 16));
+
+    axisText.text = const TextSpan(
+      text: 'PA / FC / PAM / PAI',
+      style: TextStyle(
+        color: Color(0xFF5D7288),
+        fontSize: 11,
+        fontWeight: FontWeight.w800,
+      ),
+    );
+    axisText.layout();
+    axisText.paint(canvas, Offset(38, layout.hemoTop - 18));
+
+    for (double minute = 0; minute <= layout.maxTime; minute += 5) {
+      final x = layout.xForTime(minute);
+      final isMajor = minute % 15 == 0;
+      canvas.drawLine(
+        Offset(x, HemodynamicChartLayout.topPadding),
+        Offset(x, size.height - HemodynamicChartLayout.bottomPadding),
+        isMajor ? timeGridMajor : timeGridMinor,
+      );
+    }
+
+    canvas.drawLine(
+      Offset(
+        HemodynamicChartLayout.leftPadding,
+        HemodynamicChartLayout.topPadding,
+      ),
+      Offset(
+        HemodynamicChartLayout.leftPadding,
+        size.height - HemodynamicChartLayout.bottomPadding,
+      ),
+      axis,
+    );
+
+    if (layout.points.isEmpty && layout.markers.isEmpty) {
+      return;
+    }
+
+    final sortedMarkers = List<HemodynamicMarker>.from(layout.markers)
+      ..sort((a, b) => a.time.compareTo(b.time));
+    for (var index = 0; index < sortedMarkers.length; index++) {
+      final marker = sortedMarkers[index];
+      final x = layout.xForTime(marker.time);
+      final markerColor = marker.label == 'Início da anestesia'
+          ? const Color(0xFF2B76D2)
+          : const Color(0xFF169653);
+      final markerPaint = Paint()
+        ..color = markerColor
+        ..strokeWidth = 1.4;
+      canvas.drawLine(
+        Offset(x, HemodynamicChartLayout.topPadding),
+        Offset(x, size.height - HemodynamicChartLayout.bottomPadding),
+        markerPaint,
+      );
+      axisText.text = TextSpan(
+        text: marker.clockTime.trim().isEmpty
+            ? marker.label
+            : '${marker.label} ${marker.clockTime}',
+        style: TextStyle(
+          color: markerColor,
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+        ),
+      );
+      axisText.layout();
+      final labelX = x < 130 ? x + 34 : x + 4;
+      final labelY = 2.0 + (index * 12.0);
+      axisText.paint(canvas, Offset(labelX, labelY));
+    }
+
+    _drawSeries(canvas, 'PAS', const Color(0xFF365FD5));
+    _drawSeries(canvas, 'PAD', const Color(0xFF6B8DF2));
+    _drawSeries(canvas, 'PAM', const Color(0xFF2747B8));
+    _drawSeries(canvas, 'FC', const Color(0xFFEA5455));
+    _drawSeries(canvas, 'SpO2', const Color(0xFF16A96B));
+    _drawSeries(canvas, 'PAI', const Color(0xFF5B6B7A));
+
+    for (double time = 0; time <= layout.maxTime; time += 15) {
+      final x = layout.xForTime(time);
+      axisText.text = TextSpan(
+        text: _formatAxisTime(time),
+        style: const TextStyle(
+          color: Color(0xFF7A8EA4),
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+        ),
+      );
+      axisText.layout();
+      axisText.paint(canvas, Offset(x - 8, size.height - 16));
+    }
+  }
+
+  String _formatAxisTime(double time) {
+    final totalSeconds = (time * 60).round();
+    final minutes = totalSeconds ~/ 60;
+    return minutes.toString().padLeft(2, '0');
+  }
+
+  void _drawSeries(Canvas canvas, String type, Color color) {
+    final data = type == 'PAM'
+        ? _buildPamPoints()
+        : (layout.points.where((item) => item.type == type).toList()
+          ..sort((a, b) => a.time.compareTo(b.time)));
+    if (data.isEmpty) return;
+
+    final line = Paint()
+      ..color = color
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+    final symbolPaint = Paint()
+      ..color = color
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+    final path = Path();
+
+    for (var i = 0; i < data.length; i++) {
+      final point = data[i];
+      final offset = layout.offsetForPoint(point);
+      final x = offset.dx;
+      final y = offset.dy;
+      if (type != 'PAI') {
+        if (i == 0) {
+          path.moveTo(x, y);
+        } else {
+          path.lineTo(x, y);
+        }
+      }
+
+      switch (type) {
+        case 'PAS':
+          final symbol = Path()
+            ..moveTo(x - 5, y - 4)
+            ..lineTo(x, y + 4)
+            ..lineTo(x + 5, y - 4);
+          canvas.drawPath(symbol, symbolPaint);
+          break;
+        case 'PAD':
+          final symbol = Path()
+            ..moveTo(x - 5, y + 4)
+            ..lineTo(x, y - 4)
+            ..lineTo(x + 5, y + 4);
+          canvas.drawPath(symbol, symbolPaint);
+          break;
+        case 'FC':
+          canvas.drawCircle(offset, 3.5, Paint()..color = color);
+          break;
+        case 'PAM':
+          final text = TextPainter(
+            text: TextSpan(
+              text: 'm',
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            textDirection: TextDirection.ltr,
+          )..layout();
+          text.paint(canvas, Offset(x - 4, y - 8));
+          break;
+        case 'SpO2':
+          final text = TextPainter(
+            text: TextSpan(
+              text: 'S',
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            textDirection: TextDirection.ltr,
+          )..layout();
+          text.paint(canvas, Offset(x - 4, y - 8));
+          break;
+        case 'PAI':
+          canvas.drawCircle(
+            offset,
+            10,
+            Paint()
+              ..color = color.withAlpha(24)
+              ..style = PaintingStyle.fill,
+          );
+          final text = TextPainter(
+            text: TextSpan(
+              text: 'PAI',
+              style: TextStyle(
+                color: color,
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            textDirection: TextDirection.ltr,
+          )..layout();
+          text.paint(canvas, Offset(x - (text.width / 2), y - 8));
+          break;
+      }
+    }
+    if (type != 'PAI') {
+      canvas.drawPath(path, line);
+    }
+  }
+
+  List<HemodynamicPoint> _buildPamPoints() {
+    const toleranceMinutes = 1.0;
+    final pasPoints = layout.points.where((item) => item.type == 'PAS').toList();
+    final padPoints = layout.points.where((item) => item.type == 'PAD').toList();
+    final usedPadIndexes = <int>{};
+    final pamPoints = <HemodynamicPoint>[];
+
+    for (final pas in pasPoints) {
+      var bestIndex = -1;
+      var bestDelta = double.infinity;
+      for (var index = 0; index < padPoints.length; index++) {
+        if (usedPadIndexes.contains(index)) continue;
+        final delta = (padPoints[index].time - pas.time).abs();
+        if (delta <= toleranceMinutes && delta < bestDelta) {
+          bestDelta = delta;
+          bestIndex = index;
+        }
+      }
+      if (bestIndex == -1) continue;
+
+      final matchingPad = padPoints[bestIndex];
+      usedPadIndexes.add(bestIndex);
+      final pam = (pas.value + (2 * matchingPad.value)) / 3;
+      pamPoints.add(
+        HemodynamicPoint(
+          type: 'PAM',
+          value: pam,
+          time: (pas.time + matchingPad.time) / 2,
+        ),
+      );
+    }
+
+    pamPoints.sort((a, b) => a.time.compareTo(b.time));
+    return pamPoints;
+  }
+
+  @override
+  bool shouldRepaint(covariant _ChartPainter oldDelegate) =>
+      oldDelegate.layout.points != layout.points ||
+      oldDelegate.layout.markers != layout.markers;
+}
+
+class MetricTile extends StatelessWidget {
+  const MetricTile({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.background,
+    required this.valueColor,
+    required this.icon,
+  });
+
+  final String label;
+  final String value;
+  final Color background;
+  final Color valueColor;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE1EAF5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 13, color: valueColor),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF6D8097),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              color: valueColor,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class LabeledSurface extends StatelessWidget {
+  const LabeledSurface({
+    super.key,
+    required this.label,
+    required this.child,
+  });
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FBFF),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFDDE7F3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF6F8298),
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class DoseRow extends StatelessWidget {
+  const DoseRow({
+    super.key,
+    required this.drug,
+    required this.dose,
+    required this.time,
+  });
+
+  final String drug;
+  final String dose;
+  final String time;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          flex: 4,
+          child: Text(
+            drug,
+            style: const TextStyle(
+              color: Color(0xFF17324D),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 3,
+          child: Text(
+            dose,
+            style: const TextStyle(
+              color: Color(0xFF5D7288),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        SizedBox(
+          width: 44,
+          child: Text(
+            time,
+            textAlign: TextAlign.right,
+            style: const TextStyle(
+              color: Color(0xFF5D7288),
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class KeyValueLine extends StatelessWidget {
+  const KeyValueLine({
+    super.key,
+    required this.label,
+    required this.value,
+    this.labelColor = const Color(0xFF5D7288),
+    this.valueColor = const Color(0xFF17324D),
+  });
+
+  final String label;
+  final String value;
+  final Color labelColor;
+  final Color valueColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final isPlaceholder = value.trim().isEmpty || value.trim() == '--';
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: labelColor,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: isPlaceholder ? const Color(0xFF8AA0B5) : valueColor,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
+    );
+  }
+}
