@@ -195,6 +195,83 @@ void main() {
     expect(find.text('1 MET'), findsNothing);
   });
 
+  testWidgets('uses objection wording instead of parental refusal for pediatric restrictions', (
+    WidgetTester tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PreAnestheticScreen(
+          patient: const Patient(
+            name: 'Pedro',
+            age: 5,
+            weightKg: 18,
+            heightMeters: 1.08,
+            asa: 'I',
+            allergies: [],
+            restrictions: [],
+            medications: [],
+            population: PatientPopulation.pediatric,
+          ),
+          initialAssessment: const PreAnestheticAssessment.empty(),
+          initialConsultationDate: '',
+        ),
+      ),
+    );
+
+    await tester.scrollUntilVisible(
+      find.text('Consentimento e cuidados especiais'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Consentimento e cuidados especiais'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Objeção familiar a hemocomponentes'), findsOneWidget);
+    expect(find.text('Não aceita transfusão'), findsNothing);
+  });
+
+  testWidgets('uses objection wording instead of parental refusal for neonatal restrictions', (
+    WidgetTester tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PreAnestheticScreen(
+          patient: const Patient(
+            name: 'RN',
+            age: 0,
+            weightKg: 3.0,
+            heightMeters: 0.49,
+            asa: 'III',
+            allergies: [],
+            restrictions: [],
+            medications: [],
+            population: PatientPopulation.neonatal,
+            postnatalAgeDays: 2,
+            gestationalAgeWeeks: 38,
+            birthWeightKg: 2.8,
+          ),
+          initialAssessment: const PreAnestheticAssessment.empty(),
+          initialConsultationDate: '',
+        ),
+      ),
+    );
+
+    await tester.scrollUntilVisible(
+      find.text('Consentimento e suporte necessário'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Consentimento e suporte necessário'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Objeção familiar a hemocomponentes'), findsOneWidget);
+    expect(find.text('Não aceita transfusão'), findsNothing);
+  });
+
   testWidgets('shows compact physical exam fields in pre-anesthetic screen', (
     WidgetTester tester,
   ) async {
