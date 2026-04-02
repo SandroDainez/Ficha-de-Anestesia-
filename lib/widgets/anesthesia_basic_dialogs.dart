@@ -419,6 +419,10 @@ class PatientIdentificationDialog extends StatefulWidget {
 class _PatientIdentificationDialogState
     extends State<PatientIdentificationDialog> {
   static const List<String> _asaOptions = ['I', 'II', 'III', 'IV', 'V'];
+  static const List<String> _informedConsentOptions = [
+    'Assinado',
+    'Não assinado',
+  ];
   static const List<String> _commonAllergies = [
     'Látex',
     'Dipirona',
@@ -447,6 +451,7 @@ class _PatientIdentificationDialogState
   late final TextEditingController _correctedGestationalAgeController;
   late final TextEditingController _birthWeightController;
   late final TextEditingController _asaController;
+  late String _selectedInformedConsentStatus;
   late final TextEditingController _allergiesController;
   late final TextEditingController _restrictionsController;
   late final TextEditingController _medicationsController;
@@ -523,6 +528,12 @@ class _PatientIdentificationDialogState
     _selectedAsa = _asaOptions.contains(widget.initialPatient.asa)
         ? widget.initialPatient.asa
         : '';
+    _selectedInformedConsentStatus =
+        _informedConsentOptions.contains(
+              widget.initialPatient.informedConsentStatus,
+            )
+            ? widget.initialPatient.informedConsentStatus
+            : '';
     _selectedPopulation = widget.initialPatient.population;
   }
 
@@ -709,6 +720,27 @@ class _PatientIdentificationDialogState
                 ),
               ),
               const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _informedConsentOptions
+                      .map(
+                        (item) => ChoiceChip(
+                          label: Text(item),
+                          selected: _selectedInformedConsentStatus == item,
+                          onSelected: (_) {
+                            setState(() {
+                              _selectedInformedConsentStatus = item;
+                            });
+                          },
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+              const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -845,6 +877,7 @@ class _PatientIdentificationDialogState
                 ..._selectedMedications,
                 ..._lines(_medicationsController.text),
               ],
+              informedConsentStatus: _selectedInformedConsentStatus,
             ),
           ),
           child: const Text('Salvar'),

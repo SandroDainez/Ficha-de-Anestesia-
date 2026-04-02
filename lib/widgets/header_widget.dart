@@ -222,6 +222,7 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
     this.onCorrectedGestationalAgeTap,
     this.onBirthWeightTap,
     this.onAsaTap,
+    this.onInformedConsentTap,
     this.onMallampatiTap,
     this.onAllergiesTap,
     this.onRestrictionsTap,
@@ -240,6 +241,7 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
   final VoidCallback? onCorrectedGestationalAgeTap;
   final VoidCallback? onBirthWeightTap;
   final VoidCallback? onAsaTap;
+  final VoidCallback? onInformedConsentTap;
   final VoidCallback? onMallampatiTap;
   final VoidCallback? onAllergiesTap;
   final VoidCallback? onRestrictionsTap;
@@ -378,6 +380,18 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
                       patient.asa.trim().isEmpty ? 'Não definido' : patient.asa,
                   color: UiColors.success,
                   onTap: onAsaTap,
+                ),
+                ClinicalChip(
+                  label: 'Consentimento',
+                  value: patient.informedConsentStatus.trim().isEmpty
+                      ? 'Não informado'
+                      : patient.informedConsentStatus,
+                  color: patient.informedConsentStatus.trim() == 'Assinado'
+                      ? UiColors.success
+                      : patient.informedConsentStatus.trim() == 'Não assinado'
+                          ? UiColors.danger
+                          : UiColors.warning,
+                  onTap: onInformedConsentTap,
                 ),
                 if (patient.population == PatientPopulation.adult)
                   ClinicalChip(

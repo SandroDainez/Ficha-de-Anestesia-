@@ -192,11 +192,11 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
 
     final title = switch (widget.section) {
       SurgeryInfoSection.description => 'Cirurgia',
-      SurgeryInfoSection.priority => 'Prioridade',
+      SurgeryInfoSection.priority => 'Tipo de cirurgia',
       SurgeryInfoSection.surgeon => 'Cirurgião',
       SurgeryInfoSection.assistants => 'Auxiliares',
       SurgeryInfoSection.destination => 'Destino pós-operatório',
-      SurgeryInfoSection.notes => 'Chegada ao centro cirúrgico e anotações',
+      SurgeryInfoSection.notes => 'Anotações relevantes',
       SurgeryInfoSection.checklist => 'Protocolo de cirurgia segura',
       SurgeryInfoSection.timeOut => 'Time-out',
       SurgeryInfoSection.all => 'Cirurgia e checklist',
@@ -230,7 +230,7 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Prioridade do caso',
+                    'Tipo de cirurgia',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
@@ -324,8 +324,8 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
                   minLines: 3,
                   maxLines: 6,
                   decoration: const InputDecoration(
-                    labelText: 'Chegada ao centro cirúrgico e anotações',
-                    hintText: 'Ex: paciente chegou em VM/oxigênio, vindo da UTI, cirurgia suspensa e motivo, intercorrências logísticas',
+                    labelText: 'Anotações relevantes',
+                    hintText: 'Ex: condições de chegada ao centro cirúrgico, cirurgia suspensa e motivo, intercorrências logísticas, observações relevantes',
                   ),
                 ),
               if (showNotes && (showChecklist || showTimeOut))

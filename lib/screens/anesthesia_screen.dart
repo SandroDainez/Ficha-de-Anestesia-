@@ -576,6 +576,20 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return '$destination • $other';
   }
 
+  List<String> _lineItems(String value) {
+    return value
+        .split('\n')
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+  }
+
+  String _multilineSummary(String value, {String empty = 'Toque para preencher'}) {
+    final items = _lineItems(value);
+    if (items.isEmpty) return empty;
+    return items.join(' • ');
+  }
+
   List<String> get _anesthesiologistEntries {
     if (_record.anesthesiologists.isNotEmpty) return _record.anesthesiologists;
     final legacy = [
@@ -690,6 +704,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     List<String>? allergies,
     List<String>? restrictions,
     List<String>? medications,
+    String? informedConsentStatus,
     String? mallampati,
     PatientPopulation? population,
     int? postnatalAgeDays,
@@ -707,6 +722,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         allergies: allergies,
         restrictions: restrictions,
         medications: medications,
+        informedConsentStatus: informedConsentStatus,
         population: population,
         postnatalAgeDays: postnatalAgeDays,
         gestationalAgeWeeks: gestationalAgeWeeks,
@@ -736,6 +752,20 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     });
 
     await _persistRecord();
+  }
+
+  Future<void> _editPatientInformedConsentStatus() async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => ChoiceFieldDialog(
+        title: 'Termo de Consentimento Informado para Anestesia',
+        options: const ['Assinado', 'Não assinado'],
+        initialValue: _record.patient.informedConsentStatus,
+      ),
+    );
+
+    if (result == null) return;
+    await _updatePatient(informedConsentStatus: result.trim());
   }
 
   HemodynamicPoint? _latestPointOfType(String type) =>
@@ -1550,6 +1580,25 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     await _persistRecord();
   }
 
+  Future<void> _editMaintenanceAgents() async {
+    final result = await showDialog<List<String>>(
+      context: context,
+      builder: (_) => ListFieldDialog(
+        title: 'Manutenção da anestesia',
+        label: 'Agentes / estratégia de manutenção',
+        initialItems: _lineItems(_record.maintenanceAgents),
+        hintText: 'Um item por linha',
+      ),
+    );
+
+    if (result == null) return;
+
+    setState(() {
+      _record = _record.copyWith(maintenanceAgents: result.join('\n'));
+    });
+    await _persistRecord();
+  }
+
   Future<void> _editTecnicaAnestesica() async {
     final result = await showDialog<TechniqueDialogResult>(
       context: context,
@@ -1734,6 +1783,78 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Future<void> _editSurgerySection(SurgeryInfoSection section) async {
+    if (section == SurgeryInfoSection.description) {
+      final result = await showDialog<List<String>>(
+        context: context,
+        builder: (_) => ListFieldDialog(
+          title: 'Cirurgia',
+          label: 'Cirurgia',
+          initialItems: _lineItems(_record.surgeryDescription),
+          hintText: 'Uma cirurgia / procedimento por linha',
+        ),
+      );
+      if (result == null) return;
+      setState(() {
+        _record = _record.copyWith(surgeryDescription: result.join('\n'));
+      });
+      await _persistRecord();
+      return;
+    }
+
+    if (section == SurgeryInfoSection.surgeon) {
+      final result = await showDialog<List<String>>(
+        context: context,
+        builder: (_) => ListFieldDialog(
+          title: 'Cirurgião',
+          label: 'Cirurgião',
+          initialItems: _lineItems(_record.surgeonName),
+          hintText: 'Um nome por linha',
+        ),
+      );
+      if (result == null) return;
+      setState(() {
+        _record = _record.copyWith(surgeonName: result.join('\n'));
+      });
+      await _persistRecord();
+      return;
+    }
+
+    if (section == SurgeryInfoSection.assistants) {
+      final result = await showDialog<List<String>>(
+        context: context,
+        builder: (_) => ListFieldDialog(
+          title: 'Auxiliares',
+          label: 'Auxiliares',
+          initialItems: _record.assistantNames,
+          hintText: 'Um nome por linha',
+        ),
+      );
+      if (result == null) return;
+      setState(() {
+        _record = _record.copyWith(assistantNames: result);
+      });
+      await _persistRecord();
+      return;
+    }
+
+    if (section == SurgeryInfoSection.notes) {
+      final result = await showDialog<List<String>>(
+        context: context,
+        builder: (_) => ListFieldDialog(
+          title: 'Anotações relevantes',
+          label: 'Anotações relevantes',
+          initialItems: _lineItems(_record.operationalNotes),
+          hintText: 'Uma anotação por linha',
+        ),
+      );
+      if (result == null) return;
+      setState(() {
+        _record = _record.copyWith(operationalNotes: result.join('\n'));
+      });
+      await _persistRecord();
+      return;
+    }
+
     final result = await showDialog<SurgeryInfoDialogResult>(
       context: context,
       builder: (_) => SurgeryInfoDialog(
@@ -1839,6 +1960,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                           _editPatientCorrectedGestationalAge,
                       onBirthWeightTap: _editPatientBirthWeight,
                       onAsaTap: _editPatientAsa,
+                      onInformedConsentTap: _editPatientInformedConsentStatus,
                       onMallampatiTap: _usesMallampatiInCase
                           ? _editPatientMallampati
                           : null,
@@ -2005,43 +2127,110 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   Widget _buildDesktopTopCardsAndFullWidthChart() {
     return Column(
       children: [
-        _buildSurgerySummaryStrip(),
-        const SizedBox(height: 12),
-        _buildSurgeryPlanningStrip(),
-        const SizedBox(height: 12),
-        _buildSurgeryNotesStrip(),
+        _buildEqualWidthTripletRow(
+          first: _buildSurgerySummaryCard(
+            key: const Key('surgery-description-card'),
+            tapKey: const Key('surgery-description-entry'),
+            title: '1) Cirurgia',
+            icon: Icons.content_paste_search_outlined,
+            value: _multilineSummary(_record.surgeryDescription),
+            section: SurgeryInfoSection.description,
+            isCompleted: _record.surgeryDescription.trim().isNotEmpty,
+          ),
+          second: _buildSurgerySummaryCard(
+            key: const Key('surgery-priority-card'),
+            tapKey: const Key('surgery-priority-entry'),
+            title: '2) Tipo de cirurgia',
+            icon: Icons.priority_high_outlined,
+            value: _valueOrPlaceholder(_displaySurgeryPriority),
+            section: SurgeryInfoSection.priority,
+            isCompleted: _displaySurgeryPriority.trim().isNotEmpty,
+          ),
+          third: _buildSurgerySummaryCard(
+            key: const Key('surgery-surgeon-card'),
+            tapKey: const Key('surgery-surgeon-entry'),
+            title: '3) Cirurgião',
+            icon: Icons.person_outline,
+            value: _multilineSummary(_record.surgeonName),
+            section: SurgeryInfoSection.surgeon,
+            isCompleted: _record.surgeonName.trim().isNotEmpty,
+          ),
+        ),
         const SizedBox(height: 12),
         _buildEqualWidthTripletRow(
-          first: _buildTimeOutCard(),
+          first: _buildSurgerySummaryCard(
+            key: const Key('surgery-assistants-card'),
+            tapKey: const Key('surgery-assistants-entry'),
+            title: '4) Auxiliares',
+            icon: Icons.groups_outlined,
+            value: _record.assistantNames.isEmpty
+                ? 'Toque para preencher'
+                : _record.assistantNames.join(', '),
+            section: SurgeryInfoSection.assistants,
+            isCompleted: _record.assistantNames.isNotEmpty,
+          ),
+          second: _buildSurgerySummaryCard(
+            key: const Key('surgery-anesthesiologists-card'),
+            tapKey: const Key('surgery-anesthesiologists-entry'),
+            title: '5) Anestesiologistas',
+            icon: Icons.badge_outlined,
+            value: _displayAnesthesiologists,
+            onTap: _editAnesthesiologists,
+            isCompleted: _anesthesiologistEntries.isNotEmpty,
+          ),
+          third: _buildSurgerySummaryCard(
+            key: const Key('surgery-notes-card'),
+            tapKey: const Key('surgery-notes-entry'),
+            title: '6) Anotações relevantes',
+            icon: Icons.note_alt_outlined,
+            value: _multilineSummary(_record.operationalNotes),
+            section: SurgeryInfoSection.notes,
+            isCompleted: _record.operationalNotes.trim().isNotEmpty,
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildEqualWidthTripletRow(
+          first: _buildFastingCard(),
           second: _buildAntibioticProphylaxisCard(),
-          third: _buildFastingCard(),
+          third: _buildVenousAccessCard(),
         ),
         const SizedBox(height: 12),
         _buildEqualWidthTripletRow(
-          first: _buildVenousAccessCard(),
-          second: _buildArterialAccessCard(),
-          third: _buildMonitoringCard(),
+          first: _buildMonitoringCard(),
+          second: _buildTimeOutCard(),
+          third: _buildTechniqueCard(),
         ),
         const SizedBox(height: 12),
         _buildEqualWidthTripletRow(
-          first: _buildTechniqueCard(),
-          second: _buildDrugsCard(),
-          third: _buildAdjunctsCard(),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: _buildOtherMedicationsCard()),
-            const SizedBox(width: 12),
-            Expanded(child: _buildVasoactiveDrugsCard()),
-          ],
+          first: _buildDrugsCard(),
+          second: _buildAdjunctsCard(),
+          third: _buildAirwayCard(),
         ),
         const SizedBox(height: 12),
         _buildEqualWidthTripletRow(
-          first: _buildAirwayCard(),
-          second: _buildVolumeReplacementCard(),
-          third: _buildFluidBalanceCard(),
+          first: _buildMaintenanceCard(),
+          second: _buildOtherMedicationsCard(),
+          third: _buildVasoactiveDrugsCard(),
+        ),
+        const SizedBox(height: 12),
+        _buildEqualWidthTripletRow(
+          first: _buildVolumeReplacementCard(),
+          second: _buildFluidBalanceCard(),
+          third: const SizedBox.shrink(),
+        ),
+        const SizedBox(height: 12),
+        _buildEqualWidthTripletRow(
+          first: _buildArterialAccessCard(),
+          second: _buildSurgerySummaryCard(
+            key: const Key('surgery-destination-card'),
+            tapKey: const Key('surgery-destination-entry'),
+            title: '21) Destino pós-operatório',
+            icon: Icons.local_hospital_outlined,
+            value: _displayPatientDestination,
+            section: SurgeryInfoSection.destination,
+            isCompleted: _record.patientDestination.trim().isNotEmpty,
+          ),
+          third: const SizedBox.shrink(),
         ),
         const SizedBox(height: 14),
         _buildSectionHeader(
@@ -2083,6 +2272,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildSurgerySummaryStrip() {
     return _buildEqualWidthTripletRow(
       first: _buildSurgerySummaryCard(
@@ -2092,6 +2282,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         icon: Icons.content_paste_search_outlined,
         value: _valueOrPlaceholder(_record.surgeryDescription),
         section: SurgeryInfoSection.description,
+        isCompleted: _record.surgeryDescription.trim().isNotEmpty,
       ),
       second: _buildSurgerySummaryCard(
         key: const Key('surgery-surgeon-card'),
@@ -2100,6 +2291,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         icon: Icons.person_outline,
         value: _valueOrPlaceholder(_record.surgeonName),
         section: SurgeryInfoSection.surgeon,
+        isCompleted: _record.surgeonName.trim().isNotEmpty,
       ),
       third: _buildSurgerySummaryCard(
         key: const Key('surgery-priority-card'),
@@ -2108,10 +2300,12 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         icon: Icons.priority_high_outlined,
         value: _valueOrPlaceholder(_displaySurgeryPriority),
         section: SurgeryInfoSection.priority,
+        isCompleted: _displaySurgeryPriority.trim().isNotEmpty,
       ),
     );
   }
 
+  // ignore: unused_element
   Widget _buildSurgeryPlanningStrip() {
     return _buildEqualWidthTripletRow(
       first: _buildSurgerySummaryCard(
@@ -2121,6 +2315,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         icon: Icons.local_hospital_outlined,
         value: _displayPatientDestination,
         section: SurgeryInfoSection.destination,
+        isCompleted: _record.patientDestination.trim().isNotEmpty,
       ),
       second: _buildSurgerySummaryCard(
         key: const Key('surgery-assistants-card'),
@@ -2131,6 +2326,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             ? 'Toque para preencher'
             : _record.assistantNames.join(', '),
         section: SurgeryInfoSection.assistants,
+        isCompleted: _record.assistantNames.isNotEmpty,
       ),
       third: _buildSurgerySummaryCard(
         key: const Key('surgery-anesthesiologists-card'),
@@ -2139,10 +2335,12 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         icon: Icons.badge_outlined,
         value: _displayAnesthesiologists,
         onTap: _editAnesthesiologists,
+        isCompleted: _anesthesiologistEntries.isNotEmpty,
       ),
     );
   }
 
+  // ignore: unused_element
   Widget _buildSurgeryNotesStrip() {
     return _buildEqualWidthTripletRow(
       first: _buildSurgerySummaryCard(
@@ -2152,6 +2350,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         icon: Icons.note_alt_outlined,
         value: _valueOrPlaceholder(_record.operationalNotes),
         section: SurgeryInfoSection.notes,
+        isCompleted: _record.operationalNotes.trim().isNotEmpty,
       ),
       second: _buildTimeOutCard(),
       third: _buildAntibioticProphylaxisCard(),
@@ -2161,23 +2360,87 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   Widget _buildMobileOverview() {
     return Column(
       children: [
-        _buildSurgeryCards(desktop: false),
+        _buildSurgerySummaryCard(
+          key: const Key('surgery-description-card'),
+          tapKey: const Key('surgery-description-entry'),
+          title: '1) Cirurgia',
+          icon: Icons.content_paste_search_outlined,
+          value: _multilineSummary(_record.surgeryDescription),
+          section: SurgeryInfoSection.description,
+          isCompleted: _record.surgeryDescription.trim().isNotEmpty,
+        ),
+        const SizedBox(height: 12),
+        _buildSurgerySummaryCard(
+          key: const Key('surgery-priority-card'),
+          tapKey: const Key('surgery-priority-entry'),
+          title: '2) Tipo de cirurgia',
+          icon: Icons.priority_high_outlined,
+          value: _valueOrPlaceholder(_displaySurgeryPriority),
+          section: SurgeryInfoSection.priority,
+          isCompleted: _displaySurgeryPriority.trim().isNotEmpty,
+        ),
+        const SizedBox(height: 12),
+        _buildSurgerySummaryCard(
+          key: const Key('surgery-surgeon-card'),
+          tapKey: const Key('surgery-surgeon-entry'),
+          title: '3) Cirurgião',
+          icon: Icons.person_outline,
+          value: _multilineSummary(_record.surgeonName),
+          section: SurgeryInfoSection.surgeon,
+          isCompleted: _record.surgeonName.trim().isNotEmpty,
+        ),
+        const SizedBox(height: 12),
+        _buildSurgerySummaryCard(
+          key: const Key('surgery-assistants-card'),
+          tapKey: const Key('surgery-assistants-entry'),
+          title: '4) Auxiliares',
+          icon: Icons.groups_outlined,
+          value: _record.assistantNames.isEmpty
+              ? 'Toque para preencher'
+              : _record.assistantNames.join(', '),
+          section: SurgeryInfoSection.assistants,
+          isCompleted: _record.assistantNames.isNotEmpty,
+        ),
+        const SizedBox(height: 12),
+        _buildSurgerySummaryCard(
+          key: const Key('surgery-anesthesiologists-card'),
+          tapKey: const Key('surgery-anesthesiologists-entry'),
+          title: '5) Anestesiologistas',
+          icon: Icons.badge_outlined,
+          value: _displayAnesthesiologists,
+          onTap: _editAnesthesiologists,
+          isCompleted: _anesthesiologistEntries.isNotEmpty,
+        ),
+        const SizedBox(height: 12),
+        _buildSurgerySummaryCard(
+          key: const Key('surgery-notes-card'),
+          tapKey: const Key('surgery-notes-entry'),
+          title: '6) Anotações relevantes',
+          icon: Icons.note_alt_outlined,
+          value: _multilineSummary(_record.operationalNotes),
+          section: SurgeryInfoSection.notes,
+          isCompleted: _record.operationalNotes.trim().isNotEmpty,
+        ),
+        const SizedBox(height: 12),
+        _buildFastingCard(),
         const SizedBox(height: 12),
         _buildAntibioticProphylaxisCard(),
         const SizedBox(height: 12),
-        _buildAirwayCard(),
-        const SizedBox(height: 12),
         _buildVenousAccessCard(),
         const SizedBox(height: 12),
-        _buildArterialAccessCard(),
-        const SizedBox(height: 12),
         _buildMonitoringCard(),
+        const SizedBox(height: 12),
+        _buildTimeOutCard(),
         const SizedBox(height: 12),
         _buildTechniqueCard(),
         const SizedBox(height: 12),
         _buildDrugsCard(),
         const SizedBox(height: 12),
         _buildAdjunctsCard(),
+        const SizedBox(height: 12),
+        _buildAirwayCard(),
+        const SizedBox(height: 12),
+        _buildMaintenanceCard(),
         const SizedBox(height: 12),
         _buildOtherMedicationsCard(),
         const SizedBox(height: 12),
@@ -2186,6 +2449,18 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         _buildVolumeReplacementCard(),
         const SizedBox(height: 12),
         _buildFluidBalanceCard(),
+        const SizedBox(height: 12),
+        _buildArterialAccessCard(),
+        const SizedBox(height: 12),
+        _buildSurgerySummaryCard(
+          key: const Key('surgery-destination-card'),
+          tapKey: const Key('surgery-destination-entry'),
+          title: '21) Destino pós-operatório',
+          icon: Icons.local_hospital_outlined,
+          value: _displayPatientDestination,
+          section: SurgeryInfoSection.destination,
+          isCompleted: _record.patientDestination.trim().isNotEmpty,
+        ),
       ],
     );
   }
@@ -2252,11 +2527,16 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         children: [
           PanelCard(
           key: const Key('airway-card'),
-          title: 'Via aérea',
+          title: '15) Via aérea',
           titleColor: _airwayFluidRowColor,
           icon: Icons.air,
           minHeight: 286,
           isAttention: _hasPendingAirway,
+          isCompleted:
+              _record.airway.device.trim().isNotEmpty ||
+              _record.airway.technique.trim().isNotEmpty ||
+              _record.airway.observation.trim().isNotEmpty ||
+              _record.airway.cormackLehane.trim().isNotEmpty,
           trailing: const Icon(
             Icons.keyboard_arrow_up,
             color: Color(0xFF7D93AA),
@@ -2357,13 +2637,14 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return _buildCompactOperationalCard(
       key: const Key('venous-access-card'),
       tapKey: const Key('venous-access-entry'),
-      title: 'Acesso venoso',
+      title: '9) Acesso venoso',
       titleColor: _accessRowColor,
       icon: Icons.vaccines_outlined,
       minHeight: 92,
       status: status,
       summary: summary,
       onTap: _editAcessoVenoso,
+      isCompleted: _venousAccesses.isNotEmpty,
     );
   }
 
@@ -2379,13 +2660,14 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return _buildCompactOperationalCard(
       key: const Key('arterial-access-card'),
       tapKey: const Key('arterial-access-entry'),
-      title: 'Acesso arterial',
+      title: 'Cateter de PAI',
       titleColor: _accessRowColor,
       icon: Icons.timeline_outlined,
       minHeight: 92,
       status: status,
       summary: summary,
       onTap: _editAcessoArterial,
+      isCompleted: _arterialAccesses.isNotEmpty,
     );
   }
 
@@ -2405,13 +2687,14 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return _buildCompactOperationalCard(
       key: const Key('monitoring-card'),
       tapKey: const Key('monitoring-entry'),
-      title: 'Monitorização',
+      title: '10) Monitorização',
       titleColor: _accessRowColor,
       icon: Icons.monitor_heart_outlined,
       minHeight: 92,
       status: status,
       summary: summary,
       onTap: _editMonitorizacao,
+      isCompleted: _monitoringItems.isNotEmpty,
     );
   }
 
@@ -2508,16 +2791,18 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         tapKey: const Key('surgery-description-entry'),
         title: 'Cirurgia',
         icon: Icons.content_paste_search_outlined,
-        value: _valueOrPlaceholder(_record.surgeryDescription),
+        value: _multilineSummary(_record.surgeryDescription),
         section: SurgeryInfoSection.description,
+        isCompleted: _record.surgeryDescription.trim().isNotEmpty,
       ),
       _buildSurgerySummaryCard(
         key: const Key('surgery-surgeon-card'),
         tapKey: const Key('surgery-surgeon-entry'),
         title: 'Cirurgião',
         icon: Icons.person_outline,
-        value: _valueOrPlaceholder(_record.surgeonName),
+        value: _multilineSummary(_record.surgeonName),
         section: SurgeryInfoSection.surgeon,
+        isCompleted: _record.surgeonName.trim().isNotEmpty,
       ),
       _buildSurgerySummaryCard(
         key: const Key('surgery-priority-card'),
@@ -2526,6 +2811,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         icon: Icons.priority_high_outlined,
         value: _valueOrPlaceholder(_displaySurgeryPriority),
         section: SurgeryInfoSection.priority,
+        isCompleted: _displaySurgeryPriority.trim().isNotEmpty,
       ),
       _buildSurgerySummaryCard(
         key: const Key('surgery-assistants-card'),
@@ -2536,6 +2822,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             ? 'Toque para preencher'
             : _record.assistantNames.join(', '),
         section: SurgeryInfoSection.assistants,
+        isCompleted: _record.assistantNames.isNotEmpty,
       ),
       _buildSurgerySummaryCard(
         key: const Key('surgery-destination-card'),
@@ -2544,6 +2831,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         icon: Icons.local_hospital_outlined,
         value: _displayPatientDestination,
         section: SurgeryInfoSection.destination,
+        isCompleted: _record.patientDestination.trim().isNotEmpty,
       ),
       _buildSurgerySummaryCard(
         key: const Key('surgery-anesthesiologists-card'),
@@ -2552,14 +2840,16 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         icon: Icons.badge_outlined,
         value: _displayAnesthesiologists,
         onTap: _editAnesthesiologists,
+        isCompleted: _anesthesiologistEntries.isNotEmpty,
       ),
       _buildSurgerySummaryCard(
         key: const Key('surgery-notes-card'),
         tapKey: const Key('surgery-notes-entry'),
         title: 'Chegada ao CC / anotações',
         icon: Icons.note_alt_outlined,
-        value: _valueOrPlaceholder(_record.operationalNotes),
+        value: _multilineSummary(_record.operationalNotes),
         section: SurgeryInfoSection.notes,
+        isCompleted: _record.operationalNotes.trim().isNotEmpty,
       ),
       _buildTimeOutCard(),
     ];
@@ -2621,12 +2911,14 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     required String value,
     SurgeryInfoSection? section,
     VoidCallback? onTap,
+    bool isCompleted = false,
   }) {
     return PanelCard(
       key: key,
       title: title,
       titleColor: _surgeryRowColor,
       icon: icon,
+      isCompleted: isCompleted,
       child: InkWell(
         key: tapKey,
         borderRadius: BorderRadius.circular(10),
@@ -2656,6 +2948,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     required VoidCallback onTap,
     Color statusColor = const Color(0xFF17324D),
     bool isAttention = false,
+    bool isCompleted = false,
     double minHeight = 92,
   }) {
     return PanelCard(
@@ -2665,6 +2958,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       icon: icon,
       minHeight: minHeight,
       isAttention: isAttention,
+      isCompleted: isCompleted,
       child: InkWell(
         key: tapKey,
         borderRadius: BorderRadius.circular(10),
@@ -2716,7 +3010,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         : '${_record.timeOutChecklist.length} itens confirmados';
     return _buildCompactOperationalCard(
       key: const Key('surgery-timeout-card'),
-      title: 'Time-out',
+      title: '11) Time-out',
       titleColor: _timeoutRowColor,
       icon: Icons.alarm_on_outlined,
       isAttention: _hasPendingTimeOut,
@@ -2726,6 +3020,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           completed ? const Color(0xFF169653) : const Color(0xFFF59E0B),
       summary: summary,
       onTap: () => _editSurgerySection(SurgeryInfoSection.timeOut),
+      isCompleted: completed,
     );
   }
 
@@ -2754,7 +3049,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return _buildCompactOperationalCard(
       key: const Key('antibiotic-entry-card'),
       tapKey: const Key('antibiotic-entry'),
-      title: 'Antibiótico profilaxia',
+      title: '8) Antibiótico profilaxia',
       titleColor: _timeoutRowColor,
       icon: Icons.medical_services_outlined,
       minHeight: 92,
@@ -2767,6 +3062,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           : const Color(0xFF17324D),
       summary: summary,
       onTap: _editProphylacticAntibiotics,
+      isCompleted: antibiotics.isNotEmpty && redoseAlerts.isEmpty,
     );
   }
 
@@ -2774,7 +3070,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     final fasting = _displayFastingHours;
 
     return _buildCompactOperationalCard(
-      title: 'Jejum',
+      title: '7) Jejum',
       titleColor: _timeoutRowColor,
       icon: Icons.schedule_outlined,
       minHeight: 92,
@@ -2784,6 +3080,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         fastingText: fasting,
       ),
       onTap: _editFastingHours,
+      isCompleted: fasting.isNotEmpty,
     );
   }
 
@@ -2795,6 +3092,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       icon: Icons.event_note_outlined,
       fillChild: true,
       isAttention: _hasPendingEvents,
+      isCompleted: _record.events.isNotEmpty,
       trailing: AddButton(label: 'Adicionar evento', onTap: _editEventos),
       child: InkWell(
         key: const Key('events-entry'),
@@ -2820,11 +3118,12 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       key: _techniqueSectionKey,
       child: PanelCard(
       key: const Key('technique-card'),
-      title: 'Técnica anestésica',
+      title: '12) Técnica anestésica',
       titleColor: _techniqueRowColor,
       icon: Icons.local_hospital_outlined,
       minHeight: 168,
       isAttention: _hasPendingTechnique,
+      isCompleted: _record.anesthesiaTechnique.trim().isNotEmpty,
       child: InkWell(
         key: const Key('technique-entry'),
         borderRadius: BorderRadius.circular(18),
@@ -2870,11 +3169,12 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       key: _drugsSectionKey,
       child: PanelCard(
       key: const Key('drugs-card'),
-      title: 'Indução (Drogas)',
+      title: '13) Indução',
       titleColor: _techniqueRowColor,
       icon: Icons.medication_outlined,
       minHeight: 168,
       isAttention: _hasPendingDrugs,
+      isCompleted: _record.drugs.isNotEmpty,
       child: InkWell(
         key: const Key('drugs-entry'),
         borderRadius: BorderRadius.circular(18),
@@ -2916,10 +3216,11 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
 
   Widget _buildAdjunctsCard() {
     return PanelCard(
-      title: 'Adjuvantes',
+      title: '14) Adjuvantes',
       titleColor: _techniqueRowColor,
       icon: Icons.auto_awesome_outlined,
       minHeight: 168,
+      isCompleted: _record.adjuncts.isNotEmpty,
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
         onTap: _editAdjuvantes,
@@ -2962,10 +3263,11 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       key: _otherMedicationsSectionKey,
       child: PanelCard(
         key: const Key('other-medications-card'),
-        title: 'Outras medicações',
+        title: '17) Outras medicações',
         titleColor: _medicationsRowColor,
         icon: Icons.healing_outlined,
         minHeight: 168,
+        isCompleted: _record.otherMedications.isNotEmpty,
         child: InkWell(
           key: const Key('other-medications-entry'),
           borderRadius: BorderRadius.circular(18),
@@ -3010,10 +3312,11 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       key: _vasoactiveSectionKey,
       child: PanelCard(
         key: const Key('vasoactive-card'),
-        title: 'Drogas vasoativas',
+        title: '18) Drogas vasoativas',
         titleColor: _medicationsRowColor,
         icon: Icons.show_chart_outlined,
         minHeight: 168,
+        isCompleted: _record.vasoactiveDrugs.isNotEmpty,
         child: InkWell(
           key: const Key('vasoactive-entry'),
           borderRadius: BorderRadius.circular(18),
@@ -3061,11 +3364,12 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       key: _fluidSectionKey,
       child: PanelCard(
       key: const Key('fluid-balance-card'),
-      title: 'Balanço hídrico',
+      title: '20) Balanço hídrico',
       titleColor: _airwayFluidRowColor,
       icon: Icons.opacity_outlined,
       minHeight: 286,
       isAttention: _hasPendingFluidBalance,
+      isCompleted: _record.fluidBalance.isComplete,
       child: InkWell(
         key: const Key('fluid-balance-entry'),
         borderRadius: BorderRadius.circular(18),
@@ -3144,10 +3448,14 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     );
 
     return PanelCard(
-      title: 'Reposição volêmica / sangue e derivados',
+      title: '19) Reposição volêmica / sangue',
       titleColor: _airwayFluidRowColor,
       icon: Icons.bloodtype_outlined,
       minHeight: 286,
+      isCompleted:
+          _record.fluidBalance.blood.trim().isNotEmpty ||
+          _record.fluidBalance.colloids.trim().isNotEmpty ||
+          _record.fluidBalance.crystalloids.trim().isNotEmpty,
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
         onTap: _editReposicaoVolemica,
@@ -3205,6 +3513,49 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
               value: _record.fluidBalance.crystalloids.trim().isEmpty
                   ? '--'
                   : '${_record.fluidBalance.crystalloids} mL',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMaintenanceCard() {
+    return PanelCard(
+      key: const Key('maintenance-card'),
+      title: '16) Manutenção da anestesia',
+      titleColor: _medicationsRowColor,
+      icon: Icons.tune_outlined,
+      minHeight: 168,
+      isCompleted: _record.maintenanceAgents.trim().isNotEmpty,
+      child: InkWell(
+        key: const Key('maintenance-entry'),
+        borderRadius: BorderRadius.circular(18),
+        onTap: _editMaintenanceAgents,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (_record.maintenanceAgents.trim().isEmpty)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 10),
+                child: StatusHint(
+                  text: 'Nenhum agente de manutenção registrado',
+                ),
+              )
+            else
+              ..._record.maintenanceAgents
+                  .split('\n')
+                  .where((item) => item.trim().isNotEmpty)
+                  .map(
+                    (item) => Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: CheckLine(text: item.trim()),
+                    ),
+                  ),
+            const SizedBox(height: 4),
+            AddButton(
+              label: 'Editar manutenção',
+              onTap: _editMaintenanceAgents,
             ),
           ],
         ),

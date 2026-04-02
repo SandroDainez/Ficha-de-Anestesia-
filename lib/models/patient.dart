@@ -30,6 +30,7 @@ class Patient {
     required this.allergies,
     required this.restrictions,
     required this.medications,
+    this.informedConsentStatus = '',
     this.population = PatientPopulation.adult,
     this.postnatalAgeDays = 0,
     this.gestationalAgeWeeks = 0,
@@ -46,6 +47,7 @@ class Patient {
         allergies = const [],
         restrictions = const [],
         medications = const [],
+        informedConsentStatus = '',
         population = PatientPopulation.adult,
         postnatalAgeDays = 0,
         gestationalAgeWeeks = 0,
@@ -60,6 +62,7 @@ class Patient {
   final List<String> allergies;
   final List<String> restrictions;
   final List<String> medications;
+  final String informedConsentStatus;
   final PatientPopulation population;
   final int postnatalAgeDays;
   final int gestationalAgeWeeks;
@@ -75,6 +78,7 @@ class Patient {
     List<String>? allergies,
     List<String>? restrictions,
     List<String>? medications,
+    String? informedConsentStatus,
     PatientPopulation? population,
     int? postnatalAgeDays,
     int? gestationalAgeWeeks,
@@ -90,6 +94,8 @@ class Patient {
       allergies: allergies ?? this.allergies,
       restrictions: restrictions ?? this.restrictions,
       medications: medications ?? this.medications,
+      informedConsentStatus:
+          informedConsentStatus ?? this.informedConsentStatus,
       population: population ?? this.population,
       postnatalAgeDays: postnatalAgeDays ?? this.postnatalAgeDays,
       gestationalAgeWeeks: gestationalAgeWeeks ?? this.gestationalAgeWeeks,
@@ -109,6 +115,7 @@ class Patient {
       'allergies': allergies,
       'restrictions': restrictions,
       'medications': medications,
+      'informedConsentStatus': informedConsentStatus,
       'population': population.code,
       'postnatalAgeDays': postnatalAgeDays,
       'gestationalAgeWeeks': gestationalAgeWeeks,
@@ -133,6 +140,7 @@ class Patient {
       medications: (json['medications'] as List<dynamic>? ?? const [])
           .map((item) => item.toString())
           .toList(),
+      informedConsentStatus: json['informedConsentStatus'] as String? ?? '',
       population: PatientPopulationX.fromCode(json['population'] as String?),
       postnatalAgeDays: json['postnatalAgeDays'] as int? ?? 0,
       gestationalAgeWeeks: json['gestationalAgeWeeks'] as int? ?? 0,

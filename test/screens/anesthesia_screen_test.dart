@@ -684,11 +684,12 @@ void main() {
     await tester.tap(find.byKey(const Key('surgery-priority-entry')).first);
     await tester.pumpAndSettle();
 
-    expect(find.text('Prioridade'), findsOneWidget);
+    expect(find.text('Tipo de cirurgia'), findsWidgets);
     await tester.tap(find.widgetWithText(ChoiceChip, 'Urgência'));
     await tester.tap(find.byKey(const Key('surgery-save-button')));
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.byKey(const Key('surgery-destination-entry')).first);
     await tester.tap(find.byKey(const Key('surgery-destination-entry')).first);
     await tester.pumpAndSettle();
 
@@ -702,15 +703,16 @@ void main() {
     await tester.tap(find.byKey(const Key('surgery-save-button')));
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.byKey(const Key('surgery-notes-entry')).first);
     await tester.tap(find.byKey(const Key('surgery-notes-entry')).first);
     await tester.pumpAndSettle();
 
-    expect(find.text('Chegada ao centro cirúrgico e anotações'), findsWidgets);
+    expect(find.text('Anotações relevantes'), findsWidgets);
     await tester.enterText(
-      find.byKey(const Key('surgery-notes-field')),
+      find.byType(TextField).last,
       'Paciente chegou com acesso periférico único.',
     );
-    await tester.tap(find.byKey(const Key('surgery-save-button')));
+    await tester.tap(find.widgetWithText(FilledButton, 'Salvar'));
     await tester.pumpAndSettle();
 
     expect(find.text('Urgência'), findsWidgets);

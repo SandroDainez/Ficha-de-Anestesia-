@@ -16,6 +16,7 @@ void main() {
         weightKg: 68,
         heightMeters: 1.65,
         asa: 'II',
+        informedConsentStatus: 'Assinado',
         allergies: ['Dipirona'],
         restrictions: ['Nao aceita transfusao'],
         medications: ['Losartana'],
@@ -133,6 +134,7 @@ void main() {
     final restored = AnesthesiaRecord.fromJson(record.toJson());
 
     expect(restored.patient.name, 'Maria');
+    expect(restored.patient.informedConsentStatus, 'Assinado');
     expect(restored.preAnestheticAssessment.asaClassification, 'II');
     expect(restored.preAnestheticAssessment.surgeryPriority, 'Eletiva');
     expect(restored.preAnestheticAssessment.postoperativePlanningItems, ['Reserva de UTI']);

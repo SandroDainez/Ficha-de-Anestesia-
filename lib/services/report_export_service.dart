@@ -87,6 +87,10 @@ class ReportExportService {
               _field('Peso', _orDash(record.patient.weightKg > 0 ? '${record.patient.weightKg.toStringAsFixed(0)} kg' : '')),
               _field('Altura', _orDash(record.patient.heightMeters > 0 ? '${record.patient.heightMeters.toStringAsFixed(2).replaceAll('.', ',')} m' : '')),
               _field('ASA', _orDash(record.patient.asa)),
+              _field(
+                'Termo de Consentimento Informado para Anestesia',
+                _orDash(record.patient.informedConsentStatus),
+              ),
               _field('Alergias', _joinList(record.patient.allergies)),
               _field('Restrições', _joinList(record.patient.restrictions)),
               _field('Medicações em uso', _joinList(record.patient.medications)),
@@ -226,6 +230,8 @@ class ReportExportService {
         'peso': record.patient.weightKg > 0 ? '${record.patient.weightKg.toStringAsFixed(0)} kg' : 'Não informado',
         'altura': record.patient.heightMeters > 0 ? '${record.patient.heightMeters.toStringAsFixed(2).replaceAll('.', ',')} m' : 'Não informada',
         'asa': _orDash(record.patient.asa),
+        'termo_de_consentimento_informado_para_anestesia':
+            _orDash(record.patient.informedConsentStatus),
         'alergias': record.patient.allergies.isEmpty ? 'Nenhuma registrada' : record.patient.allergies.join(', '),
         'restricoes': record.patient.restrictions.isEmpty ? 'Nenhuma registrada' : record.patient.restrictions.join(', '),
         'medicacoes_em_uso': record.patient.medications.isEmpty ? 'Nenhuma registrada' : record.patient.medications.join(', '),
@@ -348,6 +354,7 @@ class ReportExportService {
   pw.Widget _buildPatientSummary(AnesthesiaRecord record) {
     final items = <List<String>>[
       ['ASA', _orDash(record.patient.asa)],
+      ['Consentimento', _orDash(record.patient.informedConsentStatus)],
       ['Perfil', record.patient.population.label],
       ['Idade', _orDash(record.patient.age > 0 ? '${record.patient.age} anos' : '')],
       ['Peso', _orDash(record.patient.weightKg > 0 ? '${record.patient.weightKg.toStringAsFixed(0)} kg' : '')],

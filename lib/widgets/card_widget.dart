@@ -13,6 +13,7 @@ class PanelCard extends StatelessWidget {
     this.fillChild = false,
     this.minHeight,
     this.isAttention = false,
+    this.isCompleted = false,
   });
 
   final String title;
@@ -23,34 +24,44 @@ class PanelCard extends StatelessWidget {
   final bool fillChild;
   final double? minHeight;
   final bool isAttention;
+  final bool isCompleted;
 
   @override
   Widget build(BuildContext context) {
+    final isSuccess = isCompleted && !isAttention;
     final headerBackground = isAttention
         ? Color.alphaBlend(
             const Color(0x14F0A11F),
             titleColor.withAlpha(18),
           )
-        : titleColor.withAlpha(18);
+        : isSuccess
+            ? const Color(0xFFE7F6EC)
+            : titleColor.withAlpha(18);
     final headerDivider = isAttention
         ? Color.alphaBlend(
             const Color(0x40F0A11F),
             titleColor.withAlpha(48),
           )
-        : titleColor.withAlpha(48);
+        : isSuccess
+            ? const Color(0xFF8DD0A3)
+            : titleColor.withAlpha(48);
+    final cardBackground = isSuccess ? const Color(0xFFF4FBF6) : Colors.white;
+    final cardBorder = isAttention
+        ? const Color(0xFFF2C879)
+        : isSuccess
+            ? const Color(0xFF8DD0A3)
+            : const Color(0xFFBCD0E4);
+    final effectiveTitleColor =
+        isSuccess ? const Color(0xFF177245) : titleColor;
 
     return Container(
       width: double.infinity,
       constraints:
           minHeight == null ? null : BoxConstraints(minHeight: minHeight!),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBackground,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isAttention
-              ? const Color(0xFFF2C879)
-              : const Color(0xFFBCD0E4),
-        ),
+        border: Border.all(color: cardBorder),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0D17324D),
@@ -76,7 +87,7 @@ class PanelCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(icon, size: 15, color: titleColor),
+                Icon(icon, size: 15, color: effectiveTitleColor),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -84,7 +95,7 @@ class PanelCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: titleColor,
+                      color: effectiveTitleColor,
                       fontWeight: FontWeight.w800,
                       fontSize: 12,
                       letterSpacing: 0.2,
