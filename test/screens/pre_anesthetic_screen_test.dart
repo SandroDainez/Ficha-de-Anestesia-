@@ -129,6 +129,54 @@ void main() {
     expect(find.text('Gasometria'), findsOneWidget);
   });
 
+  testWidgets('adapts fasting fields for pediatric intake types', (
+    WidgetTester tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 2200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PreAnestheticScreen(
+          patient: const Patient(
+            name: 'Pedro',
+            age: 7,
+            weightKg: 24,
+            heightMeters: 1.18,
+            asa: 'I',
+            allergies: [],
+            restrictions: [],
+            medications: [],
+            population: PatientPopulation.pediatric,
+          ),
+          initialAssessment: const PreAnestheticAssessment.empty(),
+          initialConsultationDate: '',
+        ),
+      ),
+    );
+
+    await tester.scrollUntilVisible(
+      find.text('Jejum'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Jejum'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Leite materno: 4 h.'), findsOneWidget);
+    expect(
+      find.text('Criança maior: refeição leve ou sólidos leves 6 h; refeição gordurosa 8 h ou mais.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('ASA 2023'), findsOneWidget);
+    expect(find.textContaining('ESAIC 2022'), findsOneWidget);
+    expect(
+      find.text('Fórmula / leite não humano / refeição leve / sólidos (horas)'),
+      findsOneWidget,
+    );
+    expect(find.text('Líquidos claros (horas)'), findsOneWidget);
+    expect(find.text('Leite materno (horas)'), findsOneWidget);
+  });
+
   testWidgets('hides adult-centered airway items in neonatal pre-anesthetic screen', (
     WidgetTester tester,
   ) async {

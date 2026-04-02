@@ -130,6 +130,26 @@ void main() {
     expect(find.text('FINALIZAR CASO'), findsOneWidget);
   });
 
+  testWidgets('summarizes pediatric fasting by intake type in anesthesia screen', (
+    WidgetTester tester,
+  ) async {
+    final record = buildRecord().copyWith(
+      patient: buildRecord().patient.copyWith(population: PatientPopulation.pediatric),
+      preAnestheticAssessment: buildRecord().preAnestheticAssessment.copyWith(
+        fastingSolids: '6-8h',
+        fastingLiquids: '2-4h',
+        fastingBreastMilk: '4-6h',
+      ),
+    );
+
+    await pumpScreen(tester, record);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Formula/refeicao: 6-8h'), findsOneWidget);
+    expect(find.textContaining('Leite materno: 4-6h'), findsOneWidget);
+    expect(find.textContaining('Liquidos claros: 2-4h'), findsOneWidget);
+  });
+
   testWidgets('gives hemodynamic chart visual priority in the main layout', (
     WidgetTester tester,
   ) async {

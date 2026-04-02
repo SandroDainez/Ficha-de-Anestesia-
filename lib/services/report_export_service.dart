@@ -73,6 +73,7 @@ class ReportExportService {
               _field('Outros detalhes do plano', _orDash(record.preAnestheticAssessment.otherAnestheticPlan)),
               _field('Jejum sólidos', _orDash(record.preAnestheticAssessment.fastingSolids)),
               _field('Jejum líquidos', _orDash(record.preAnestheticAssessment.fastingLiquids)),
+              _field('Jejum leite materno', _orDash(record.preAnestheticAssessment.fastingBreastMilk)),
               _field('Observações do jejum', _orDash(record.preAnestheticAssessment.fastingNotes)),
               _field('Exames complementares', _joinList(record.preAnestheticAssessment.complementaryExamItems)),
               _field('Outros exames', _orDash(record.preAnestheticAssessment.complementaryExams)),

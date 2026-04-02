@@ -26,6 +26,7 @@ class PreAnestheticAssessment {
     required this.otherComplementaryExams,
     required this.fastingSolids,
     required this.fastingLiquids,
+    this.fastingBreastMilk = '',
     required this.fastingNotes,
     required this.asaClassification,
     required this.asaNotes,
@@ -61,6 +62,7 @@ class PreAnestheticAssessment {
         otherComplementaryExams = '',
         fastingSolids = '',
         fastingLiquids = '',
+        fastingBreastMilk = '',
         fastingNotes = '',
         asaClassification = '',
         asaNotes = '',
@@ -94,6 +96,7 @@ class PreAnestheticAssessment {
   final String otherComplementaryExams;
   final String fastingSolids;
   final String fastingLiquids;
+  final String fastingBreastMilk;
   final String fastingNotes;
   final String asaClassification;
   final String asaNotes;
@@ -128,6 +131,7 @@ class PreAnestheticAssessment {
     String? otherComplementaryExams,
     String? fastingSolids,
     String? fastingLiquids,
+    String? fastingBreastMilk,
     String? fastingNotes,
     String? asaClassification,
     String? asaNotes,
@@ -169,6 +173,7 @@ class PreAnestheticAssessment {
           otherComplementaryExams ?? this.otherComplementaryExams,
       fastingSolids: fastingSolids ?? this.fastingSolids,
       fastingLiquids: fastingLiquids ?? this.fastingLiquids,
+      fastingBreastMilk: fastingBreastMilk ?? this.fastingBreastMilk,
       fastingNotes: fastingNotes ?? this.fastingNotes,
       asaClassification: asaClassification ?? this.asaClassification,
       asaNotes: asaNotes ?? this.asaNotes,
@@ -207,6 +212,7 @@ class PreAnestheticAssessment {
       'otherComplementaryExams': otherComplementaryExams,
       'fastingSolids': fastingSolids,
       'fastingLiquids': fastingLiquids,
+      'fastingBreastMilk': fastingBreastMilk,
       'fastingNotes': fastingNotes,
       'asaClassification': asaClassification,
       'asaNotes': asaNotes,
@@ -264,6 +270,7 @@ class PreAnestheticAssessment {
           json['otherComplementaryExams'] as String? ?? '',
       fastingSolids: json['fastingSolids'] as String? ?? '',
       fastingLiquids: json['fastingLiquids'] as String? ?? '',
+      fastingBreastMilk: json['fastingBreastMilk'] as String? ?? '',
       fastingNotes: json['fastingNotes'] as String? ?? '',
       asaClassification: json['asaClassification'] as String? ?? '',
       asaNotes: json['asaNotes'] as String? ?? '',

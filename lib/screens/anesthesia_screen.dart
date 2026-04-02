@@ -531,7 +531,32 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   String get _displayFastingHours {
     final manual = _record.fastingHours.trim();
     if (manual.isNotEmpty) return manual;
-    return _record.preAnestheticAssessment.fastingSolids.trim();
+    final assessment = _record.preAnestheticAssessment;
+    final population = _record.patient.population;
+    if (population == PatientPopulation.adult) {
+      return assessment.fastingSolids.trim();
+    }
+
+    final segments = <String>[];
+    final solids = assessment.fastingSolids.trim();
+    final liquids = assessment.fastingLiquids.trim();
+    final breastMilk = assessment.fastingBreastMilk.trim();
+
+    if (solids.isNotEmpty) {
+      segments.add(
+        population == PatientPopulation.neonatal
+            ? 'Formula/leite nao humano: $solids'
+            : 'Formula/refeicao: $solids',
+      );
+    }
+    if (breastMilk.isNotEmpty) {
+      segments.add('Leite materno: $breastMilk');
+    }
+    if (liquids.isNotEmpty) {
+      segments.add('Liquidos claros: $liquids');
+    }
+
+    return segments.join(' • ');
   }
 
   double get _documentedLossesMl {

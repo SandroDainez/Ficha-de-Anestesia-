@@ -242,6 +242,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   ];
   static const List<String> _solidFastingOptions = ['<6h', '6-8h', '>8h'];
   static const List<String> _liquidFastingOptions = ['<2h', '2-4h', '>4h'];
+  static const List<String> _breastMilkFastingOptions = ['<4h', '4-6h', '>6h'];
   static const List<String> _asaOptions = ['I', 'II', 'III', 'IV', 'V', 'VI'];
   static const List<String> _anestheticPlanOptions = [
     'Anestesia geral balanceada',
@@ -333,6 +334,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   String _selectedDentition = '';
   String _selectedSolidFasting = '';
   String _selectedLiquidFasting = '';
+  String _selectedBreastMilkFasting = '';
   String _selectedAsa = '';
   late PatientPopulation _selectedPopulation;
 
@@ -349,17 +351,22 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   String get _solidFastingLabel {
     return switch (_selectedPopulation) {
       PatientPopulation.adult => 'Sólidos / refeição leve',
-      PatientPopulation.pediatric => 'Sólidos / fórmula / leite não humano',
+      PatientPopulation.pediatric =>
+        'Fórmula / leite não humano / refeição leve / sólidos',
       PatientPopulation.neonatal => 'Fórmula / leite não humano',
     };
   }
 
   String get _liquidFastingLabel {
     return switch (_selectedPopulation) {
-      PatientPopulation.neonatal => 'Leite materno / líquidos claros',
       _ => 'Líquidos claros',
     };
   }
+
+  bool get _showBreastMilkFastingSection =>
+      _selectedPopulation != PatientPopulation.adult;
+
+  String get _breastMilkFastingLabel => 'Leite materno';
 
   List<String> get _fastingGuidanceLines {
     switch (_selectedPopulation) {
@@ -373,7 +380,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         return const [
           'Líquidos claros: até 2 h.',
           'Leite materno: 4 h.',
-          'Fórmula infantil, leite não humano e refeição leve: 6 h.',
+          'Fórmula infantil e leite não humano: 6 h.',
+          'Criança maior: refeição leve ou sólidos leves 6 h; refeição gordurosa 8 h ou mais.',
         ];
       case PatientPopulation.neonatal:
         return const [
@@ -382,6 +390,16 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
           'Fórmula infantil ou leite não humano: 6 h.',
         ];
     }
+  }
+
+  String? get _fastingReferenceText {
+    return switch (_selectedPopulation) {
+      PatientPopulation.adult => null,
+      PatientPopulation.pediatric =>
+        'Base usada nesta tela: esquema conservador 2-4-6. Referências: ASA 2023 (PMID 36629465) e ESAIC 2022 (PMID 34857683). Alguns serviços pediátricos adotam 1 h para líquidos claros em casos eletivos conforme protocolo local.',
+      PatientPopulation.neonatal =>
+        'Base usada nesta tela: esquema conservador 2-4-6 para RN estáveis em contexto eletivo. Referências: ASA 2023 (PMID 36629465) e ESAIC 2022 (PMID 34857683). Em RN internado, prematuro ou com risco metabólico, individualizar conforme contexto clínico e protocolo institucional.',
+    };
   }
 
   List<String> get _profileComorbidityOptions {
@@ -1149,6 +1167,10 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         _liquidFastingOptions.contains(assessment.fastingLiquids)
             ? assessment.fastingLiquids
             : '';
+    _selectedBreastMilkFasting =
+        _breastMilkFastingOptions.contains(assessment.fastingBreastMilk)
+            ? assessment.fastingBreastMilk
+            : '';
     _selectedAsa = _asaOptions.contains(assessment.asaClassification)
         ? assessment.asaClassification
         : widget.patient.asa;
@@ -1345,6 +1367,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       otherComplementaryExams: _otherComplementaryExamsController.text.trim(),
       fastingSolids: _selectedSolidFasting,
       fastingLiquids: _selectedLiquidFasting,
+      fastingBreastMilk:
+          _showBreastMilkFastingSection ? _selectedBreastMilkFasting : '',
       fastingNotes: _fastingNotesController.text.trim(),
       asaClassification: _selectedAsa,
       asaNotes: _asaNotesController.text.trim(),
@@ -2147,6 +2171,17 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                           ),
                         ),
                       ),
+                      if (_fastingReferenceText != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          _fastingReferenceText!,
+                          style: const TextStyle(
+                            color: Color(0xFF5F7288),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -2171,6 +2206,19 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                     setState(() => _selectedLiquidFasting = value);
                   },
                 ),
+                if (_showBreastMilkFastingSection) ...[
+                  const SizedBox(height: 14),
+                  _sectionLabel('$_breastMilkFastingLabel (horas)'),
+                  const SizedBox(height: 8),
+                  _buildChoiceChips(
+                    options: _breastMilkFastingOptions,
+                    selectedValue: _selectedBreastMilkFasting,
+                    onSelected: (value) {
+                      setState(() => _selectedBreastMilkFasting = value);
+                    },
+                    color: const Color(0xFF169653),
+                  ),
+                ],
                 const SizedBox(height: 14),
                 TextField(
                   controller: _fastingNotesController,
@@ -2178,9 +2226,11 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   maxLines: 4,
                   decoration: InputDecoration(
                     labelText: 'Observações do jejum',
-                    hintText: _selectedPopulation == PatientPopulation.neonatal
-                        ? 'Ex: horário da última mamada, fórmula, glicemia'
-                        : 'Ex: jejum inadequado, horário da última refeição',
+                    hintText: _selectedPopulation == PatientPopulation.adult
+                        ? 'Ex: jejum inadequado, horário da última refeição'
+                        : _selectedPopulation == PatientPopulation.pediatric
+                            ? 'Ex: discriminar se foi leite materno, fórmula ou refeição sólida conforme a idade'
+                            : 'Ex: horário da última mamada, fórmula, glicemia, risco de hipoglicemia',
                   ),
                 ),
               ],
