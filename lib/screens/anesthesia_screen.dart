@@ -559,6 +559,23 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return segments.join(' • ');
   }
 
+  String get _displaySurgeryPriority {
+    final recordPriority = _record.surgeryPriority.trim();
+    if (recordPriority.isNotEmpty) return recordPriority;
+    return _record.preAnestheticAssessment.surgeryPriority.trim();
+  }
+
+  String get _displayPatientDestination {
+    final destination = _record.patientDestination.trim();
+    final other = _record.otherPatientDestination.trim();
+    if (destination.isEmpty && other.isEmpty) {
+      return 'Toque para preencher';
+    }
+    if (destination.isEmpty) return other;
+    if (other.isEmpty) return destination;
+    return '$destination • $other';
+  }
+
   double get _documentedLossesMl {
     double parse(String value) =>
         double.tryParse(value.trim().replaceAll(',', '.')) ?? 0;
@@ -1687,11 +1704,16 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       builder: (_) => SurgeryInfoDialog(
         section: section,
         initialDescription: _record.surgeryDescription,
+        initialPriority: _displaySurgeryPriority,
         initialSurgeon: _record.surgeonName,
         initialAssistants: _record.assistantNames,
+        initialDestination: _record.patientDestination,
+        initialOtherDestination: _record.otherPatientDestination,
+        initialNotes: _record.operationalNotes,
         initialChecklist: _record.safeSurgeryChecklist,
         initialTimeOutChecklist: _record.timeOutChecklist,
         initialTimeOutCompleted: _record.timeOutCompleted,
+        patientPopulation: _record.patient.population,
       ),
     );
 
@@ -1700,8 +1722,12 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     setState(() {
       _record = _record.copyWith(
         surgeryDescription: result.description,
+        surgeryPriority: result.priority,
         surgeonName: result.surgeon,
         assistantNames: result.assistants,
+        patientDestination: result.destination,
+        otherPatientDestination: result.otherDestination,
+        operationalNotes: result.notes,
         safeSurgeryChecklist: result.checklist,
         timeOutChecklist: result.timeOutChecklist,
         timeOutCompleted: result.timeOutCompleted,
@@ -1950,6 +1976,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       children: [
         _buildSurgerySummaryStrip(),
         const SizedBox(height: 12),
+        _buildSurgeryPlanningStrip(),
+        const SizedBox(height: 12),
         _buildEqualWidthTripletRow(
           first: _buildTimeOutCard(),
           second: _buildAntibioticProphylaxisCard(),
@@ -2041,6 +2069,27 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         section: SurgeryInfoSection.surgeon,
       ),
       third: _buildSurgerySummaryCard(
+        key: const Key('surgery-priority-card'),
+        tapKey: const Key('surgery-priority-entry'),
+        title: 'Prioridade',
+        icon: Icons.priority_high_outlined,
+        value: _valueOrPlaceholder(_displaySurgeryPriority),
+        section: SurgeryInfoSection.priority,
+      ),
+    );
+  }
+
+  Widget _buildSurgeryPlanningStrip() {
+    return _buildEqualWidthTripletRow(
+      first: _buildSurgerySummaryCard(
+        key: const Key('surgery-destination-card'),
+        tapKey: const Key('surgery-destination-entry'),
+        title: 'Destino pós-op',
+        icon: Icons.local_hospital_outlined,
+        value: _displayPatientDestination,
+        section: SurgeryInfoSection.destination,
+      ),
+      second: _buildSurgerySummaryCard(
         key: const Key('surgery-assistants-card'),
         tapKey: const Key('surgery-assistants-entry'),
         title: 'Auxiliares',
@@ -2049,6 +2098,14 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             ? 'Toque para preencher'
             : _record.assistantNames.join(', '),
         section: SurgeryInfoSection.assistants,
+      ),
+      third: _buildSurgerySummaryCard(
+        key: const Key('surgery-notes-card'),
+        tapKey: const Key('surgery-notes-entry'),
+        title: 'Anotações',
+        icon: Icons.note_alt_outlined,
+        value: _valueOrPlaceholder(_record.operationalNotes),
+        section: SurgeryInfoSection.notes,
       ),
     );
   }
@@ -2411,6 +2468,14 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         section: SurgeryInfoSection.surgeon,
       ),
       _buildSurgerySummaryCard(
+        key: const Key('surgery-priority-card'),
+        tapKey: const Key('surgery-priority-entry'),
+        title: 'Prioridade',
+        icon: Icons.priority_high_outlined,
+        value: _valueOrPlaceholder(_displaySurgeryPriority),
+        section: SurgeryInfoSection.priority,
+      ),
+      _buildSurgerySummaryCard(
         key: const Key('surgery-assistants-card'),
         tapKey: const Key('surgery-assistants-entry'),
         title: 'Auxiliares',
@@ -2419,6 +2484,22 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             ? 'Toque para preencher'
             : _record.assistantNames.join(', '),
         section: SurgeryInfoSection.assistants,
+      ),
+      _buildSurgerySummaryCard(
+        key: const Key('surgery-destination-card'),
+        tapKey: const Key('surgery-destination-entry'),
+        title: 'Destino pós-op',
+        icon: Icons.local_hospital_outlined,
+        value: _displayPatientDestination,
+        section: SurgeryInfoSection.destination,
+      ),
+      _buildSurgerySummaryCard(
+        key: const Key('surgery-notes-card'),
+        tapKey: const Key('surgery-notes-entry'),
+        title: 'Anotações',
+        icon: Icons.note_alt_outlined,
+        value: _valueOrPlaceholder(_record.operationalNotes),
+        section: SurgeryInfoSection.notes,
       ),
       _buildTimeOutCard(),
     ];
@@ -2447,7 +2528,18 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        cards[3],
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: cards[3]),
+            const SizedBox(width: 12),
+            Expanded(child: cards[4]),
+            const SizedBox(width: 12),
+            Expanded(child: cards[5]),
+          ],
+        ),
+        const SizedBox(height: 12),
+        cards[6],
       ],
     );
   }

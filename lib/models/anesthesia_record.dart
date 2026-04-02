@@ -28,8 +28,12 @@ class AnesthesiaRecord {
     required this.monitoringItems,
     required this.surgicalSize,
     required this.surgeryDescription,
+    this.surgeryPriority = '',
     required this.surgeonName,
     required this.assistantNames,
+    this.patientDestination = '',
+    this.otherPatientDestination = '',
+    this.operationalNotes = '',
     required this.safeSurgeryChecklist,
     required this.timeOutChecklist,
     required this.timeOutCompleted,
@@ -60,8 +64,12 @@ class AnesthesiaRecord {
         monitoringItems = const [],
         surgicalSize = '',
         surgeryDescription = '',
+        surgeryPriority = '',
         surgeonName = '',
         assistantNames = const [],
+        patientDestination = '',
+        otherPatientDestination = '',
+        operationalNotes = '',
         safeSurgeryChecklist = const [],
         timeOutChecklist = const [],
         timeOutCompleted = false,
@@ -90,8 +98,12 @@ class AnesthesiaRecord {
   final List<String> monitoringItems;
   final String surgicalSize;
   final String surgeryDescription;
+  final String surgeryPriority;
   final String surgeonName;
   final List<String> assistantNames;
+  final String patientDestination;
+  final String otherPatientDestination;
+  final String operationalNotes;
   final List<String> safeSurgeryChecklist;
   final List<String> timeOutChecklist;
   final bool timeOutCompleted;
@@ -121,8 +133,12 @@ class AnesthesiaRecord {
     List<String>? monitoringItems,
     String? surgicalSize,
     String? surgeryDescription,
+    String? surgeryPriority,
     String? surgeonName,
     List<String>? assistantNames,
+    String? patientDestination,
+    String? otherPatientDestination,
+    String? operationalNotes,
     List<String>? safeSurgeryChecklist,
     List<String>? timeOutChecklist,
     bool? timeOutCompleted,
@@ -154,8 +170,13 @@ class AnesthesiaRecord {
       monitoringItems: monitoringItems ?? this.monitoringItems,
       surgicalSize: surgicalSize ?? this.surgicalSize,
       surgeryDescription: surgeryDescription ?? this.surgeryDescription,
+      surgeryPriority: surgeryPriority ?? this.surgeryPriority,
       surgeonName: surgeonName ?? this.surgeonName,
       assistantNames: assistantNames ?? this.assistantNames,
+      patientDestination: patientDestination ?? this.patientDestination,
+      otherPatientDestination:
+          otherPatientDestination ?? this.otherPatientDestination,
+      operationalNotes: operationalNotes ?? this.operationalNotes,
       safeSurgeryChecklist:
           safeSurgeryChecklist ?? this.safeSurgeryChecklist,
       timeOutChecklist: timeOutChecklist ?? this.timeOutChecklist,
@@ -192,8 +213,12 @@ class AnesthesiaRecord {
       'monitoringItems': monitoringItems,
       'surgicalSize': surgicalSize,
       'surgeryDescription': surgeryDescription,
+      'surgeryPriority': surgeryPriority,
       'surgeonName': surgeonName,
       'assistantNames': assistantNames,
+      'patientDestination': patientDestination,
+      'otherPatientDestination': otherPatientDestination,
+      'operationalNotes': operationalNotes,
       'safeSurgeryChecklist': safeSurgeryChecklist,
       'timeOutChecklist': timeOutChecklist,
       'timeOutCompleted': timeOutCompleted,
@@ -276,10 +301,14 @@ class AnesthesiaRecord {
           .toList(),
       surgicalSize: json['surgicalSize'] as String? ?? '',
       surgeryDescription: json['surgeryDescription'] as String? ?? '',
+      surgeryPriority: json['surgeryPriority'] as String? ?? '',
       surgeonName: json['surgeonName'] as String? ?? '',
       assistantNames: (json['assistantNames'] as List<dynamic>? ?? const [])
           .map((item) => item.toString())
           .toList(),
+      patientDestination: json['patientDestination'] as String? ?? '',
+      otherPatientDestination: json['otherPatientDestination'] as String? ?? '',
+      operationalNotes: json['operationalNotes'] as String? ?? '',
       safeSurgeryChecklist:
           (json['safeSurgeryChecklist'] as List<dynamic>? ?? const [])
               .map((item) => item.toString())

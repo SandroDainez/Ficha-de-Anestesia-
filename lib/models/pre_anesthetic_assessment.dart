@@ -28,10 +28,14 @@ class PreAnestheticAssessment {
     required this.fastingLiquids,
     this.fastingBreastMilk = '',
     required this.fastingNotes,
+    this.surgeryPriority = '',
     required this.asaClassification,
     required this.asaNotes,
     required this.anestheticPlan,
     required this.otherAnestheticPlan,
+    this.postoperativePlanningItems = const [],
+    this.otherPostoperativePlanning = '',
+    this.planningNotes = '',
     required this.restrictionItems,
     required this.patientRestrictions,
     required this.otherRestrictions,
@@ -64,10 +68,14 @@ class PreAnestheticAssessment {
         fastingLiquids = '',
         fastingBreastMilk = '',
         fastingNotes = '',
+        surgeryPriority = '',
         asaClassification = '',
         asaNotes = '',
         anestheticPlan = '',
         otherAnestheticPlan = '',
+        postoperativePlanningItems = const [],
+        otherPostoperativePlanning = '',
+        planningNotes = '',
         restrictionItems = const [],
         patientRestrictions = '',
         otherRestrictions = '';
@@ -98,10 +106,14 @@ class PreAnestheticAssessment {
   final String fastingLiquids;
   final String fastingBreastMilk;
   final String fastingNotes;
+  final String surgeryPriority;
   final String asaClassification;
   final String asaNotes;
   final String anestheticPlan;
   final String otherAnestheticPlan;
+  final List<String> postoperativePlanningItems;
+  final String otherPostoperativePlanning;
+  final String planningNotes;
   final List<String> restrictionItems;
   final String patientRestrictions;
   final String otherRestrictions;
@@ -133,10 +145,14 @@ class PreAnestheticAssessment {
     String? fastingLiquids,
     String? fastingBreastMilk,
     String? fastingNotes,
+    String? surgeryPriority,
     String? asaClassification,
     String? asaNotes,
     String? anestheticPlan,
     String? otherAnestheticPlan,
+    List<String>? postoperativePlanningItems,
+    String? otherPostoperativePlanning,
+    String? planningNotes,
     List<String>? restrictionItems,
     String? patientRestrictions,
     String? otherRestrictions,
@@ -175,10 +191,16 @@ class PreAnestheticAssessment {
       fastingLiquids: fastingLiquids ?? this.fastingLiquids,
       fastingBreastMilk: fastingBreastMilk ?? this.fastingBreastMilk,
       fastingNotes: fastingNotes ?? this.fastingNotes,
+      surgeryPriority: surgeryPriority ?? this.surgeryPriority,
       asaClassification: asaClassification ?? this.asaClassification,
       asaNotes: asaNotes ?? this.asaNotes,
       anestheticPlan: anestheticPlan ?? this.anestheticPlan,
       otherAnestheticPlan: otherAnestheticPlan ?? this.otherAnestheticPlan,
+      postoperativePlanningItems:
+          postoperativePlanningItems ?? this.postoperativePlanningItems,
+      otherPostoperativePlanning:
+          otherPostoperativePlanning ?? this.otherPostoperativePlanning,
+      planningNotes: planningNotes ?? this.planningNotes,
       restrictionItems: restrictionItems ?? this.restrictionItems,
       patientRestrictions: patientRestrictions ?? this.patientRestrictions,
       otherRestrictions: otherRestrictions ?? this.otherRestrictions,
@@ -214,10 +236,14 @@ class PreAnestheticAssessment {
       'fastingLiquids': fastingLiquids,
       'fastingBreastMilk': fastingBreastMilk,
       'fastingNotes': fastingNotes,
+      'surgeryPriority': surgeryPriority,
       'asaClassification': asaClassification,
       'asaNotes': asaNotes,
       'anestheticPlan': anestheticPlan,
       'otherAnestheticPlan': otherAnestheticPlan,
+      'postoperativePlanningItems': postoperativePlanningItems,
+      'otherPostoperativePlanning': otherPostoperativePlanning,
+      'planningNotes': planningNotes,
       'restrictionItems': restrictionItems,
       'patientRestrictions': patientRestrictions,
       'otherRestrictions': otherRestrictions,
@@ -272,10 +298,18 @@ class PreAnestheticAssessment {
       fastingLiquids: json['fastingLiquids'] as String? ?? '',
       fastingBreastMilk: json['fastingBreastMilk'] as String? ?? '',
       fastingNotes: json['fastingNotes'] as String? ?? '',
+      surgeryPriority: json['surgeryPriority'] as String? ?? '',
       asaClassification: json['asaClassification'] as String? ?? '',
       asaNotes: json['asaNotes'] as String? ?? '',
       anestheticPlan: json['anestheticPlan'] as String? ?? '',
       otherAnestheticPlan: json['otherAnestheticPlan'] as String? ?? '',
+      postoperativePlanningItems:
+          (json['postoperativePlanningItems'] as List<dynamic>? ?? const [])
+              .map((item) => item.toString())
+              .toList(),
+      otherPostoperativePlanning:
+          json['otherPostoperativePlanning'] as String? ?? '',
+      planningNotes: json['planningNotes'] as String? ?? '',
       restrictionItems: (json['restrictionItems'] as List<dynamic>? ?? const [])
           .map((item) => item.toString())
           .toList(),

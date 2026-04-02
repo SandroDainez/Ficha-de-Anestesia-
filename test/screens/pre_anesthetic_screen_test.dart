@@ -74,6 +74,50 @@ void main() {
     expect(find.text('Doença coronariana'), findsNothing);
   });
 
+  testWidgets('shows surgery priority and postoperative planning for adult pre-anesthetic screen', (
+    WidgetTester tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 2200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PreAnestheticScreen(
+          patient: const Patient(
+            name: 'Adulto',
+            age: 52,
+            weightKg: 82,
+            heightMeters: 1.75,
+            asa: 'III',
+            allergies: [],
+            restrictions: [],
+            medications: [],
+          ),
+          initialAssessment: const PreAnestheticAssessment.empty(),
+          initialConsultationDate: '',
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Classificação do caso'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Eletiva'), findsOneWidget);
+    expect(find.text('Urgência'), findsOneWidget);
+    expect(find.text('Emergência'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Planejamento pós-operatório e logística'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Planejamento pós-operatório e logística'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reserva de UTI'), findsOneWidget);
+    expect(find.text('Sangue tipado / prova cruzada'), findsOneWidget);
+    expect(find.text('Hemocomponentes disponíveis'), findsOneWidget);
+  });
+
   testWidgets('shows neonatal medication and exam guidance in pre-anesthetic screen', (
     WidgetTester tester,
   ) async {

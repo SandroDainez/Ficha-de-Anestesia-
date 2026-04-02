@@ -53,10 +53,14 @@ void main() {
         fastingSolids: '>8h',
         fastingLiquids: '>4h',
         fastingNotes: '',
+        surgeryPriority: 'Eletiva',
         asaClassification: 'II',
         asaNotes: '',
         anestheticPlan: 'Anestesia geral balanceada',
         otherAnestheticPlan: '',
+        postoperativePlanningItems: ['Reserva de UTI'],
+        otherPostoperativePlanning: 'Sangue reservado',
+        planningNotes: 'Chegou compensada.',
         restrictionItems: ['Nao aceita transfusao'],
         patientRestrictions: 'Nao aceita transfusao',
         otherRestrictions: '',
@@ -112,8 +116,12 @@ void main() {
       monitoringItems: ['ECG (5 derivações)', 'SpO₂'],
       surgicalSize: 'Medio porte',
       surgeryDescription: 'Colecistectomia',
+      surgeryPriority: 'Eletiva',
       surgeonName: 'Dr. Silva',
       assistantNames: ['Dra. Lima'],
+      patientDestination: 'RPA',
+      otherPatientDestination: 'Observação prolongada',
+      operationalNotes: 'Paciente chegou de enfermaria sem intercorrências.',
       safeSurgeryChecklist: ['Paciente identificado'],
       timeOutChecklist: ['Antibiotico realizado'],
       timeOutCompleted: true,
@@ -126,6 +134,8 @@ void main() {
 
     expect(restored.patient.name, 'Maria');
     expect(restored.preAnestheticAssessment.asaClassification, 'II');
+    expect(restored.preAnestheticAssessment.surgeryPriority, 'Eletiva');
+    expect(restored.preAnestheticAssessment.postoperativePlanningItems, ['Reserva de UTI']);
     expect(restored.airway.tubeNumber, '7.5');
     expect(restored.fluidBalance.totalBalance, 1000);
     expect(restored.hemodynamicEntries.single.formattedBloodPressure, '120 / 70');
@@ -137,6 +147,9 @@ void main() {
     expect(restored.prophylacticAntibiotics, ['Cefazolina|2 g|07:45']);
     expect(restored.fastingHours, '8');
     expect(restored.monitoringItems, ['ECG (5 derivações)', 'SpO₂']);
+    expect(restored.surgeryPriority, 'Eletiva');
+    expect(restored.patientDestination, 'RPA');
+    expect(restored.operationalNotes, 'Paciente chegou de enfermaria sem intercorrências.');
     expect(restored.timeOutCompleted, isTrue);
   });
 }

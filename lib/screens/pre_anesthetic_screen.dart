@@ -244,6 +244,11 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   static const List<String> _liquidFastingOptions = ['<2h', '2-4h', '>4h'];
   static const List<String> _breastMilkFastingOptions = ['<4h', '4-6h', '>6h'];
   static const List<String> _asaOptions = ['I', 'II', 'III', 'IV', 'V', 'VI'];
+  static const List<String> _surgeryPriorityOptions = [
+    'Eletiva',
+    'Urgência',
+    'Emergência',
+  ];
   static const List<String> _anestheticPlanOptions = [
     'Anestesia geral balanceada',
     'Raquianestesia',
@@ -266,6 +271,30 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     'Analgesia opioide titulada',
     'Bloqueio regional selecionado',
     'Plano pós-operatório em UTI',
+  ];
+  static const List<String> _adultPostoperativePlanningOptions = [
+    'Reserva de UTI',
+    'Sangue tipado / prova cruzada',
+    'Hemocomponentes disponíveis',
+    'Ventilação pós-operatória planejada',
+    'Monitorização prolongada',
+    'Parecer / seguimento em dor aguda',
+  ];
+  static const List<String> _pediatricPostoperativePlanningOptions = [
+    'Reserva de UTI pediátrica',
+    'Sangue compatibilizado disponível',
+    'Acompanhante no pós-operatório',
+    'Monitorização prolongada em RPA',
+    'Plano analgésico pediátrico',
+    'Observação respiratória ampliada',
+  ];
+  static const List<String> _neonatalPostoperativePlanningOptions = [
+    'Reserva de UTI neonatal',
+    'UCIN programada',
+    'Hemocomponentes disponíveis',
+    'Ventilação pós-operatória planejada',
+    'Termorregulação no transporte',
+    'Glicemia seriada',
   ];
   static const List<String> _restrictionOptions = [
     'Não aceita transfusão',
@@ -315,6 +344,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   late final TextEditingController _fastingNotesController;
   late final TextEditingController _asaNotesController;
   late final TextEditingController _otherAnestheticPlanController;
+  late final TextEditingController _otherPostoperativePlanningController;
+  late final TextEditingController _freeNotesController;
   late final TextEditingController _otherRestrictionsController;
   late final TextEditingController _consultationDateController;
 
@@ -322,6 +353,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   late Set<String> _selectedMedications;
   late Set<String> _selectedExamItems;
   late Set<String> _selectedAnestheticPlans;
+  late Set<String> _selectedPostoperativePlanningItems;
   late Set<String> _selectedRestrictions;
   late Set<String> _selectedDifficultAirwayPredictors;
   late Set<String> _selectedDifficultVentilationPredictors;
@@ -335,6 +367,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   String _selectedSolidFasting = '';
   String _selectedLiquidFasting = '';
   String _selectedBreastMilkFasting = '';
+  String _selectedSurgeryPriority = '';
   String _selectedAsa = '';
   late PatientPopulation _selectedPopulation;
 
@@ -863,6 +896,45 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     }
   }
 
+  List<String> get _profilePostoperativePlanningOptions {
+    switch (_selectedPopulation) {
+      case PatientPopulation.adult:
+        return _adultPostoperativePlanningOptions;
+      case PatientPopulation.pediatric:
+        return _pediatricPostoperativePlanningOptions;
+      case PatientPopulation.neonatal:
+        return _neonatalPostoperativePlanningOptions;
+    }
+  }
+
+  List<String> get _postoperativeGuidanceLines {
+    switch (_selectedPopulation) {
+      case PatientPopulation.adult:
+        return const [
+          'Antecipe necessidade de leito crítico, sangue, derivados, ventilação e analgesia de resgate.',
+        ];
+      case PatientPopulation.pediatric:
+        return const [
+          'Defina observação respiratória, analgesia pediátrica, necessidade de sangue compatibilizado e eventual UTI pediátrica.',
+        ];
+      case PatientPopulation.neonatal:
+        return const [
+          'Defina destino monitorizado, termorregulação, glicemia, ventilação pós-operatória e suporte neonatal avançado.',
+        ];
+    }
+  }
+
+  String get _freeNotesHint {
+    return switch (_selectedPopulation) {
+      PatientPopulation.adult =>
+        'Ex: paciente chegou hipertenso, cirurgia suspensa e motivo, necessidade de contato com hemoterapia',
+      PatientPopulation.pediatric =>
+        'Ex: criança chegou com tosse, responsável orientado, adiamento e motivo, intercorrência logística',
+      PatientPopulation.neonatal =>
+        'Ex: veio da UTI neonatal, em CPAP, atraso por incubadora, suspensão e motivo',
+    };
+  }
+
   List<String> get _allAnestheticPlanOptions {
     return {
       ..._anestheticPlanOptions,
@@ -1107,6 +1179,12 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     _otherAnestheticPlanController = TextEditingController(
       text: assessment.otherAnestheticPlan,
     );
+    _otherPostoperativePlanningController = TextEditingController(
+      text: assessment.otherPostoperativePlanning,
+    );
+    _freeNotesController = TextEditingController(
+      text: assessment.planningNotes,
+    );
     _otherRestrictionsController = TextEditingController(
       text: assessment.otherRestrictions,
     );
@@ -1129,6 +1207,15 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         .split('\n')
         .map((item) => item.trim())
         .where(_allAnestheticPlanOptions.contains)
+        .toSet();
+    _selectedPostoperativePlanningItems = assessment.postoperativePlanningItems
+        .where(
+          (item) => {
+            ..._adultPostoperativePlanningOptions,
+            ..._pediatricPostoperativePlanningOptions,
+            ..._neonatalPostoperativePlanningOptions,
+          }.contains(item),
+        )
         .toSet();
     _selectedRestrictions = assessment.restrictionItems
         .where(_allRestrictionOptions.contains)
@@ -1172,6 +1259,10 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         _breastMilkFastingOptions.contains(assessment.fastingBreastMilk)
             ? assessment.fastingBreastMilk
             : '';
+    _selectedSurgeryPriority =
+        _surgeryPriorityOptions.contains(assessment.surgeryPriority)
+            ? assessment.surgeryPriority
+            : '';
     _selectedAsa = _asaOptions.contains(assessment.asaClassification)
         ? assessment.asaClassification
         : widget.patient.asa;
@@ -1206,6 +1297,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     _fastingNotesController.dispose();
     _asaNotesController.dispose();
     _otherAnestheticPlanController.dispose();
+    _otherPostoperativePlanningController.dispose();
+    _freeNotesController.dispose();
     _otherRestrictionsController.dispose();
     _consultationDateController.dispose();
     super.dispose();
@@ -1371,10 +1464,15 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       fastingBreastMilk:
           _showBreastMilkFastingSection ? _selectedBreastMilkFasting : '',
       fastingNotes: _fastingNotesController.text.trim(),
+      surgeryPriority: _selectedSurgeryPriority,
       asaClassification: _selectedAsa,
       asaNotes: _asaNotesController.text.trim(),
       anestheticPlan: anestheticPlanLines.join('\n'),
       otherAnestheticPlan: _otherAnestheticPlanController.text.trim(),
+      postoperativePlanningItems: _selectedPostoperativePlanningItems.toList(),
+      otherPostoperativePlanning:
+          _otherPostoperativePlanningController.text.trim(),
+      planningNotes: _freeNotesController.text.trim(),
       restrictionItems: _selectedRestrictions.toList(),
       patientRestrictions: restrictionLines.join('\n'),
       otherRestrictions: _otherRestrictionsController.text.trim(),
@@ -1416,6 +1514,10 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                             onSelected: (_) {
                               setState(() {
                                 _selectedPopulation = item;
+                                _selectedPostoperativePlanningItems.removeWhere(
+                                  (value) =>
+                                      !_profilePostoperativePlanningOptions.contains(value),
+                                );
                                 if (!_showMallampatiSection) {
                                   _selectedMallampati = '';
                                 }
@@ -2238,6 +2340,32 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
             ),
           ),
           _SectionCard(
+            title: 'Classificação do caso',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildChoiceChips(
+                  options: _surgeryPriorityOptions,
+                  selectedValue: _selectedSurgeryPriority,
+                  onSelected: (value) {
+                    setState(() => _selectedSurgeryPriority = value);
+                  },
+                  color: const Color(0xFFCC3D3D),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _freeNotesController,
+                  minLines: 3,
+                  maxLines: 6,
+                  decoration: InputDecoration(
+                    labelText: 'Anotações livres do caso',
+                    hintText: _freeNotesHint,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _SectionCard(
             title: 'Classificação ASA',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2315,6 +2443,65 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Outros',
                     hintText: 'Detalhe analgesia, bloqueios e condutas adicionais',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _SectionCard(
+            title: 'Planejamento pós-operatório e logística',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFE),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE5ECF6)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: _postoperativeGuidanceLines
+                        .map(
+                          (line) => Padding(
+                            padding: const EdgeInsets.only(bottom: 2),
+                            child: Text(
+                              line,
+                              style: const TextStyle(
+                                color: Color(0xFF5D7288),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _buildFilterChips(
+                  options: _profilePostoperativePlanningOptions,
+                  selectedValues: _selectedPostoperativePlanningItems,
+                  color: const Color(0xFF169653),
+                  onToggle: (value) {
+                    setState(() {
+                      if (_selectedPostoperativePlanningItems.contains(value)) {
+                        _selectedPostoperativePlanningItems.remove(value);
+                      } else {
+                        _selectedPostoperativePlanningItems.add(value);
+                      }
+                    });
+                  },
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _otherPostoperativePlanningController,
+                  minLines: 2,
+                  maxLines: 5,
+                  decoration: const InputDecoration(
+                    labelText: 'Outros',
+                    hintText: 'Detalhe reserva de leito, hemoterapia, ventilação, transporte ou observações logísticas',
                   ),
                 ),
               ],

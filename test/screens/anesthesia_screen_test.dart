@@ -108,8 +108,11 @@ void main() {
       anesthesiologistCrm: '12345',
       anesthesiologistDetails: 'Equipe A',
       surgeryDescription: 'Colecistectomia',
+      surgeryPriority: 'Eletiva',
       surgeonName: 'Dr. Silva',
       assistantNames: const ['Dra. Lima'],
+      patientDestination: 'RPA',
+      operationalNotes: 'Paciente chegou em sala colaborativa.',
       timeOutChecklist: const ['Paciente identificado'],
       timeOutCompleted: true,
     );
@@ -645,11 +648,57 @@ void main() {
     expect(find.text('8 itens confirmados'), findsOneWidget);
   });
 
+  testWidgets('updates surgery priority destination and notes through surgery dialog', (
+    WidgetTester tester,
+  ) async {
+    await pumpScreen(tester, buildRecord());
+
+    await tester.tap(find.byKey(const Key('surgery-priority-entry')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Prioridade'), findsOneWidget);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Urgência'));
+    await tester.tap(find.byKey(const Key('surgery-save-button')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('surgery-destination-entry')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Destino pós-operatório'), findsWidgets);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'UTI'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('surgery-other-destination-field')),
+      'leito reservado',
+    );
+    await tester.tap(find.byKey(const Key('surgery-save-button')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('surgery-notes-entry')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Anotações operacionais'), findsWidgets);
+    await tester.enterText(
+      find.byKey(const Key('surgery-notes-field')),
+      'Paciente chegou com acesso periférico único.',
+    );
+    await tester.tap(find.byKey(const Key('surgery-save-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Urgência'), findsWidgets);
+    expect(find.textContaining('UTI • leito reservado'), findsOneWidget);
+    expect(
+      find.textContaining('Paciente chegou com acesso periférico único.'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('updates airway technique through the airway dialog', (
     WidgetTester tester,
   ) async {
     await pumpScreen(tester, buildRecord());
 
+    await tester.ensureVisible(find.byKey(const Key('airway-technique-entry')));
     await tester.tap(find.byKey(const Key('airway-technique-entry')));
     await tester.pumpAndSettle();
 
