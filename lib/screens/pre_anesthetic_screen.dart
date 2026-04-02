@@ -1371,6 +1371,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          _buildHeaderCard(),
+          const SizedBox(height: 12),
           _SectionCard(
             title: 'Identificação do paciente',
             initiallyExpanded: true,
@@ -2334,6 +2336,76 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
             style: FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(56),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFDCE6F2)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A17324D),
+            blurRadius: 18,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 12,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.asset(
+              'assets/images/gabs_logo.png',
+              width: 52,
+              height: 52,
+              fit: BoxFit.contain,
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'GABS',
+                style: TextStyle(
+                  color: Color(0xFF17324D),
+                  fontWeight: FontWeight.w900,
+                  fontSize: 20,
+                  letterSpacing: 0.4,
+                ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                'Grupo de Anestesiologistas da Baixada Santista',
+                style: TextStyle(
+                  color: Color(0xFF5F7288),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _selectedPopulation == PatientPopulation.adult
+                    ? 'Consulta pré-anestésica do adulto'
+                    : _selectedPopulation == PatientPopulation.pediatric
+                        ? 'Consulta pré-anestésica pediátrica'
+                        : 'Consulta pré-anestésica neonatal',
+                style: const TextStyle(
+                  color: Color(0xFF5F7288),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
         ],
       ),

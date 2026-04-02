@@ -5,6 +5,38 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('shows GABS header in pre-anesthetic screen', (
+    WidgetTester tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PreAnestheticScreen(
+          patient: const Patient(
+            name: 'Adulto',
+            age: 40,
+            weightKg: 70,
+            heightMeters: 1.7,
+            asa: 'II',
+            allergies: [],
+            restrictions: [],
+            medications: [],
+          ),
+          initialAssessment: const PreAnestheticAssessment.empty(),
+          initialConsultationDate: '',
+        ),
+      ),
+    );
+
+    expect(find.text('GABS'), findsOneWidget);
+    expect(
+      find.text('Grupo de Anestesiologistas da Baixada Santista'),
+      findsOneWidget,
+    );
+    expect(find.text('Consulta pré-anestésica do adulto'), findsOneWidget);
+  });
+
   testWidgets('shows pediatric antecedent guidance in pre-anesthetic screen', (
     WidgetTester tester,
   ) async {
@@ -440,7 +472,7 @@ void main() {
   testWidgets('syncs mouth opening and neck mobility with difficult airway predictors', (
     WidgetTester tester,
   ) async {
-    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       MaterialApp(
@@ -469,10 +501,8 @@ void main() {
     await tester.tap(find.text('Avaliação de via aérea'));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.widgetWithText(ChoiceChip, '2-3 dedos (3-5 cm)'));
     await tester.tap(find.widgetWithText(ChoiceChip, '2-3 dedos (3-5 cm)'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Limitada'));
     await tester.tap(find.widgetWithText(ChoiceChip, 'Limitada'));
     await tester.pumpAndSettle();
 
