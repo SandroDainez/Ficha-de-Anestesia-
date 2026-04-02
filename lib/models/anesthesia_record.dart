@@ -37,6 +37,7 @@ class AnesthesiaRecord {
     required this.safeSurgeryChecklist,
     required this.timeOutChecklist,
     required this.timeOutCompleted,
+    this.anesthesiologists = const [],
     required this.anesthesiologistName,
     required this.anesthesiologistCrm,
     required this.anesthesiologistDetails,
@@ -73,6 +74,7 @@ class AnesthesiaRecord {
         safeSurgeryChecklist = const [],
         timeOutChecklist = const [],
         timeOutCompleted = false,
+        anesthesiologists = const [],
         anesthesiologistName = '',
         anesthesiologistCrm = '',
         anesthesiologistDetails = '';
@@ -107,6 +109,7 @@ class AnesthesiaRecord {
   final List<String> safeSurgeryChecklist;
   final List<String> timeOutChecklist;
   final bool timeOutCompleted;
+  final List<String> anesthesiologists;
   final String anesthesiologistName;
   final String anesthesiologistCrm;
   final String anesthesiologistDetails;
@@ -142,6 +145,7 @@ class AnesthesiaRecord {
     List<String>? safeSurgeryChecklist,
     List<String>? timeOutChecklist,
     bool? timeOutCompleted,
+    List<String>? anesthesiologists,
     String? anesthesiologistName,
     String? anesthesiologistCrm,
     String? anesthesiologistDetails,
@@ -181,6 +185,7 @@ class AnesthesiaRecord {
           safeSurgeryChecklist ?? this.safeSurgeryChecklist,
       timeOutChecklist: timeOutChecklist ?? this.timeOutChecklist,
       timeOutCompleted: timeOutCompleted ?? this.timeOutCompleted,
+      anesthesiologists: anesthesiologists ?? this.anesthesiologists,
       anesthesiologistName:
           anesthesiologistName ?? this.anesthesiologistName,
       anesthesiologistCrm: anesthesiologistCrm ?? this.anesthesiologistCrm,
@@ -222,6 +227,7 @@ class AnesthesiaRecord {
       'safeSurgeryChecklist': safeSurgeryChecklist,
       'timeOutChecklist': timeOutChecklist,
       'timeOutCompleted': timeOutCompleted,
+      'anesthesiologists': anesthesiologists,
       'anesthesiologistName': anesthesiologistName,
       'anesthesiologistCrm': anesthesiologistCrm,
       'anesthesiologistDetails': anesthesiologistDetails,
@@ -317,6 +323,19 @@ class AnesthesiaRecord {
           .map((item) => item.toString())
           .toList(),
       timeOutCompleted: json['timeOutCompleted'] as bool? ?? false,
+      anesthesiologists: ((json['anesthesiologists'] as List<dynamic>?) ??
+                  (((json['anesthesiologistName'] as String? ?? '').trim().isEmpty &&
+                          (json['anesthesiologistCrm'] as String? ?? '').trim().isEmpty &&
+                          (json['anesthesiologistDetails'] as String? ?? '').trim().isEmpty)
+                      ? const <dynamic>[]
+                      : [
+                          '${json['anesthesiologistName'] as String? ?? ''}|'
+                              '${json['anesthesiologistCrm'] as String? ?? ''}|'
+                              '${json['anesthesiologistDetails'] as String? ?? ''}',
+                        ]))
+              .map((item) => item.toString())
+              .where((item) => item.trim().isNotEmpty)
+              .toList(),
       anesthesiologistName: json['anesthesiologistName'] as String? ?? '',
       anesthesiologistCrm: json['anesthesiologistCrm'] as String? ?? '',
       anesthesiologistDetails:

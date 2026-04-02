@@ -3,45 +3,32 @@ import 'package:flutter/services.dart';
 
 import '../models/patient.dart';
 
-class AnesthesiologistInfo {
-  const AnesthesiologistInfo({
-    required this.name,
-    required this.crm,
-    required this.details,
-  });
-
-  final String name;
-  final String crm;
-  final String details;
-}
-
-class AnesthesiologistDialog extends StatefulWidget {
-  const AnesthesiologistDialog({
+class AnesthesiologistsDialog extends StatefulWidget {
+  const AnesthesiologistsDialog({
     super.key,
-    required this.initialName,
-    required this.initialCrm,
-    required this.initialDetails,
+    required this.initialItems,
   });
 
-  final String initialName;
-  final String initialCrm;
-  final String initialDetails;
+  final List<String> initialItems;
 
   @override
-  State<AnesthesiologistDialog> createState() => _AnesthesiologistDialogState();
+  State<AnesthesiologistsDialog> createState() =>
+      _AnesthesiologistsDialogState();
 }
 
-class _AnesthesiologistDialogState extends State<AnesthesiologistDialog> {
+class _AnesthesiologistsDialogState extends State<AnesthesiologistsDialog> {
   late final TextEditingController _nameController;
   late final TextEditingController _crmController;
   late final TextEditingController _detailsController;
+  late List<String> _items;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.initialName);
-    _crmController = TextEditingController(text: widget.initialCrm);
-    _detailsController = TextEditingController(text: widget.initialDetails);
+    _nameController = TextEditingController();
+    _crmController = TextEditingController();
+    _detailsController = TextEditingController();
+    _items = List<String>.from(widget.initialItems);
   }
 
   @override
@@ -52,27 +39,50 @@ class _AnesthesiologistDialogState extends State<AnesthesiologistDialog> {
     super.dispose();
   }
 
+  String? _buildDraftItem() {
+    final name = _nameController.text.trim();
+    final crm = _crmController.text.trim();
+    final details = _detailsController.text.trim();
+    if (name.isEmpty && crm.isEmpty && details.isEmpty) return null;
+    if (name.isEmpty) return null;
+    return '$name|$crm|$details';
+  }
+
+  void _addDraft() {
+    final draft = _buildDraftItem();
+    if (draft == null) return;
+    setState(() {
+      _items = [..._items, draft];
+      _nameController.clear();
+      _crmController.clear();
+      _detailsController.clear();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Anestesiologista responsável'),
+      title: const Text('Anestesiologistas'),
       content: SizedBox(
-        width: 460,
+        width: 560,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
+                key: const Key('anesthesiologist-name-field'),
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Nome'),
               ),
               const SizedBox(height: 12),
               TextField(
+                key: const Key('anesthesiologist-crm-field'),
                 controller: _crmController,
                 decoration: const InputDecoration(labelText: 'CRM'),
               ),
               const SizedBox(height: 12),
               TextField(
+                key: const Key('anesthesiologist-details-field'),
                 controller: _detailsController,
                 maxLines: 3,
                 decoration: const InputDecoration(
@@ -80,6 +90,40 @@ class _AnesthesiologistDialogState extends State<AnesthesiologistDialog> {
                   hintText: 'Ex: UF, RQE, equipe, observações',
                 ),
               ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton.icon(
+                  key: const Key('anesthesiologist-add-button'),
+                  onPressed: _addDraft,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Adicionar anestesiologista'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              ..._items.asMap().entries.map((entry) {
+                final parts = entry.value.split('|');
+                final title = parts.isNotEmpty ? parts.first : '';
+                final subtitle = [
+                  if (parts.length > 1 && parts[1].trim().isNotEmpty)
+                    'CRM ${parts[1].trim()}',
+                  if (parts.length > 2 && parts[2].trim().isNotEmpty)
+                    parts[2].trim(),
+                ].join(' • ');
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(title),
+                  subtitle: subtitle.isEmpty ? null : Text(subtitle),
+                  trailing: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _items.removeAt(entry.key);
+                      });
+                    },
+                    icon: const Icon(Icons.delete_outline),
+                  ),
+                );
+              }),
             ],
           ),
         ),
@@ -90,13 +134,13 @@ class _AnesthesiologistDialogState extends State<AnesthesiologistDialog> {
           child: const Text('Cancelar'),
         ),
         FilledButton(
-          onPressed: () => Navigator.of(context).pop(
-            AnesthesiologistInfo(
-              name: _nameController.text.trim(),
-              crm: _crmController.text.trim(),
-              details: _detailsController.text.trim(),
-            ),
-          ),
+          key: const Key('anesthesiologist-save-button'),
+          onPressed: () {
+            final draft = _buildDraftItem();
+            Navigator.of(context).pop(
+              draft == null ? _items : [..._items, draft],
+            );
+          },
           child: const Text('Salvar'),
         ),
       ],

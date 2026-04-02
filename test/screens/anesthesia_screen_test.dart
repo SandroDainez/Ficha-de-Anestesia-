@@ -126,10 +126,10 @@ void main() {
     expect(find.text('GABS'), findsOneWidget);
     expect(find.text('Maria Souza'), findsOneWidget);
     expect(find.text('Colecistectomia'), findsOneWidget);
-    expect(find.text('Time-out finalizado'), findsOneWidget);
+    expect(find.text('Time-out finalizado'), findsWidgets);
     expect(find.text('Anestesia geral balanceada'), findsOneWidget);
     expect(find.text('+1050 mL'), findsOneWidget);
-    expect(find.text('VERIFICAR FICHA COM IA'), findsOneWidget);
+    expect(find.text('VERIFICAR PENDÊNCIAS'), findsOneWidget);
     expect(find.text('FINALIZAR CASO'), findsOneWidget);
   });
 
@@ -175,16 +175,16 @@ void main() {
     await pumpScreen(tester, buildRecord());
 
     await tester.scrollUntilVisible(
-      find.text('VERIFICAR FICHA COM IA'),
+      find.text('VERIFICAR PENDÊNCIAS'),
       300,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.text('VERIFICAR FICHA COM IA'));
+    await tester.tap(find.text('VERIFICAR PENDÊNCIAS'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 800));
     await tester.pumpAndSettle();
 
-    expect(find.text('Análise da ficha'), findsOneWidget);
+    expect(find.text('Pendências da ficha'), findsOneWidget);
     expect(
       find.text(
         'Ficha anestésica global consistente para revisão final, sem campos obrigatórios pendentes.',
@@ -223,6 +223,34 @@ void main() {
       find.byKey(const Key('hemo-start-surgery-button')),
     );
     expect(updatedSurgeryButton.onPressed, isNotNull);
+    expect(find.textContaining('Anestesia: '), findsWidgets);
+    expect(find.textContaining('Anestesia: Toque para informar'), findsNothing);
+  });
+
+  testWidgets('shows finish buttons for anesthesia and surgery markers', (
+    WidgetTester tester,
+  ) async {
+    final record = buildRecord().copyWith(
+      hemodynamicMarkers: const [],
+    );
+    await pumpScreen(tester, record);
+
+    await tester.ensureVisible(find.byKey(const Key('hemo-start-anesthesia-button')));
+    await tester.tap(find.byKey(const Key('hemo-start-anesthesia-button')));
+    await tester.pumpAndSettle();
+
+    final endAnesthesiaButton = tester.widget<OutlinedButton>(
+      find.byKey(const Key('hemo-end-anesthesia-button')),
+    );
+    expect(endAnesthesiaButton.onPressed, isNotNull);
+
+    await tester.tap(find.byKey(const Key('hemo-start-surgery-button')));
+    await tester.pumpAndSettle();
+
+    final endSurgeryButton = tester.widget<OutlinedButton>(
+      find.byKey(const Key('hemo-end-surgery-button')),
+    );
+    expect(endSurgeryButton.onPressed, isNotNull);
   });
 
   testWidgets('hemodynamic area toggles between register and correction modes', (
@@ -501,8 +529,8 @@ void main() {
   ) async {
     await pumpScreen(tester, buildRecord());
 
-    await tester.ensureVisible(find.byKey(const Key('antibiotic-entry')));
-    await tester.tap(find.byKey(const Key('antibiotic-entry')));
+    await tester.ensureVisible(find.byKey(const Key('antibiotic-entry')).first);
+    await tester.tap(find.byKey(const Key('antibiotic-entry')).first);
     await tester.pumpAndSettle();
 
     expect(find.text('Editar Antibiótico profilaxia'), findsOneWidget);
@@ -617,7 +645,7 @@ void main() {
     );
     await pumpScreen(tester, record);
 
-    await tester.tap(find.byKey(const Key('surgery-timeout-entry')));
+    await tester.tap(find.byKey(const Key('surgery-timeout-entry')).first);
     await tester.pumpAndSettle();
 
     expect(find.text('Time-out'), findsOneWidget);
@@ -644,8 +672,8 @@ void main() {
     await tester.tap(find.byKey(const Key('surgery-save-button')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Time-out finalizado'), findsOneWidget);
-    expect(find.text('8 itens confirmados'), findsOneWidget);
+    expect(find.text('Time-out finalizado'), findsWidgets);
+    expect(find.text('8 itens confirmados'), findsWidgets);
   });
 
   testWidgets('updates surgery priority destination and notes through surgery dialog', (
@@ -653,7 +681,7 @@ void main() {
   ) async {
     await pumpScreen(tester, buildRecord());
 
-    await tester.tap(find.byKey(const Key('surgery-priority-entry')));
+    await tester.tap(find.byKey(const Key('surgery-priority-entry')).first);
     await tester.pumpAndSettle();
 
     expect(find.text('Prioridade'), findsOneWidget);
@@ -661,7 +689,7 @@ void main() {
     await tester.tap(find.byKey(const Key('surgery-save-button')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('surgery-destination-entry')));
+    await tester.tap(find.byKey(const Key('surgery-destination-entry')).first);
     await tester.pumpAndSettle();
 
     expect(find.text('Destino pós-operatório'), findsWidgets);
@@ -674,10 +702,10 @@ void main() {
     await tester.tap(find.byKey(const Key('surgery-save-button')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('surgery-notes-entry')));
+    await tester.tap(find.byKey(const Key('surgery-notes-entry')).first);
     await tester.pumpAndSettle();
 
-    expect(find.text('Anotações operacionais'), findsWidgets);
+    expect(find.text('Chegada ao centro cirúrgico e anotações'), findsWidgets);
     await tester.enterText(
       find.byKey(const Key('surgery-notes-field')),
       'Paciente chegou com acesso periférico único.',
@@ -792,5 +820,31 @@ void main() {
     expect(find.text('09:30'), findsOneWidget);
     expect(find.text('EXTUBAÇÃO'), findsOneWidget);
     expect(find.text('Sem intercorrências na saída'), findsOneWidget);
+  });
+
+  testWidgets('saves pending typed event even without pressing add', (
+    WidgetTester tester,
+  ) async {
+    await pumpScreen(tester, buildRecord());
+
+    await tester.ensureVisible(find.byKey(const Key('events-entry')));
+    await tester.tap(find.byKey(const Key('events-entry')));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byKey(const Key('event-time-field')), '09:45');
+    await tester.enterText(
+      find.byKey(const Key('event-custom-field')),
+      'Chegada em RPA',
+    );
+    await tester.enterText(
+      find.byKey(const Key('event-details-field')),
+      'Paciente estável na transferência.',
+    );
+    await tester.tap(find.byKey(const Key('event-save-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('09:45'), findsOneWidget);
+    expect(find.text('CHEGADA EM RPA'), findsOneWidget);
+    expect(find.text('Paciente estável na transferência.'), findsOneWidget);
   });
 }

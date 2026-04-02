@@ -5,20 +5,12 @@ import '../models/record_analysis.dart';
 class FooterBar extends StatelessWidget {
   const FooterBar({
     super.key,
-    required this.anesthesiologistName,
-    required this.anesthesiologistCrm,
-    required this.anesthesiologistDetails,
-    required this.onDoctorTap,
     required this.onExportPressed,
     required this.onVerifyPressed,
     required this.onFinalizePressed,
     required this.onExportJsonPressed,
   });
 
-  final String anesthesiologistName;
-  final String anesthesiologistCrm;
-  final String anesthesiologistDetails;
-  final Future<void> Function() onDoctorTap;
   final Future<void> Function() onExportPressed;
   final Future<void> Function() onVerifyPressed;
   final Future<void> Function() onFinalizePressed;
@@ -32,19 +24,10 @@ class FooterBar extends StatelessWidget {
       children: [
         SizedBox(
           width: 280,
-          child: DoctorCard(
-            name: anesthesiologistName,
-            crm: anesthesiologistCrm,
-            details: anesthesiologistDetails,
-            onTap: onDoctorTap,
-          ),
-        ),
-        SizedBox(
-          width: 280,
           child: PrimaryFooterButton(
             key: const Key('export-case-button'),
-            label: 'EXPORTAR PDF',
-            subtitle: 'Salvar ou compartilhar',
+            label: 'EXPORTAR FICHA COMPLETA',
+            subtitle: 'Anestesia + pré-anestésico',
             color: const Color(0xFF5A6F86),
             onPressed: onExportPressed,
           ),
@@ -53,8 +36,8 @@ class FooterBar extends StatelessWidget {
           width: 280,
           child: PrimaryFooterButton(
             key: const Key('export-case-json-button'),
-            label: 'EXPORTAR JSON',
-            subtitle: 'Dados estruturados',
+            label: 'EXPORTAR RESUMO COMPLETO',
+            subtitle: 'Anestesia + pré-anestésico',
             color: const Color(0xFF5A6F86),
             onPressed: onExportJsonPressed,
           ),
@@ -63,8 +46,8 @@ class FooterBar extends StatelessWidget {
           width: 360,
           child: PrimaryFooterButton(
             key: const Key('verify-record-button'),
-            label: 'VERIFICAR FICHA COM IA',
-            subtitle: 'Auditoria automática',
+            label: 'VERIFICAR PENDÊNCIAS',
+            subtitle: 'Checagem da ficha',
             color: const Color(0xFF2B76D2),
             onPressed: onVerifyPressed,
           ),
@@ -129,92 +112,6 @@ class PrimaryFooterButton extends StatelessWidget {
   }
 }
 
-class DoctorCard extends StatelessWidget {
-  const DoctorCard({
-    super.key,
-    required this.name,
-    required this.crm,
-    required this.details,
-    required this.onTap,
-  });
-
-  final String name;
-  final String crm;
-  final String details;
-  final Future<void> Function() onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final displayName = name.trim().isEmpty ? 'Toque para preencher' : name;
-    final displaySubtitle = [
-      if (crm.trim().isNotEmpty) 'CRM $crm',
-      if (details.trim().isNotEmpty) details,
-    ].join(' • ');
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          height: 72,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFDCE6F2)),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.person, color: Color(0xFF2B76D2)),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'ANESTESIOLOGISTA RESPONSÁVEL',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Color(0xFF2B76D2),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      displayName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFF17324D),
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    if (displaySubtitle.isNotEmpty)
-                      Text(
-                        displaySubtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFF5D7288),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class RecordAnalysisDialog extends StatelessWidget {
   const RecordAnalysisDialog({
     super.key,
@@ -238,7 +135,7 @@ class RecordAnalysisDialog extends StatelessWidget {
             color: headerColor,
           ),
           const SizedBox(width: 8),
-          const Expanded(child: Text('Análise da ficha')),
+          const Expanded(child: Text('Pendências da ficha')),
         ],
       ),
       content: SizedBox(

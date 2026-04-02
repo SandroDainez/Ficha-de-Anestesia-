@@ -196,7 +196,7 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
       SurgeryInfoSection.surgeon => 'Cirurgião',
       SurgeryInfoSection.assistants => 'Auxiliares',
       SurgeryInfoSection.destination => 'Destino pós-operatório',
-      SurgeryInfoSection.notes => 'Anotações operacionais',
+      SurgeryInfoSection.notes => 'Chegada ao centro cirúrgico e anotações',
       SurgeryInfoSection.checklist => 'Protocolo de cirurgia segura',
       SurgeryInfoSection.timeOut => 'Time-out',
       SurgeryInfoSection.all => 'Cirurgia e checklist',
@@ -324,8 +324,8 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
                   minLines: 3,
                   maxLines: 6,
                   decoration: const InputDecoration(
-                    labelText: 'Anotações operacionais',
-                    hintText: 'Ex: paciente chegou em VM, cirurgia suspensa e motivo, intercorrências logísticas',
+                    labelText: 'Chegada ao centro cirúrgico e anotações',
+                    hintText: 'Ex: paciente chegou em VM/oxigênio, vindo da UTI, cirurgia suspensa e motivo, intercorrências logísticas',
                   ),
                 ),
               if (showNotes && (showChecklist || showTimeOut))

@@ -274,26 +274,28 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   ];
   static const List<String> _adultPostoperativePlanningOptions = [
     'Reserva de UTI',
-    'Sangue tipado / prova cruzada',
-    'Hemocomponentes disponíveis',
+    'Tipagem / pesquisa de anticorpos',
+    'Prova cruzada / hemácias reservadas',
+    'Hemocomponentes adicionais disponíveis',
     'Ventilação pós-operatória planejada',
     'Monitorização prolongada',
-    'Parecer / seguimento em dor aguda',
+    'Dor aguda / PCA planejada',
   ];
   static const List<String> _pediatricPostoperativePlanningOptions = [
-    'Reserva de UTI pediátrica',
+    'UTI pediátrica planejada',
     'Sangue compatibilizado disponível',
-    'Acompanhante no pós-operatório',
-    'Monitorização prolongada em RPA',
+    'Observação respiratória prolongada',
+    'Monitorização prolongada em RPA pediátrica',
     'Plano analgésico pediátrico',
-    'Observação respiratória ampliada',
+    'Ventilação pós-operatória planejada',
   ];
   static const List<String> _neonatalPostoperativePlanningOptions = [
     'Reserva de UTI neonatal',
     'UCIN programada',
     'Hemocomponentes disponíveis',
     'Ventilação pós-operatória planejada',
-    'Termorregulação no transporte',
+    'Monitorização de apneia/bradicardia',
+    'Termorregulação e transporte aquecido',
     'Glicemia seriada',
   ];
   static const List<String> _restrictionOptions = [
@@ -911,15 +913,18 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     switch (_selectedPopulation) {
       case PatientPopulation.adult:
         return const [
-          'Antecipe necessidade de leito crítico, sangue, derivados, ventilação e analgesia de resgate.',
+          'Planeje leito crítico quando houver ventilação pós-operatória, instabilidade hemodinâmica esperada, grande porte ou risco elevado de sangramento.',
+          'Tipagem, prova cruzada e hemocomponentes devem seguir risco do paciente/procedimento e protocolo local de hemoterapia, não reserva rotineira indiscriminada.',
         ];
       case PatientPopulation.pediatric:
         return const [
-          'Defina observação respiratória, analgesia pediátrica, necessidade de sangue compatibilizado e eventual UTI pediátrica.',
+          'Planeje observação prolongada ou internação monitorizada em ex-prematuros, lactentes pequenos, OSA, cardiopatia, via aérea difícil ou uso relevante de opioides.',
+          'Sangue compatibilizado e UTI pediátrica devem ser antecipados conforme risco hemorrágico, cirurgia e reserva fisiológica.',
         ];
       case PatientPopulation.neonatal:
         return const [
-          'Defina destino monitorizado, termorregulação, glicemia, ventilação pós-operatória e suporte neonatal avançado.',
+          'Ex-prematuros com idade pós-conceptual baixa, RN a termo com poucas semanas de vida, apneia prévia ou suporte respiratório recente exigem planejamento de monitorização ampliada.',
+          'Defina previamente UTI/UCIN, termorregulação, glicemia, ventilação pós-operatória e disponibilidade de hemocomponentes quando o risco justificar.',
         ];
     }
   }

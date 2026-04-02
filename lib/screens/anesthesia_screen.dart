@@ -576,6 +576,25 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return '$destination • $other';
   }
 
+  List<String> get _anesthesiologistEntries {
+    if (_record.anesthesiologists.isNotEmpty) return _record.anesthesiologists;
+    final legacy = [
+      _record.anesthesiologistName.trim(),
+      _record.anesthesiologistCrm.trim(),
+      _record.anesthesiologistDetails.trim(),
+    ];
+    if (legacy.every((item) => item.isEmpty)) return const [];
+    return ['${legacy[0]}|${legacy[1]}|${legacy[2]}'];
+  }
+
+  String get _displayAnesthesiologists {
+    if (_anesthesiologistEntries.isEmpty) return 'Toque para preencher';
+    return _anesthesiologistEntries
+        .map((item) => item.split('|').first.trim())
+        .where((item) => item.isNotEmpty)
+        .join(', ');
+  }
+
   double get _documentedLossesMl {
     double parse(String value) =>
         double.tryParse(value.trim().replaceAll(',', '.')) ?? 0;
@@ -740,6 +759,14 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   DateTime? get _hemodynamicSurgeryStartAt => _hemodynamicService
       .markerStartAt(_record.hemodynamicMarkers, 'Início da cirurgia');
 
+  bool get _hasAnesthesiaEndMarker => _record.hemodynamicMarkers.any(
+        (item) => item.label == 'Fim da anestesia',
+      );
+
+  bool get _hasSurgeryEndMarker => _record.hemodynamicMarkers.any(
+        (item) => item.label == 'Fim da cirurgia',
+      );
+
   String get _paiSummary {
     if (_latestPaiPoint != null) {
       return _latestPaiPoint!.value.round().toString();
@@ -790,11 +817,15 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
 
   String _nowLabel() {
     final now = DateTime.now();
-    final day = now.day.toString().padLeft(2, '0');
-    final month = now.month.toString().padLeft(2, '0');
-    final year = now.year.toString();
-    final hour = now.hour.toString().padLeft(2, '0');
-    final minute = now.minute.toString().padLeft(2, '0');
+    return _formatDateTimeLabel(now);
+  }
+
+  String _formatDateTimeLabel(DateTime value) {
+    final day = value.day.toString().padLeft(2, '0');
+    final month = value.month.toString().padLeft(2, '0');
+    final year = value.year.toString();
+    final hour = value.hour.toString().padLeft(2, '0');
+    final minute = value.minute.toString().padLeft(2, '0');
     return '$day/$month/$year $hour:$minute';
   }
 
@@ -857,6 +888,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
 
     setState(() {
       _record = _record.copyWith(hemodynamicMarkers: updatedMarkers);
+      if (label == 'Início da anestesia') {
+        _anesthesiaDate = _formatDateTimeLabel(now);
+      }
     });
     _startHemodynamicTickerIfNeeded();
     await _persistRecord();
@@ -1024,6 +1058,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       context: context,
       builder: (_) => _ExportCaseDialog(
         onPreviewPressed: () => _previewPdf(bytes),
+        onPrintPressed: () => _previewPdf(bytes),
         onSharePressed: () => _sharePdf(bytes, filename),
       ),
     );
@@ -1039,7 +1074,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     if (!mounted) return;
     await showDialog<void>(
       context: context,
-      builder: (_) => JsonExportDialog(json: jsonText, subject: subject),
+      builder: (_) => JsonExportDialog(content: jsonText, subject: subject),
     );
   }
 
@@ -1736,23 +1771,23 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     await _persistRecord();
   }
 
-  Future<void> _editAnesthesiologist() async {
-    final result = await showDialog<AnesthesiologistInfo>(
+  Future<void> _editAnesthesiologists() async {
+    final result = await showDialog<List<String>>(
       context: context,
-      builder: (_) => AnesthesiologistDialog(
-        initialName: _record.anesthesiologistName,
-        initialCrm: _record.anesthesiologistCrm,
-        initialDetails: _record.anesthesiologistDetails,
+      builder: (_) => AnesthesiologistsDialog(
+        initialItems: _anesthesiologistEntries,
       ),
     );
 
     if (result == null) return;
 
+    final first = result.isEmpty ? ['', '', ''] : [...result.first.split('|'), '', '', ''];
     setState(() {
       _record = _record.copyWith(
-        anesthesiologistName: result.name,
-        anesthesiologistCrm: result.crm,
-        anesthesiologistDetails: result.details,
+        anesthesiologists: result,
+        anesthesiologistName: first[0].trim(),
+        anesthesiologistCrm: first[1].trim(),
+        anesthesiologistDetails: first[2].trim(),
       );
     });
     await _persistRecord();
@@ -1825,10 +1860,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                           ),
                     const SizedBox(height: 12),
                     FooterBar(
-                      anesthesiologistName: _record.anesthesiologistName,
-                      anesthesiologistCrm: _record.anesthesiologistCrm,
-                      anesthesiologistDetails: _record.anesthesiologistDetails,
-                      onDoctorTap: _editAnesthesiologist,
                       onExportPressed: _exportCasePdf,
                       onVerifyPressed: _runAiAnalysis,
                       onFinalizePressed: _finalizarCaso,
@@ -1978,6 +2009,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         const SizedBox(height: 12),
         _buildSurgeryPlanningStrip(),
         const SizedBox(height: 12),
+        _buildSurgeryNotesStrip(),
+        const SizedBox(height: 12),
         _buildEqualWidthTripletRow(
           first: _buildTimeOutCard(),
           second: _buildAntibioticProphylaxisCard(),
@@ -2100,13 +2133,28 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         section: SurgeryInfoSection.assistants,
       ),
       third: _buildSurgerySummaryCard(
+        key: const Key('surgery-anesthesiologists-card'),
+        tapKey: const Key('surgery-anesthesiologists-entry'),
+        title: 'Anestesiologistas',
+        icon: Icons.badge_outlined,
+        value: _displayAnesthesiologists,
+        onTap: _editAnesthesiologists,
+      ),
+    );
+  }
+
+  Widget _buildSurgeryNotesStrip() {
+    return _buildEqualWidthTripletRow(
+      first: _buildSurgerySummaryCard(
         key: const Key('surgery-notes-card'),
         tapKey: const Key('surgery-notes-entry'),
-        title: 'Anotações',
+        title: 'Chegada ao CC / anotações',
         icon: Icons.note_alt_outlined,
         value: _valueOrPlaceholder(_record.operationalNotes),
         section: SurgeryInfoSection.notes,
       ),
+      second: _buildTimeOutCard(),
+      third: _buildAntibioticProphylaxisCard(),
     );
   }
 
@@ -2407,6 +2455,10 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           : _latestSpo2Point!.value.round().toString(),
       onAddAnesthesiaStart: () => _addHemodynamicMarker('Início da anestesia'),
       onAddSurgeryStart: () => _addHemodynamicMarker('Início da cirurgia'),
+      onAddAnesthesiaEnd: () => _addHemodynamicMarker('Fim da anestesia'),
+      onAddSurgeryEnd: () => _addHemodynamicMarker('Fim da cirurgia'),
+      hasAnesthesiaEndMarker: _hasAnesthesiaEndMarker,
+      hasSurgeryEndMarker: _hasSurgeryEndMarker,
       onToggleRemoveMode: () {
         setState(() {
           _inlineHemodynamicRemoveMode = !_inlineHemodynamicRemoveMode;
@@ -2494,9 +2546,17 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         section: SurgeryInfoSection.destination,
       ),
       _buildSurgerySummaryCard(
+        key: const Key('surgery-anesthesiologists-card'),
+        tapKey: const Key('surgery-anesthesiologists-entry'),
+        title: 'Anestesiologistas',
+        icon: Icons.badge_outlined,
+        value: _displayAnesthesiologists,
+        onTap: _editAnesthesiologists,
+      ),
+      _buildSurgerySummaryCard(
         key: const Key('surgery-notes-card'),
         tapKey: const Key('surgery-notes-entry'),
-        title: 'Anotações',
+        title: 'Chegada ao CC / anotações',
         icon: Icons.note_alt_outlined,
         value: _valueOrPlaceholder(_record.operationalNotes),
         section: SurgeryInfoSection.notes,
@@ -2533,13 +2593,22 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           children: [
             Expanded(child: cards[3]),
             const SizedBox(width: 12),
-            Expanded(child: cards[4]),
-            const SizedBox(width: 12),
             Expanded(child: cards[5]),
+            const SizedBox(width: 12),
+            Expanded(child: cards[4]),
           ],
         ),
         const SizedBox(height: 12),
-        cards[6],
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: cards[6]),
+            const SizedBox(width: 12),
+            Expanded(child: cards[7]),
+            const SizedBox(width: 12),
+            const Expanded(child: SizedBox()),
+          ],
+        ),
       ],
     );
   }
@@ -2550,7 +2619,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     required String title,
     required IconData icon,
     required String value,
-    required SurgeryInfoSection section,
+    SurgeryInfoSection? section,
+    VoidCallback? onTap,
   }) {
     return PanelCard(
       key: key,
@@ -2560,7 +2630,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       child: InkWell(
         key: tapKey,
         borderRadius: BorderRadius.circular(10),
-        onTap: () => _editSurgerySection(section),
+        onTap: onTap ?? (section == null ? null : () => _editSurgerySection(section)),
         child: SizedBox(
           width: double.infinity,
           child: Text(
@@ -3229,6 +3299,20 @@ class _HemodynamicDialogState extends State<HemodynamicDialog> {
     }
   }
 
+  HemodynamicMarker? get _surgeryStartMarker {
+    try {
+      return _markers.firstWhere((item) => item.label == 'Início da cirurgia');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  bool get _hasSurgeryEndMarker =>
+      _markers.any((item) => item.label == 'Fim da cirurgia');
+
+  bool get _hasAnesthesiaEndMarker =>
+      _markers.any((item) => item.label == 'Fim da anestesia');
+
   DateTime? get _anesthesiaStartAt {
     final marker = _anesthesiaStartMarker;
     if (marker == null || marker.recordedAtIso.trim().isEmpty) return null;
@@ -3415,16 +3499,34 @@ class _HemodynamicDialogState extends State<HemodynamicDialog> {
                 runSpacing: 8,
                 children: [
                   FilledButton.icon(
-                    onPressed: () => _addMarker('Início da anestesia'),
+                    onPressed: _anesthesiaStartMarker == null
+                        ? () => _addMarker('Início da anestesia')
+                        : null,
                     icon: const Icon(Icons.flag_outlined),
                     label: const Text('Início da anestesia'),
                   ),
                   FilledButton.icon(
                     onPressed: _anesthesiaStartMarker == null
+                            || _surgeryStartMarker != null
                         ? null
                         : () => _addMarker('Início da cirurgia'),
                     icon: const Icon(Icons.flag),
                     label: const Text('Início da cirurgia'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _surgeryStartMarker == null || _hasSurgeryEndMarker
+                        ? null
+                        : () => _addMarker('Fim da cirurgia'),
+                    icon: const Icon(Icons.stop_circle_outlined),
+                    label: const Text('Fim da cirurgia'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed:
+                        _anesthesiaStartMarker == null || _hasAnesthesiaEndMarker
+                            ? null
+                            : () => _addMarker('Fim da anestesia'),
+                    icon: const Icon(Icons.stop_circle),
+                    label: const Text('Fim da anestesia'),
                   ),
                   OutlinedButton.icon(
                     onPressed: _points.isEmpty ? null : _undoLastPoint,
@@ -4610,18 +4712,20 @@ class _FluidEntryList extends StatelessWidget {
 class _ExportCaseDialog extends StatelessWidget {
   const _ExportCaseDialog({
     required this.onPreviewPressed,
+    required this.onPrintPressed,
     required this.onSharePressed,
   });
 
   final Future<void> Function() onPreviewPressed;
+  final Future<void> Function() onPrintPressed;
   final Future<void> Function() onSharePressed;
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Exportar ficha'),
+      title: const Text('Exportar ficha completa'),
       content: const Text(
-        'Você pode visualizar ou imprimir o PDF, ou compartilhar/salvar o arquivo no computador, WhatsApp ou email.',
+        'O arquivo reúne a ficha de anestesia e, abaixo dela, o pré-anestésico completo.',
       ),
       actions: [
         TextButton(
@@ -4634,7 +4738,15 @@ class _ExportCaseDialog extends StatelessWidget {
             await onPreviewPressed();
           },
           icon: const Icon(Icons.picture_as_pdf_outlined),
-          label: const Text('Visualizar / imprimir'),
+          label: const Text('Visualizar'),
+        ),
+        OutlinedButton.icon(
+          onPressed: () async {
+            Navigator.of(context).pop();
+            await onPrintPressed();
+          },
+          icon: const Icon(Icons.print_outlined),
+          label: const Text('Imprimir'),
         ),
         FilledButton.icon(
           onPressed: () async {

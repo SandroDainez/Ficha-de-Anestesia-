@@ -317,6 +317,7 @@ class _EventsDialogState extends State<EventsDialog> {
   late List<String> _items;
   late String _selectedEvent;
   late final TextEditingController _timeController;
+  late final TextEditingController _customEventController;
   late final TextEditingController _detailsController;
 
   @override
@@ -325,27 +326,36 @@ class _EventsDialogState extends State<EventsDialog> {
     _items = List<String>.from(widget.initialItems);
     _selectedEvent = '';
     _timeController = TextEditingController();
+    _customEventController = TextEditingController();
     _detailsController = TextEditingController();
   }
 
   @override
   void dispose() {
     _timeController.dispose();
+    _customEventController.dispose();
     _detailsController.dispose();
     super.dispose();
   }
 
-  void _addItem() {
+  String? _buildDraftItem() {
     final event = _selectedEvent.isNotEmpty
         ? _selectedEvent
-        : _detailsController.text.trim();
-    if (event.isEmpty) return;
+        : _customEventController.text.trim();
+    final details = _detailsController.text.trim();
+    final time = _timeController.text.trim();
+    if (event.isEmpty && details.isEmpty && time.isEmpty) return null;
+    if (event.isEmpty) return null;
+    return '$time|$event|$details';
+  }
 
-    final encoded =
-        '${_timeController.text.trim()}|$event|${_detailsController.text.trim()}';
+  void _commitDraftIfNeeded() {
+    final encoded = _buildDraftItem();
+    if (encoded == null) return;
     setState(() {
       _items = [..._items, encoded];
       _timeController.clear();
+      _customEventController.clear();
       _detailsController.clear();
       _selectedEvent = '';
     });
@@ -390,21 +400,29 @@ class _EventsDialogState extends State<EventsDialog> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: TextField(
-                      key: const Key('event-details-field'),
-                      controller: _detailsController,
+                      key: const Key('event-custom-field'),
+                      controller: _customEventController,
                       decoration: const InputDecoration(
-                        labelText: 'Detalhes / outros',
+                        labelText: 'Evento / outro',
                       ),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
+              TextField(
+                key: const Key('event-details-field'),
+                controller: _detailsController,
+                decoration: const InputDecoration(
+                  labelText: 'Detalhes',
+                ),
+              ),
+              const SizedBox(height: 12),
               Align(
                 alignment: Alignment.centerRight,
                 child: FilledButton.icon(
                   key: const Key('event-add-button'),
-                  onPressed: _addItem,
+                  onPressed: _commitDraftIfNeeded,
                   icon: const Icon(Icons.add),
                   label: const Text('Adicionar evento'),
                 ),
@@ -435,7 +453,12 @@ class _EventsDialogState extends State<EventsDialog> {
         ),
         FilledButton(
           key: const Key('event-save-button'),
-          onPressed: () => Navigator.of(context).pop(_items),
+          onPressed: () {
+            final pending = _buildDraftItem();
+            Navigator.of(context).pop(
+              pending == null ? _items : [..._items, pending],
+            );
+          },
           child: const Text('Salvar'),
         ),
       ],

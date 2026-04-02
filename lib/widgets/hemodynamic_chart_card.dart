@@ -23,6 +23,10 @@ class HemodynamicChartCard extends StatelessWidget {
     required this.latestSpo2,
     required this.onAddAnesthesiaStart,
     required this.onAddSurgeryStart,
+    required this.onAddAnesthesiaEnd,
+    required this.onAddSurgeryEnd,
+    required this.hasAnesthesiaEndMarker,
+    required this.hasSurgeryEndMarker,
     required this.onToggleRemoveMode,
     required this.onManualEntry,
     required this.onSelectType,
@@ -48,6 +52,10 @@ class HemodynamicChartCard extends StatelessWidget {
   final String latestSpo2;
   final VoidCallback onAddAnesthesiaStart;
   final VoidCallback onAddSurgeryStart;
+  final VoidCallback onAddAnesthesiaEnd;
+  final VoidCallback onAddSurgeryEnd;
+  final bool hasAnesthesiaEndMarker;
+  final bool hasSurgeryEndMarker;
   final VoidCallback onToggleRemoveMode;
   final VoidCallback onManualEntry;
   final ValueChanged<String> onSelectType;
@@ -135,6 +143,22 @@ class HemodynamicChartCard extends StatelessWidget {
                             ),
                             icon: const Icon(Icons.flag),
                             label: const Text('Início da cirurgia'),
+                          ),
+                          OutlinedButton.icon(
+                            key: const Key('hemo-end-surgery-button'),
+                            onPressed: !hasSurgeryStartMarker || hasSurgeryEndMarker
+                                ? null
+                                : onAddSurgeryEnd,
+                            icon: const Icon(Icons.stop_circle_outlined),
+                            label: const Text('Fim da cirurgia'),
+                          ),
+                          OutlinedButton.icon(
+                            key: const Key('hemo-end-anesthesia-button'),
+                            onPressed: !hasAnesthesiaStartMarker || hasAnesthesiaEndMarker
+                                ? null
+                                : onAddAnesthesiaEnd,
+                            icon: const Icon(Icons.stop_circle),
+                            label: const Text('Fim da anestesia'),
                           ),
                         ],
                       ),

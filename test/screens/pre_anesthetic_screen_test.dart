@@ -114,8 +114,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Reserva de UTI'), findsOneWidget);
-    expect(find.text('Sangue tipado / prova cruzada'), findsOneWidget);
-    expect(find.text('Hemocomponentes disponíveis'), findsOneWidget);
+    expect(find.text('Tipagem / pesquisa de anticorpos'), findsOneWidget);
+    expect(find.text('Prova cruzada / hemácias reservadas'), findsOneWidget);
+    expect(find.text('Hemocomponentes adicionais disponíveis'), findsOneWidget);
   });
 
   testWidgets('shows neonatal medication and exam guidance in pre-anesthetic screen', (

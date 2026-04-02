@@ -153,7 +153,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
     await showDialog<void>(
       context: context,
       builder: (_) => JsonExportDialog(
-        json: jsonText,
+        content: jsonText,
         subject: 'Ficha ${caseFile.displayName}',
       ),
     );
