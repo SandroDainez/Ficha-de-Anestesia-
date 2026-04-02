@@ -385,9 +385,10 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         ];
       case PatientPopulation.neonatal:
         return const [
-          'Líquidos claros: até 2 h.',
+          'RN estável em cirurgia eletiva: líquidos claros até 2 h.',
           'Leite materno: 4 h.',
           'Fórmula infantil ou leite não humano: 6 h.',
+          'Prematuro, RN internado/UTI, com suporte ventilatório, distensão abdominal ou risco metabólico: individualizar o plano de jejum.',
         ];
     }
   }
@@ -398,7 +399,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       PatientPopulation.pediatric =>
         'Base usada nesta tela: esquema conservador 2-4-6. Referências: ASA 2023 (PMID 36629465) e ESAIC 2022 (PMID 34857683). Alguns serviços pediátricos adotam 1 h para líquidos claros em casos eletivos conforme protocolo local.',
       PatientPopulation.neonatal =>
-        'Base usada nesta tela: esquema conservador 2-4-6 para RN estáveis em contexto eletivo. Referências: ASA 2023 (PMID 36629465) e ESAIC 2022 (PMID 34857683). Em RN internado, prematuro ou com risco metabólico, individualizar conforme contexto clínico e protocolo institucional.',
+        'Base usada nesta tela: esquema conservador 2-4-6 para RN estáveis em contexto eletivo. As diretrizes ASA 2023 (PMID 36629465) se aplicam a pacientes saudáveis submetidos a procedimentos eletivos, e a ESAIC 2022 (PMID 34857683) traz recomendações pediátricas com regime mais liberal em cenários selecionados. Em prematuridade, internação/UTI, suporte ventilatório, sepse, distensão abdominal, risco metabólico ou urgência, individualizar conforme contexto clínico e protocolo institucional.',
     };
   }
 

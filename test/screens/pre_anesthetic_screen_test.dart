@@ -129,6 +129,53 @@ void main() {
     expect(find.text('Gasometria'), findsOneWidget);
   });
 
+  testWidgets('shows neonatal fasting individualization guidance', (
+    WidgetTester tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 2200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PreAnestheticScreen(
+          patient: const Patient(
+            name: 'RN',
+            age: 0,
+            weightKg: 3.1,
+            heightMeters: 0.49,
+            asa: 'III',
+            allergies: [],
+            restrictions: [],
+            medications: [],
+            population: PatientPopulation.neonatal,
+            postnatalAgeDays: 4,
+            gestationalAgeWeeks: 36,
+            birthWeightKg: 2.5,
+          ),
+          initialAssessment: const PreAnestheticAssessment.empty(),
+          initialConsultationDate: '',
+        ),
+      ),
+    );
+
+    await tester.scrollUntilVisible(
+      find.text('Jejum'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Jejum'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('RN estável em cirurgia eletiva: líquidos claros até 2 h.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Prematuro, RN internado/UTI, com suporte ventilatório, distensão abdominal ou risco metabólico: individualizar o plano de jejum.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('pacientes saudáveis submetidos a procedimentos eletivos'), findsOneWidget);
+  });
+
   testWidgets('adapts fasting fields for pediatric intake types', (
     WidgetTester tester,
   ) async {
