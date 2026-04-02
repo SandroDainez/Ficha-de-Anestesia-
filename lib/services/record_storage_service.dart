@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -20,6 +21,10 @@ class RecordStorageService {
 
   Future<void> _ensureInitialized() async {
     if (_initialized) return;
+    if (kIsWeb) {
+      _initialized = true;
+      return;
+    }
 
     try {
       final directory = await getApplicationDocumentsDirectory();
@@ -39,15 +44,25 @@ class RecordStorageService {
   String createCaseId() => DateTime.now().microsecondsSinceEpoch.toString();
 
   Future<List<AnesthesiaCase>> loadCases() async {
-    final box = await _openBox();
-    final rawCases = box.get(_casesKey);
+    Box<dynamic>? box;
     final cases = <AnesthesiaCase>[];
 
-    if (rawCases is List) {
-      for (final item in rawCases) {
-        if (item is Map) {
-          cases.add(AnesthesiaCase.fromJson(Map<dynamic, dynamic>.from(item)));
+    if (!kIsWeb) {
+      try {
+        box = await _openBox();
+        final rawCases = box.get(_casesKey);
+
+        if (rawCases is List) {
+          for (final item in rawCases) {
+            if (item is Map) {
+              cases.add(
+                AnesthesiaCase.fromJson(Map<dynamic, dynamic>.from(item)),
+              );
+            }
+          }
         }
+      } catch (_) {
+        // ignore local storage failure and fall back to remote when available
       }
     }
 
@@ -60,6 +75,8 @@ class RecordStorageService {
       final remoteCases = await _loadCasesRemote();
       if (remoteCases.isNotEmpty) return remoteCases;
     }
+
+    if (kIsWeb || box == null) return const [];
 
     final legacy = box.get(_legacyRecordKey);
     if (legacy is! Map) return const [];
@@ -83,6 +100,7 @@ class RecordStorageService {
   }
 
   Future<void> saveCases(List<AnesthesiaCase> cases) async {
+    if (kIsWeb) return;
     final box = await _openBox();
     final raw = cases.map((item) => item.toJson()).toList();
     await box.put(_casesKey, raw);
@@ -103,6 +121,8 @@ class RecordStorageService {
         // fallback to local storage
       }
     }
+    if (kIsWeb) return null;
+
     final cases = await loadCases();
     return cases.firstWhereOrNull((item) => item.id == caseId);
   }
@@ -111,6 +131,7 @@ class RecordStorageService {
     if (await _ensureRemote()) {
       await _upsertRemoteCase(caseFile);
     }
+    if (kIsWeb) return;
     final cases = await loadCases();
     final updated = List<AnesthesiaCase>.from(cases);
     final index = updated.indexWhere((item) => item.id == caseFile.id);
@@ -127,6 +148,7 @@ class RecordStorageService {
     if (await _ensureRemote()) {
       await _deleteRemoteCase(caseId);
     }
+    if (kIsWeb) return;
     final cases = await loadCases();
     final updated = cases.where((item) => item.id != caseId).toList();
     await saveCases(updated);

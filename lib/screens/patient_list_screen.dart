@@ -66,8 +66,6 @@ class _PatientListScreenState extends State<PatientListScreen> {
           ? _nowLabel()
           : targetCase.anesthesiaDate,
     );
-
-    await _storageService.upsertCase(caseWithDate);
     if (!mounted) return;
 
     await Navigator.of(context).push<void>(
