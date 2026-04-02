@@ -321,6 +321,7 @@ void main() {
     expect(find.text('TOT com cuff: 5.5 mm'), findsOneWidget);
     expect(find.text('TOT sem cuff: 6 mm'), findsOneWidget);
     expect(find.text('Profundidade oral estimada: 16 cm'), findsOneWidget);
+    expect(find.text('Mallampati'), findsNothing);
   });
 
   testWidgets('shows neonatal airway reference support in the airway card', (
@@ -343,6 +344,28 @@ void main() {
     expect(find.text('Referência neonatal'), findsOneWidget);
     expect(find.text('TOT inicial por peso: 3,5 mm'), findsOneWidget);
     expect(find.text('Profundidade labial estimada: 9,1 cm'), findsOneWidget);
+    expect(find.text('Mallampati'), findsNothing);
+  });
+
+  testWidgets('shows pediatric technique options instead of adult defaults', (
+    WidgetTester tester,
+  ) async {
+    final record = buildRecord().copyWith(
+      patient: buildRecord().patient.copyWith(
+        population: PatientPopulation.pediatric,
+        age: 5,
+      ),
+    );
+
+    await pumpScreen(tester, record);
+
+    await tester.tap(find.byKey(const Key('technique-entry')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Máscara laríngea'), findsOneWidget);
+    expect(find.text('Bloqueio caudal/regional'), findsOneWidget);
+    expect(find.text('TIVA'), findsNothing);
+    expect(find.text('Raquianestesia'), findsNothing);
   });
 
   testWidgets('shows pediatric fasting guidance in the fasting card summary', (

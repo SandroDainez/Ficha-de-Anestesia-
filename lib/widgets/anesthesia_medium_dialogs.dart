@@ -236,16 +236,18 @@ class TechniqueDialog extends StatefulWidget {
   const TechniqueDialog({
     super.key,
     required this.initialTechnique,
+    required this.patient,
   });
 
   final String initialTechnique;
+  final Patient patient;
 
   @override
   State<TechniqueDialog> createState() => _TechniqueDialogState();
 }
 
 class _TechniqueDialogState extends State<TechniqueDialog> {
-  static const List<String> _techniqueOptions = [
+  static const List<String> _adultTechniqueOptions = [
     'Anestesia geral balanceada',
     'TIVA',
     'Raquianestesia',
@@ -253,8 +255,35 @@ class _TechniqueDialogState extends State<TechniqueDialog> {
     'Bloqueio periférico',
     'Sedação',
   ];
+  static const List<String> _pediatricTechniqueOptions = [
+    'Anestesia geral inalatória',
+    'Anestesia geral venosa',
+    'Máscara laríngea',
+    'Intubação orotraqueal',
+    'Bloqueio caudal/regional',
+    'Analgesia multimodal',
+  ];
+  static const List<String> _neonatalTechniqueOptions = [
+    'Anestesia geral balanceada',
+    'Intubação orotraqueal',
+    'Ventilação controlada',
+    'Analgesia opioide titulada',
+    'Bloqueio regional selecionado',
+    'Plano pós-operatório em UTI',
+  ];
   late Set<String> _selectedTechniques;
   late final TextEditingController _otherTechniqueController;
+
+  List<String> get _techniqueOptions {
+    switch (widget.patient.population) {
+      case PatientPopulation.adult:
+        return _adultTechniqueOptions;
+      case PatientPopulation.pediatric:
+        return _pediatricTechniqueOptions;
+      case PatientPopulation.neonatal:
+        return _neonatalTechniqueOptions;
+    }
+  }
 
   @override
   void initState() {

@@ -303,6 +303,18 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     'Recusa opioide',
     'Recusa anestesia regional',
   ];
+  static const List<String> _pediatricRestrictions = [
+    'Objeção familiar a hemocomponentes',
+    'Acompanhante na indução',
+    'Consentimento do responsável',
+    'Alergia ao látex',
+  ];
+  static const List<String> _neonatalRestrictions = [
+    'Objeção familiar a hemocomponentes',
+    'Consentimento do responsável',
+    'Necessita leito de UTI',
+    'Necessita termorregulação rigorosa',
+  ];
   static const List<String> _commonMedications = [
     'AAS',
     'Clopidogrel',
@@ -310,19 +322,42 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     'Metformina',
     'Beta-bloqueador',
   ];
-  static const Map<String, String> _prophylacticAntibioticOptions = {
+  static const List<String> _pediatricCommonMedications = [
+    'Broncodilatador',
+    'Corticoide inalatório',
+    'Anticonvulsivante',
+    'Insulina',
+  ];
+  static const List<String> _neonatalCommonMedications = [
+    'Cafeína',
+    'Prostaglandina',
+    'Diurético',
+    'Antibiótico',
+  ];
+  static const Map<String, String> _adultProphylacticAntibioticOptions = {
     'Cefazolina': '2 g',
     'Cefuroxima': '1,5 g',
     'Clindamicina': '600-900 mg',
     'Vancomicina': '15 mg/kg',
     'Metronidazol': '500 mg',
   };
+  static const Map<String, String> _pediatricProphylacticAntibioticOptions = {
+    'Cefazolina': '30 mg/kg',
+    'Clindamicina': '10 mg/kg',
+    'Vancomicina': '15 mg/kg',
+    'Metronidazol': '7,5 mg/kg',
+  };
+  static const Map<String, String> _neonatalProphylacticAntibioticOptions = {
+    'Cefazolina': '25 mg/kg',
+    'Vancomicina': '15 mg/kg',
+    'Gentamicina': '4-5 mg/kg',
+  };
   static const Map<String, Duration> _prophylacticRedoseIntervals = {
     'Cefazolina': Duration(hours: 4),
     'Cefuroxima': Duration(hours: 4),
     'Clindamicina': Duration(hours: 6),
   };
-  static const Map<String, String> _otherMedicationOptions = {
+  static const Map<String, String> _adultOtherMedicationOptions = {
     'Dexametasona': '4-10 mg',
     'Ondansetrona': '4-8 mg',
     'Droperidol': '0,625-1,25 mg',
@@ -333,7 +368,22 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     'Cetorolaco': '30 mg',
     'Hidrocortisona': '100 mg',
   };
-  static const Map<String, String> _vasoactiveDrugOptions = {
+  static const Map<String, String> _pediatricOtherMedicationOptions = {
+    'Dexametasona': '0,1-0,15 mg/kg',
+    'Ondansetrona': '0,1 mg/kg',
+    'Paracetamol': '10-15 mg/kg',
+    'Dipirona': '15-25 mg/kg',
+    'Atropina': '0,02 mg/kg',
+    'Hidrocortisona': '2 mg/kg',
+  };
+  static const Map<String, String> _neonatalOtherMedicationOptions = {
+    'Atropina': '0,02 mg/kg',
+    'Glicose 10%': '2-5 mL/kg',
+    'Cálcio gluconato': '50-100 mg/kg',
+    'Hidrocortisona': '1-2 mg/kg',
+    'Paracetamol': '10-15 mg/kg',
+  };
+  static const Map<String, String> _adultVasoactiveDrugOptions = {
     'Etilefrina': '2 mg',
     'Metaraminol': '0,5-2 mg',
     'Efedrina': '5-10 mg',
@@ -343,6 +393,22 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     'Dobutamina': '2-10 mcg/kg/min',
     'Dopamina': '3-10 mcg/kg/min',
     'Vasopressina': '0,5-2 U',
+  };
+  static const Map<String, String> _pediatricVasoactiveDrugOptions = {
+    'Efedrina': '0,1-0,2 mg/kg',
+    'Fenilefrina': '1-2 mcg/kg',
+    'Adrenalina': '0,5-1 mcg/kg',
+    'Noradrenalina': '0,02-0,2 mcg/kg/min',
+    'Dobutamina': '2-10 mcg/kg/min',
+    'Dopamina': '3-10 mcg/kg/min',
+    'Vasopressina': '0,0003-0,0007 U/kg/min',
+  };
+  static const Map<String, String> _neonatalVasoactiveDrugOptions = {
+    'Adrenalina': '0,05-0,3 mcg/kg/min',
+    'Noradrenalina': '0,02-0,2 mcg/kg/min',
+    'Dobutamina': '2-10 mcg/kg/min',
+    'Dopamina': '3-10 mcg/kg/min',
+    'Vasopressina': '0,0002-0,0007 U/kg/min',
   };
 
   final AiRecordAnalysisService _analysisService =
@@ -373,6 +439,64 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   final GlobalKey _vasoactiveSectionKey = GlobalKey();
   final GlobalKey _eventsSectionKey = GlobalKey();
   final GlobalKey _fluidSectionKey = GlobalKey();
+
+  bool get _usesMallampatiInCase =>
+      _record.patient.population == PatientPopulation.adult;
+
+  List<String> get _profileRestrictionSuggestions {
+    switch (_record.patient.population) {
+      case PatientPopulation.adult:
+        return _commonRestrictions;
+      case PatientPopulation.pediatric:
+        return _pediatricRestrictions;
+      case PatientPopulation.neonatal:
+        return _neonatalRestrictions;
+    }
+  }
+
+  List<String> get _profileMedicationSuggestions {
+    switch (_record.patient.population) {
+      case PatientPopulation.adult:
+        return _commonMedications;
+      case PatientPopulation.pediatric:
+        return _pediatricCommonMedications;
+      case PatientPopulation.neonatal:
+        return _neonatalCommonMedications;
+    }
+  }
+
+  Map<String, String> get _profileProphylacticAntibioticOptions {
+    switch (_record.patient.population) {
+      case PatientPopulation.adult:
+        return _adultProphylacticAntibioticOptions;
+      case PatientPopulation.pediatric:
+        return _pediatricProphylacticAntibioticOptions;
+      case PatientPopulation.neonatal:
+        return _neonatalProphylacticAntibioticOptions;
+    }
+  }
+
+  Map<String, String> get _profileOtherMedicationOptions {
+    switch (_record.patient.population) {
+      case PatientPopulation.adult:
+        return _adultOtherMedicationOptions;
+      case PatientPopulation.pediatric:
+        return _pediatricOtherMedicationOptions;
+      case PatientPopulation.neonatal:
+        return _neonatalOtherMedicationOptions;
+    }
+  }
+
+  Map<String, String> get _profileVasoactiveDrugOptions {
+    switch (_record.patient.population) {
+      case PatientPopulation.adult:
+        return _adultVasoactiveDrugOptions;
+      case PatientPopulation.pediatric:
+        return _pediatricVasoactiveDrugOptions;
+      case PatientPopulation.neonatal:
+        return _neonatalVasoactiveDrugOptions;
+    }
+  }
 
   String _valueOrPlaceholder(
     String value, {
@@ -1232,7 +1356,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         title: 'Restrições',
         label: 'Restrições',
         initialItems: _record.patient.restrictions,
-        suggestions: _commonRestrictions,
+        suggestions: _profileRestrictionSuggestions,
         hintText: 'Uma restrição por linha',
       ),
     );
@@ -1248,7 +1372,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         title: 'Medicações em uso',
         label: 'Medicações',
         initialItems: _record.patient.medications,
-        suggestions: _commonMedications,
+        suggestions: _profileMedicationSuggestions,
         hintText: 'Uma medicação por linha',
       ),
     );
@@ -1354,6 +1478,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       context: context,
       builder: (_) => TechniqueDialog(
         initialTechnique: _record.anesthesiaTechnique,
+        patient: _record.patient,
       ),
     );
 
@@ -1489,7 +1614,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       context: context,
       builder: (_) => CatalogMedicationDialog(
         title: 'Editar Outras medicações',
-        catalogItems: _otherMedicationOptions,
+        catalogItems: _profileOtherMedicationOptions,
         initialItems: _record.otherMedications,
       ),
     );
@@ -1504,7 +1629,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     final result = await showDialog<List<String>>(
       context: context,
       builder: (_) => VasoactiveDrugsDialog(
-        catalogItems: _vasoactiveDrugOptions,
+        catalogItems: _profileVasoactiveDrugOptions,
         initialItems: _record.vasoactiveDrugs,
       ),
     );
@@ -1520,7 +1645,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       context: context,
       builder: (_) => CatalogMedicationDialog(
         title: 'Editar Antibiótico profilaxia',
-        catalogItems: _prophylacticAntibioticOptions,
+        catalogItems: _profileProphylacticAntibioticOptions,
         initialItems: _record.prophylacticAntibiotics,
       ),
     );
@@ -1611,9 +1736,12 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                       key: _patientSummaryKey,
                       patient: _record.patient,
                       mallampati:
-                          _record.preAnestheticAssessment.airway.mallampati.trim().isNotEmpty
+                          _usesMallampatiInCase &&
+                                  _record.preAnestheticAssessment.airway.mallampati.trim().isNotEmpty
                               ? _record.preAnestheticAssessment.airway.mallampati
-                              : _record.airway.mallampati,
+                              : _usesMallampatiInCase
+                                  ? _record.airway.mallampati
+                                  : '',
                       onNameTap: _editPatientName,
                       onAgeTap: _editPatientAge,
                       onWeightTap: _editPatientWeight,
@@ -1625,7 +1753,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                           _editPatientCorrectedGestationalAge,
                       onBirthWeightTap: _editPatientBirthWeight,
                       onAsaTap: _editPatientAsa,
-                      onMallampatiTap: _editPatientMallampati,
+                      onMallampatiTap: _usesMallampatiInCase
+                          ? _editPatientMallampati
+                          : null,
                       onAllergiesTap: _editPatientAllergies,
                       onRestrictionsTap: _editPatientRestrictions,
                       onMedicationsTap: _editPatientMedications,

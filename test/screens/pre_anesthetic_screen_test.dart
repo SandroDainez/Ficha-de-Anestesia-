@@ -37,6 +37,9 @@ void main() {
     expect(find.text('Prematuridade'), findsOneWidget);
     expect(find.text('IVAS recente'), findsOneWidget);
     expect(find.text('Cardiopatia congênita'), findsOneWidget);
+    expect(find.text('HAS'), findsNothing);
+    expect(find.text('DM'), findsNothing);
+    expect(find.text('Doença coronariana'), findsNothing);
   });
 
   testWidgets('shows neonatal medication and exam guidance in pre-anesthetic screen', (
@@ -78,6 +81,8 @@ void main() {
     expect(find.text('Foco neonatal'), findsOneWidget);
     expect(find.text('Cafeína'), findsOneWidget);
     expect(find.text('Prostaglandina'), findsOneWidget);
+    expect(find.text('AAS'), findsNothing);
+    expect(find.text('Losartana'), findsNothing);
 
     await tester.scrollUntilVisible(
       find.text('Exames complementares'),
@@ -90,6 +95,86 @@ void main() {
     expect(find.text('Exames por contexto neonatal'), findsOneWidget);
     expect(find.text('Glicemia'), findsOneWidget);
     expect(find.text('Gasometria'), findsOneWidget);
+  });
+
+  testWidgets('hides adult-centered airway items in neonatal pre-anesthetic screen', (
+    WidgetTester tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PreAnestheticScreen(
+          patient: const Patient(
+            name: 'RN',
+            age: 0,
+            weightKg: 3.0,
+            heightMeters: 0.49,
+            asa: 'III',
+            allergies: [],
+            restrictions: [],
+            medications: [],
+            population: PatientPopulation.neonatal,
+            postnatalAgeDays: 2,
+            gestationalAgeWeeks: 38,
+            birthWeightKg: 2.8,
+          ),
+          initialAssessment: const PreAnestheticAssessment.empty(),
+          initialConsultationDate: '',
+        ),
+      ),
+    );
+
+    await tester.scrollUntilVisible(
+      find.text('Avaliação de via aérea'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Avaliação de via aérea'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mallampati'), findsNothing);
+    expect(find.text('Dentição / prótese'), findsNothing);
+    expect(find.text('Dentição'), findsNothing);
+    expect(find.text('Prótese móvel'), findsNothing);
+    expect(find.text('Sem prótese'), findsNothing);
+  });
+
+  testWidgets('hides Mallampati in pediatric pre-anesthetic screen', (
+    WidgetTester tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PreAnestheticScreen(
+          patient: const Patient(
+            name: 'Pedro',
+            age: 5,
+            weightKg: 18,
+            heightMeters: 1.08,
+            asa: 'I',
+            allergies: [],
+            restrictions: [],
+            medications: [],
+            population: PatientPopulation.pediatric,
+          ),
+          initialAssessment: const PreAnestheticAssessment.empty(),
+          initialConsultationDate: '',
+        ),
+      ),
+    );
+
+    await tester.scrollUntilVisible(
+      find.text('Avaliação de via aérea'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Avaliação de via aérea'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mallampati'), findsNothing);
+    expect(find.text('Referencia rapida de Mallampati (classe e significado)'), findsNothing);
   });
 
   testWidgets('adapts context and reserve sections for pediatric pre-anesthetic screen', (

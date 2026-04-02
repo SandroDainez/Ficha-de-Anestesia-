@@ -379,14 +379,15 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
                   color: UiColors.success,
                   onTap: onAsaTap,
                 ),
-                ClinicalChip(
-                  label: 'Mallampati',
-                  value: mallampati.trim().isEmpty
-                      ? 'Não informado'
-                      : 'Classe $mallampati',
-                  color: UiColors.info,
-                  onTap: onMallampatiTap,
-                ),
+                if (patient.population == PatientPopulation.adult)
+                  ClinicalChip(
+                    label: 'Mallampati',
+                    value: mallampati.trim().isEmpty
+                        ? 'Não informado'
+                        : 'Classe $mallampati',
+                    color: UiColors.info,
+                    onTap: onMallampatiTap,
+                  ),
                 ClinicalChip(
                   label: 'Alergias',
                   value: patient.allergies.isEmpty

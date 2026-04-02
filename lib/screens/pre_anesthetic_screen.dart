@@ -669,7 +669,6 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         return _difficultAirwayPredictorOptions;
       case PatientPopulation.pediatric:
         return {
-          'Mallampati III/IV',
           'Abertura oral reduzida',
           'Mobilidade cervical limitada',
           'Micrognatia/retrognatia',
@@ -793,7 +792,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   }
 
   bool get _showMallampatiSection =>
-      _selectedPopulation != PatientPopulation.neonatal;
+      _selectedPopulation == PatientPopulation.adult;
 
   bool get _showMallampatiReferenceCards =>
       _selectedPopulation == PatientPopulation.adult;
@@ -944,7 +943,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
 
   void _syncMallampatiPredictor() {
     const predictor = 'Mallampati III/IV';
-    if (_selectedMallampati == 'III' || _selectedMallampati == 'IV') {
+    if (_showMallampatiSection &&
+        (_selectedMallampati == 'III' || _selectedMallampati == 'IV')) {
       _selectedDifficultAirwayPredictors.add(predictor);
     } else {
       _selectedDifficultAirwayPredictors.remove(predictor);
@@ -1326,7 +1326,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       mets: metsValue,
       physicalExam: _buildPhysicalExamSummary(),
       airway: widget.initialAssessment.airway.copyWith(
-        mallampati: _selectedMallampati,
+        mallampati: _showMallampatiSection ? _selectedMallampati : '',
       ),
       mouthOpening: _selectedMouthOpening,
       neckMobility: _selectedNeckMobility,
@@ -1387,7 +1387,13 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                             label: Text(item.label),
                             selected: _selectedPopulation == item,
                             onSelected: (_) {
-                              setState(() => _selectedPopulation = item);
+                              setState(() {
+                                _selectedPopulation = item;
+                                if (!_showMallampatiSection) {
+                                  _selectedMallampati = '';
+                                }
+                                _syncAirwayPredictors();
+                              });
                             },
                           ),
                         )
