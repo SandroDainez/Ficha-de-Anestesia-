@@ -60,16 +60,30 @@ flutter run
 
 ### Deploy web atual
 
-O fluxo validado hoje é:
+O fluxo seguro hoje é:
 
 ```bash
-flutter build web
-vercel deploy build/web --prod --yes
+./scripts/deploy_vercel_prod.sh
+```
+
+Esse script:
+
+- gera `build/web`
+- reaplica no `build/web` o vínculo do projeto salvo na raiz em `.vercel/project.json`
+- publica em produção sem criar um projeto acidental novo no Vercel
+
+Se preferir rodar manualmente, o caminho seguro é:
+
+```bash
+flutter build web --no-wasm-dry-run
+mkdir -p build/web/.vercel
+cp .vercel/project.json build/web/.vercel/project.json
+vercel deploy --cwd build/web --prod --yes
 ```
 
 ### Observação sobre deploy automático
 
-O projeto já está conectado ao GitHub no Vercel, mas o build automático por push ainda não foi configurado com instalação do Flutter no ambiente do Vercel. Então, no estado atual, o caminho confiável continua sendo gerar `build/web` e publicar essa saída.
+O projeto já está conectado ao Vercel, mas o build automático por push ainda não foi configurado com instalação do Flutter no ambiente do Vercel. Então, no estado atual, o caminho confiável continua sendo gerar `build/web` localmente e publicar essa saída.
 
 ## Versionamento
 
