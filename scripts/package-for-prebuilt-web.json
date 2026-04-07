@@ -1,0 +1,8 @@
+{
+  "name": "ficha-anestesia-prebuilt",
+  "private": true,
+  "description": "Placeholder para npm install no deploy CLI a partir de build/web (ficheiros já gerados pelo Flutter).",
+  "scripts": {
+    "build": "true"
+  }
+}

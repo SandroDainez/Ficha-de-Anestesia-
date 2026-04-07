@@ -96,7 +96,7 @@ No painel do projeto Vercel, confira **Settings → General → Build & Developm
 
 O arquivo `vercel.json` na raiz define `buildCommand`, `outputDirectory` e rewrites SPA. O primeiro build pode levar vários minutos (download do SDK). Se aparecer **404 NOT_FOUND**, em geral o deploy não gerou `build/web` (build falhou): abra o log do deployment no Vercel.
 
-O fluxo manual continua válido: `./scripts/deploy_vercel_prod.sh` (build local + `vercel deploy --cwd build/web`).
+O fluxo manual continua válido: `./scripts/deploy_vercel_prod.sh` (build local + `vercel deploy --cwd build/web`). O script copia para `build/web` um `vercel.json` só com rewrites e um `package.json` mínimo (o `npm install` / `npm run build` da Vercel não voltam a correr o Flutter dentro dessa pasta). No painel, se **Output Directory** estiver `build/web` e usares só este fluxo CLI, altera para **`.`** ou deixa em branco para o projeto ligado a esta pasta.
 
 ## Versionamento
 

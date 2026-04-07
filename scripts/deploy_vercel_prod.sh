@@ -14,9 +14,10 @@ fi
 
 flutter build web --no-wasm-dry-run
 
-if [[ -f "$ROOT_DIR/vercel.json" ]]; then
-  cp "$ROOT_DIR/vercel.json" "$BUILD_DIR/vercel.json"
-fi
+# Deploy a partir de build/: não usar o vercel.json da raiz (tem buildCommand/output
+# para CI); aqui os ficheiros já estão compilados.
+cp "$ROOT_DIR/scripts/vercel-for-prebuilt-web.json" "$BUILD_DIR/vercel.json"
+cp "$ROOT_DIR/scripts/package-for-prebuilt-web.json" "$BUILD_DIR/package.json"
 
 mkdir -p "$BUILD_VERCEL_DIR"
 cp "$ROOT_VERCEL_DIR/project.json" "$BUILD_VERCEL_DIR/project.json"
