@@ -1,0 +1,8 @@
+{
+  "name": "ficha-anestesia-web",
+  "private": true,
+  "description": "Hook de build para Vercel (Flutter web).",
+  "scripts": {
+    "build": "bash scripts/vercel_build.sh"
+  }
+}

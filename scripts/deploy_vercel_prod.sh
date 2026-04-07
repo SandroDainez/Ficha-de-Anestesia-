@@ -14,6 +14,10 @@ fi
 
 flutter build web --no-wasm-dry-run
 
+if [[ -f "$ROOT_DIR/vercel.json" ]]; then
+  cp "$ROOT_DIR/vercel.json" "$BUILD_DIR/vercel.json"
+fi
+
 mkdir -p "$BUILD_VERCEL_DIR"
 cp "$ROOT_VERCEL_DIR/project.json" "$BUILD_VERCEL_DIR/project.json"
 

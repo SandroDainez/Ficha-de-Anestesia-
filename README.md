@@ -81,9 +81,22 @@ cp .vercel/project.json build/web/.vercel/project.json
 vercel deploy --cwd build/web --prod --yes
 ```
 
-### Observação sobre deploy automático
+### Deploy automático (Git → Vercel)
 
-O projeto já está conectado ao Vercel, mas o build automático por push ainda não foi configurado com instalação do Flutter no ambiente do Vercel. Então, no estado atual, o caminho confiável continua sendo gerar `build/web` localmente e publicar essa saída.
+O repositório inclui `package.json` e `scripts/vercel_build.sh`: no push para `main`, o Vercel deve executar `npm install` e `npm run build`, que instala o Flutter (clone stable), roda `flutter build web` e publica **`build/web`**.
+
+No painel do projeto Vercel, confira **Settings → General → Build & Development**:
+
+| Campo | Valor esperado |
+|--------|----------------|
+| Framework Preset | **Other** (ou detectado via `package.json`) |
+| Install Command | `npm install` (padrão) |
+| Build Command | `npm run build` (ou deixe vazio se o `vercel.json` do repo já define) |
+| Output Directory | **`build/web`** |
+
+O arquivo `vercel.json` na raiz define `buildCommand`, `outputDirectory` e rewrites SPA. O primeiro build pode levar vários minutos (download do SDK). Se aparecer **404 NOT_FOUND**, em geral o deploy não gerou `build/web` (build falhou): abra o log do deployment no Vercel.
+
+O fluxo manual continua válido: `./scripts/deploy_vercel_prod.sh` (build local + `vercel deploy --cwd build/web`).
 
 ## Versionamento
 
@@ -142,7 +155,7 @@ O projeto esta funcional localmente e hoje usa analise "IA" simulada por heurist
 - definir escopo de produto e regras clínicas obrigatórias com mais precisão
 - ampliar ainda mais testes de fluxo fino das telas principais
 - decidir se a análise continuará heurística ou se vira integração real com backend
-- configurar, se desejado, um pipeline de build Flutter automático para deploy por push no Vercel
+- afinar tempo de build no Vercel (cache do SDK) se o primeiro deploy passar do limite
 
 ## Observacoes
 
