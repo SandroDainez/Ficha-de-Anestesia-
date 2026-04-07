@@ -907,6 +907,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Future<void> _addHemodynamicMarker(String label) async {
+    if (label == 'Início da anestesia' && _hasAnesthesiaStartMarker) {
+      return;
+    }
     final now = DateTime.now();
     final updatedMarkers = _hemodynamicService.addMarker(
       markers: _record.hemodynamicMarkers,

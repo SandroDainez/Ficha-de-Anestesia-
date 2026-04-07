@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:pointer_interceptor/pointer_interceptor.dart';
 
 import '../models/hemodynamic_point.dart';
 
@@ -488,11 +490,9 @@ class HemodynamicChart extends StatefulWidget {
 }
 
 class _HemodynamicChartState extends State<HemodynamicChart> {
-  static const double _tapSlop = 14;
-
-  Offset? _downLocal;
-  bool _movedPastSlop = false;
-  HemodynamicPoint? _draggingHit;
+  bool _draggingPoint = false;
+  bool _receivedPanDelta = false;
+  HemodynamicPoint? _dragAnchor;
   double? _matchTime;
   double? _matchValue;
 
@@ -507,93 +507,82 @@ class _HemodynamicChartState extends State<HemodynamicChart> {
           size: chartSize,
         );
 
-        return Listener(
+        Widget chart = GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onPointerDown: (event) {
-            _downLocal = event.localPosition;
-            _movedPastSlop = false;
-            final hit = layout.hitTest(event.localPosition);
+          onPanStart: (details) {
+            _receivedPanDelta = false;
+            final hit = layout.hitTest(details.localPosition);
             if (hit != null &&
                 widget.onPointMoved != null &&
                 widget.onPointTap == null) {
-              _draggingHit = hit;
+              _draggingPoint = true;
+              _dragAnchor = hit;
               _matchTime = hit.time;
               _matchValue = hit.value;
             } else {
-              _draggingHit = null;
+              _draggingPoint = false;
+              _dragAnchor = null;
               _matchTime = null;
               _matchValue = null;
             }
           },
-          onPointerMove: (event) {
-            if (_downLocal == null) return;
-            if ((event.localPosition - _downLocal!).distance > _tapSlop) {
-              _movedPastSlop = true;
-            }
-            final drag = _draggingHit;
+          onPanUpdate: (details) {
+            if (!_draggingPoint) return;
+            _receivedPanDelta = true;
             final mt = _matchTime;
             final mv = _matchValue;
-            if (drag != null &&
-                mt != null &&
-                mv != null &&
-                widget.onPointMoved != null) {
-              final type = drag.type;
-              final newValue = layout.valueForY(event.localPosition.dy, type);
-              final newTime = layout.timeForX(event.localPosition.dx);
-              widget.onPointMoved!(type, mt, mv, newValue, newTime);
-              _matchTime = newTime;
-              _matchValue = newValue;
-            }
+            final anchor = _dragAnchor;
+            if (mt == null || mv == null || anchor == null) return;
+            final type = anchor.type;
+            final newValue = layout.valueForY(details.localPosition.dy, type);
+            final newTime = layout.timeForX(details.localPosition.dx);
+            widget.onPointMoved!(type, mt, mv, newValue, newTime);
+            _matchTime = newTime;
+            _matchValue = newValue;
           },
-          onPointerUp: (event) => _finishPointer(layout, event.localPosition),
-          onPointerCancel: (_) {
-            if (_draggingHit != null) {
+          onPanEnd: (_) {
+            if (_draggingPoint && _receivedPanDelta) {
               widget.onPointDragEnd?.call();
             }
-            _cancelPointer();
+            _resetDragState();
+          },
+          onPanCancel: () {
+            if (_draggingPoint && _receivedPanDelta) {
+              widget.onPointDragEnd?.call();
+            }
+            _resetDragState();
+          },
+          onTapUp: (details) {
+            final local = details.localPosition;
+            final hit = layout.hitTest(local);
+            if (hit != null && widget.onPointTap != null) {
+              widget.onPointTap!(hit);
+            } else if (hit == null && widget.onChartTap != null) {
+              widget.onChartTap!(
+                layout.valueForY(local.dy, widget.selectedType),
+              );
+            }
           },
           child: CustomPaint(
             painter: _ChartPainter(layout),
             size: chartSize,
           ),
         );
+
+        if (kIsWeb) {
+          chart = PointerInterceptor(child: chart);
+        }
+        return chart;
       },
     );
   }
 
-  void _cancelPointer() {
-    _downLocal = null;
-    _movedPastSlop = false;
-    _draggingHit = null;
+  void _resetDragState() {
+    _draggingPoint = false;
+    _receivedPanDelta = false;
+    _dragAnchor = null;
     _matchTime = null;
     _matchValue = null;
-  }
-
-  void _finishPointer(HemodynamicChartLayout layout, Offset local) {
-    if (_draggingHit != null) {
-      widget.onPointDragEnd?.call();
-      _cancelPointer();
-      return;
-    }
-
-    final down = _downLocal;
-    if (down == null) return;
-
-    if (_movedPastSlop) {
-      _cancelPointer();
-      return;
-    }
-
-    final hit = layout.hitTest(local);
-    if (hit != null && widget.onPointTap != null) {
-      widget.onPointTap!(hit);
-    } else if (hit == null && widget.onChartTap != null) {
-      widget.onChartTap!(
-        layout.valueForY(local.dy, widget.selectedType),
-      );
-    }
-
-    _cancelPointer();
   }
 }
 
@@ -678,9 +667,10 @@ class HemodynamicChartLayout {
   }
 
   HemodynamicPoint? hitTest(Offset position) {
+    const hitRadius = 36.0;
     for (final point in points.reversed) {
       final offset = offsetForPoint(point);
-      if ((offset - position).distance <= 22) {
+      if ((offset - position).distance <= hitRadius) {
         return point;
       }
     }

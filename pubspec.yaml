@@ -39,6 +39,7 @@ dependencies:
   path_provider: ^2.1.5
   pdf: ^3.11.3
   printing: ^5.14.2
+  pointer_interceptor: ^0.10.1+2
 
 dev_dependencies:
   flutter_test:
