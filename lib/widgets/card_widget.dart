@@ -667,7 +667,7 @@ class HemodynamicChartLayout {
   }
 
   HemodynamicPoint? hitTest(Offset position) {
-    const hitRadius = 36.0;
+    const hitRadius = 48.0;
     for (final point in points.reversed) {
       final offset = offsetForPoint(point);
       if ((offset - position).distance <= hitRadius) {
@@ -861,13 +861,19 @@ class _ChartPainter extends CustomPainter {
           ..sort((a, b) => a.time.compareTo(b.time)));
     if (data.isEmpty) return;
 
+    const lineStroke = 3.0;
+    const symbolStroke = 3.5;
     final line = Paint()
       ..color = color
-      ..strokeWidth = 2
+      ..strokeWidth = lineStroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
       ..style = PaintingStyle.stroke;
     final symbolPaint = Paint()
       ..color = color
-      ..strokeWidth = 2
+      ..strokeWidth = symbolStroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
       ..style = PaintingStyle.stroke;
     final path = Path();
 
@@ -886,21 +892,33 @@ class _ChartPainter extends CustomPainter {
 
       switch (type) {
         case 'PAS':
+          const tw = 9.0;
+          const th = 8.0;
           final symbol = Path()
-            ..moveTo(x - 5, y - 4)
-            ..lineTo(x, y + 4)
-            ..lineTo(x + 5, y - 4);
+            ..moveTo(x - tw, y - th)
+            ..lineTo(x, y + th + 2)
+            ..lineTo(x + tw, y - th)
+            ..close();
           canvas.drawPath(symbol, symbolPaint);
           break;
         case 'PAD':
+          const tw = 9.0;
+          const th = 8.0;
           final symbol = Path()
-            ..moveTo(x - 5, y + 4)
-            ..lineTo(x, y - 4)
-            ..lineTo(x + 5, y + 4);
+            ..moveTo(x - tw, y + th)
+            ..lineTo(x, y - th - 2)
+            ..lineTo(x + tw, y + th)
+            ..close();
           canvas.drawPath(symbol, symbolPaint);
           break;
         case 'FC':
-          canvas.drawCircle(offset, 3.5, Paint()..color = color);
+          final fill = Paint()..color = color;
+          final ring = Paint()
+            ..color = color
+            ..strokeWidth = 2.5
+            ..style = PaintingStyle.stroke;
+          canvas.drawCircle(offset, 7, fill);
+          canvas.drawCircle(offset, 7, ring);
           break;
         case 'PAM':
           final text = TextPainter(
@@ -908,13 +926,14 @@ class _ChartPainter extends CustomPainter {
               text: 'm',
               style: TextStyle(
                 color: color,
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                height: 1,
               ),
             ),
             textDirection: TextDirection.ltr,
           )..layout();
-          text.paint(canvas, Offset(x - 4, y - 8));
+          text.paint(canvas, Offset(x - text.width / 2, y - text.height / 2));
           break;
         case 'SpO2':
           final text = TextPainter(
@@ -922,34 +941,44 @@ class _ChartPainter extends CustomPainter {
               text: 'S',
               style: TextStyle(
                 color: color,
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                height: 1,
               ),
             ),
             textDirection: TextDirection.ltr,
           )..layout();
-          text.paint(canvas, Offset(x - 4, y - 8));
+          text.paint(canvas, Offset(x - text.width / 2, y - text.height / 2));
           break;
         case 'PAI':
           canvas.drawCircle(
             offset,
-            10,
+            14,
             Paint()
               ..color = color.withAlpha(24)
               ..style = PaintingStyle.fill,
+          );
+          canvas.drawCircle(
+            offset,
+            14,
+            Paint()
+              ..color = color
+              ..strokeWidth = 2.5
+              ..style = PaintingStyle.stroke,
           );
           final text = TextPainter(
             text: TextSpan(
               text: 'PAI',
               style: TextStyle(
                 color: color,
-                fontSize: 9,
+                fontSize: 12,
                 fontWeight: FontWeight.w900,
+                height: 1,
               ),
             ),
             textDirection: TextDirection.ltr,
           )..layout();
-          text.paint(canvas, Offset(x - (text.width / 2), y - 8));
+          text.paint(canvas, Offset(x - text.width / 2, y - text.height / 2));
           break;
       }
     }
