@@ -72,6 +72,25 @@ void main() {
     expect(removed.single.type, 'FC');
   });
 
+  test('updates a hemodynamic point in place', () {
+    const points = [
+      HemodynamicPoint(type: 'FC', value: 80, time: 5),
+      HemodynamicPoint(type: 'PAS', value: 120, time: 5),
+    ];
+    final updated = service.updatePoint(
+      points: points,
+      type: 'FC',
+      matchTime: 5,
+      matchValue: 80,
+      newTime: 12,
+      newValue: 88,
+    );
+    expect(updated, hasLength(2));
+    final fc = updated.firstWhere((p) => p.type == 'FC');
+    expect(fc.time, 12);
+    expect(fc.value, 88);
+  });
+
   test('migrates legacy hemodynamic entries to points', () {
     final record = AnesthesiaRecord.empty().copyWith(
       hemodynamicEntries: const [

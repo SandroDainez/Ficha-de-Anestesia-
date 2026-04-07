@@ -963,6 +963,28 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     await _persistRecord();
   }
 
+  void _applyInlineHemodynamicPointMove(
+    String type,
+    double matchTime,
+    double matchValue,
+    double newValue,
+    double newTime,
+  ) {
+    if (!_hasAnesthesiaStartMarker || _inlineHemodynamicRemoveMode) return;
+    final updatedPoints = _hemodynamicService.updatePoint(
+      points: _record.hemodynamicPoints,
+      type: type,
+      matchTime: matchTime,
+      matchValue: matchValue,
+      newTime: newTime,
+      newValue: newValue,
+    );
+    if (identical(updatedPoints, _record.hemodynamicPoints)) return;
+    setState(() {
+      _record = _record.copyWith(hemodynamicPoints: updatedPoints);
+    });
+  }
+
   AnesthesiaRecord _migrateLegacyHemodynamics(AnesthesiaRecord record) =>
       _hemodynamicService.migrateLegacyHemodynamics(record);
 
@@ -2757,6 +2779,14 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       onChartTap:
           _hasAnesthesiaStartMarker && !_inlineHemodynamicRemoveMode
               ? _addInlineHemodynamicPoint
+              : null,
+      onPointMoved:
+          _hasAnesthesiaStartMarker && !_inlineHemodynamicRemoveMode
+              ? _applyInlineHemodynamicPointMove
+              : null,
+      onPointDragEnd:
+          _hasAnesthesiaStartMarker && !_inlineHemodynamicRemoveMode
+              ? () => _persistRecord()
               : null,
     );
   }

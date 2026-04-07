@@ -455,7 +455,15 @@ class LegendDot extends StatelessWidget {
   }
 }
 
-class HemodynamicChart extends StatelessWidget {
+typedef HemodynamicPointDragCallback = void Function(
+  String type,
+  double matchTime,
+  double matchValue,
+  double newValue,
+  double newTime,
+);
+
+class HemodynamicChart extends StatefulWidget {
   const HemodynamicChart({
     super.key,
     required this.points,
@@ -463,6 +471,8 @@ class HemodynamicChart extends StatelessWidget {
     required this.selectedType,
     this.onPointTap,
     this.onChartTap,
+    this.onPointMoved,
+    this.onPointDragEnd,
   });
 
   final List<HemodynamicPoint> points;
@@ -470,6 +480,21 @@ class HemodynamicChart extends StatelessWidget {
   final String selectedType;
   final ValueChanged<HemodynamicPoint>? onPointTap;
   final ValueChanged<double>? onChartTap;
+  final HemodynamicPointDragCallback? onPointMoved;
+  final VoidCallback? onPointDragEnd;
+
+  @override
+  State<HemodynamicChart> createState() => _HemodynamicChartState();
+}
+
+class _HemodynamicChartState extends State<HemodynamicChart> {
+  static const double _tapSlop = 14;
+
+  Offset? _downLocal;
+  bool _movedPastSlop = false;
+  HemodynamicPoint? _draggingHit;
+  double? _matchTime;
+  double? _matchValue;
 
   @override
   Widget build(BuildContext context) {
@@ -477,25 +502,56 @@ class HemodynamicChart extends StatelessWidget {
       builder: (context, constraints) {
         final chartSize = Size(constraints.maxWidth, constraints.maxHeight);
         final layout = HemodynamicChartLayout(
-          points: points,
-          markers: markers,
+          points: widget.points,
+          markers: widget.markers,
           size: chartSize,
         );
 
-        return GestureDetector(
+        return Listener(
           behavior: HitTestBehavior.opaque,
-          onTapUp: (onPointTap == null && onChartTap == null)
-              ? null
-              : (details) {
-                  final point = layout.hitTest(details.localPosition);
-                  if (point != null && onPointTap != null) {
-                    onPointTap?.call(point);
-                  } else {
-                    onChartTap?.call(
-                      layout.valueForY(details.localPosition.dy, selectedType),
-                    );
-                  }
-                },
+          onPointerDown: (event) {
+            _downLocal = event.localPosition;
+            _movedPastSlop = false;
+            final hit = layout.hitTest(event.localPosition);
+            if (hit != null &&
+                widget.onPointMoved != null &&
+                widget.onPointTap == null) {
+              _draggingHit = hit;
+              _matchTime = hit.time;
+              _matchValue = hit.value;
+            } else {
+              _draggingHit = null;
+              _matchTime = null;
+              _matchValue = null;
+            }
+          },
+          onPointerMove: (event) {
+            if (_downLocal == null) return;
+            if ((event.localPosition - _downLocal!).distance > _tapSlop) {
+              _movedPastSlop = true;
+            }
+            final drag = _draggingHit;
+            final mt = _matchTime;
+            final mv = _matchValue;
+            if (drag != null &&
+                mt != null &&
+                mv != null &&
+                widget.onPointMoved != null) {
+              final type = drag.type;
+              final newValue = layout.valueForY(event.localPosition.dy, type);
+              final newTime = layout.timeForX(event.localPosition.dx);
+              widget.onPointMoved!(type, mt, mv, newValue, newTime);
+              _matchTime = newTime;
+              _matchValue = newValue;
+            }
+          },
+          onPointerUp: (event) => _finishPointer(layout, event.localPosition),
+          onPointerCancel: (_) {
+            if (_draggingHit != null) {
+              widget.onPointDragEnd?.call();
+            }
+            _cancelPointer();
+          },
           child: CustomPaint(
             painter: _ChartPainter(layout),
             size: chartSize,
@@ -503,6 +559,41 @@ class HemodynamicChart extends StatelessWidget {
         );
       },
     );
+  }
+
+  void _cancelPointer() {
+    _downLocal = null;
+    _movedPastSlop = false;
+    _draggingHit = null;
+    _matchTime = null;
+    _matchValue = null;
+  }
+
+  void _finishPointer(HemodynamicChartLayout layout, Offset local) {
+    if (_draggingHit != null) {
+      widget.onPointDragEnd?.call();
+      _cancelPointer();
+      return;
+    }
+
+    final down = _downLocal;
+    if (down == null) return;
+
+    if (_movedPastSlop) {
+      _cancelPointer();
+      return;
+    }
+
+    final hit = layout.hitTest(local);
+    if (hit != null && widget.onPointTap != null) {
+      widget.onPointTap!(hit);
+    } else if (hit == null && widget.onChartTap != null) {
+      widget.onChartTap!(
+        layout.valueForY(local.dy, widget.selectedType),
+      );
+    }
+
+    _cancelPointer();
   }
 }
 
@@ -549,6 +640,14 @@ class HemodynamicChartLayout {
   double xForTime(double time) {
     if (maxTime <= minTime) return leftPadding;
     return leftPadding + ((time - minTime) / (maxTime - minTime)) * chartWidth;
+  }
+
+  double timeForX(double x) {
+    if (chartWidth <= 0) return minTime;
+    final clamped = x.clamp(leftPadding, leftPadding + chartWidth);
+    if (maxTime <= minTime) return minTime;
+    return minTime +
+        ((clamped - leftPadding) / chartWidth) * (maxTime - minTime);
   }
 
   double yForValue(double value, [String type = 'FC']) {

@@ -167,6 +167,33 @@ class HemodynamicRecordService {
     return List<HemodynamicPoint>.from(points)..remove(point);
   }
 
+  /// Atualiza um ponto existente (mesmo tipo/tempo/valor) para novo tempo e valor.
+  /// Usado ao arrastar marcações no gráfico.
+  List<HemodynamicPoint> updatePoint({
+    required List<HemodynamicPoint> points,
+    required String type,
+    required double matchTime,
+    required double matchValue,
+    required double newTime,
+    required double newValue,
+  }) {
+    final list = List<HemodynamicPoint>.from(points);
+    final idx = list.indexWhere(
+      (p) =>
+          p.type == type &&
+          (p.time - matchTime).abs() < 1e-5 &&
+          (p.value - matchValue).abs() < 1e-5,
+    );
+    if (idx == -1) return points;
+    list[idx] = HemodynamicPoint(
+      type: type,
+      value: newValue,
+      time: newTime < 0 ? 0 : newTime,
+    );
+    list.sort((a, b) => a.time.compareTo(b.time));
+    return list;
+  }
+
   AnesthesiaRecord migrateLegacyHemodynamics(AnesthesiaRecord record) {
     if (record.hemodynamicPoints.isNotEmpty || record.hemodynamicEntries.isEmpty) {
       return record;

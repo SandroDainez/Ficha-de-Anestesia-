@@ -33,6 +33,8 @@ class HemodynamicChartCard extends StatelessWidget {
     required this.onQuickSpo2,
     required this.onPointTap,
     required this.onChartTap,
+    this.onPointMoved,
+    this.onPointDragEnd,
   });
 
   final bool dominant;
@@ -62,17 +64,18 @@ class HemodynamicChartCard extends StatelessWidget {
   final ValueChanged<double> onQuickSpo2;
   final ValueChanged<HemodynamicPoint>? onPointTap;
   final ValueChanged<double>? onChartTap;
+  final HemodynamicPointDragCallback? onPointMoved;
+  final VoidCallback? onPointDragEnd;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final hasPoints = points.isNotEmpty;
     final showEmptyOverlay = !hasAnesthesiaStartMarker && !hasPoints;
     final chartHeight = dominant ? 680.0 : 540.0;
     final instructionText = inlineHemodynamicRemoveMode
         ? 'Modo correção ativo. Toque em um ponto do gráfico para apagar.'
         : (hasAnesthesiaStartMarker
-            ? 'Selecione o parâmetro, confirme o modo de registro e toque no gráfico.'
+            ? 'Parâmetro à esquerda; toque no gráfico para lançar ou arraste um ponto para ajustar.'
             : 'Marque o início da anestesia para liberar os lançamentos.');
 
     return PanelCard(
@@ -197,32 +200,6 @@ class HemodynamicChartCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 10),
-                Text(
-                  'Parâmetro selecionado',
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: const Color(0xFF17324D),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      for (final type in const ['PAS', 'PAD', 'FC', 'SpO2', 'PAI']) ...[
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: ChoiceChip(
-                            label: Text(type == 'SpO2' ? 'SpO₂' : type),
-                            selected: inlineHemodynamicType == type,
-                            onSelected: (_) => onSelectType(type),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -240,7 +217,7 @@ class HemodynamicChartCard extends StatelessWidget {
                     ),
                     if (!inlineHemodynamicRemoveMode)
                       Text(
-                        'Você também pode tocar no gráfico para registrar.',
+                        'Toque no gráfico para registrar; arraste um ponto para mover (dedo ou caneta).',
                         style: const TextStyle(
                           color: Color(0xFF7A8EA5),
                           fontWeight: FontWeight.w600,
@@ -320,29 +297,42 @@ class HemodynamicChartCard extends StatelessWidget {
           const SizedBox(height: 8),
           const LegendRow(),
           const SizedBox(height: 10),
-          SizedBox(
-            height: chartHeight,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: HemodynamicChart(
-                    points: points,
-                    markers: markers,
-                    selectedType: inlineHemodynamicType,
-                    onPointTap: onPointTap,
-                    onChartTap: onChartTap,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _HemodynamicParameterSidebar(
+                inlineHemodynamicType: inlineHemodynamicType,
+                onSelectType: onSelectType,
+              ),
+              Expanded(
+                child: SizedBox(
+                  height: chartHeight,
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: HemodynamicChart(
+                          points: points,
+                          markers: markers,
+                          selectedType: inlineHemodynamicType,
+                          onPointTap: onPointTap,
+                          onChartTap: onChartTap,
+                          onPointMoved: onPointMoved,
+                          onPointDragEnd: onPointDragEnd,
+                        ),
+                      ),
+                      if (showEmptyOverlay)
+                        Positioned(
+                          left: 18,
+                          bottom: 18,
+                          child: _HemodynamicEmptyOverlay(
+                            onAddAnesthesiaStart: onAddAnesthesiaStart,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-                if (showEmptyOverlay)
-                  Positioned(
-                    left: 18,
-                    bottom: 18,
-                    child: _HemodynamicEmptyOverlay(
-                      onAddAnesthesiaStart: onAddAnesthesiaStart,
-                    ),
-                  ),
-              ],
-            ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -411,6 +401,60 @@ class HemodynamicChartCard extends StatelessWidget {
     final minutes = totalSeconds ~/ 60;
     final seconds = totalSeconds % 60;
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+}
+
+class _HemodynamicParameterSidebar extends StatelessWidget {
+  const _HemodynamicParameterSidebar({
+    required this.inlineHemodynamicType,
+    required this.onSelectType,
+  });
+
+  final String inlineHemodynamicType;
+  final ValueChanged<String> onSelectType;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const Key('hemo-parameter-sidebar'),
+      width: 112,
+      padding: const EdgeInsets.only(right: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Parâmetro',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Color(0xFF17324D),
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          for (final type in const ['PAS', 'PAD', 'FC', 'SpO2', 'PAI'])
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Center(
+                child: ChoiceChip(
+                  label: Text(
+                    type == 'SpO2' ? 'SpO₂' : type,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  selected: inlineHemodynamicType == type,
+                  onSelected: (_) => onSelectType(type),
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 
