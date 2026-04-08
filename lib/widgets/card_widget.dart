@@ -490,9 +490,12 @@ class HemodynamicChart extends StatefulWidget {
 }
 
 class _HemodynamicChartState extends State<HemodynamicChart> {
-  bool _draggingPoint = false;
-  bool _receivedPanDelta = false;
-  HemodynamicPoint? _dragAnchor;
+  static const double _tapSlop = 20;
+
+  Offset? _downLocal;
+  bool _movedPastSlop = false;
+  bool _dragUpdated = false;
+  HemodynamicPoint? _draggingHit;
   double? _matchTime;
   double? _matchValue;
 
@@ -507,62 +510,49 @@ class _HemodynamicChartState extends State<HemodynamicChart> {
           size: chartSize,
         );
 
-        Widget chart = GestureDetector(
+        // Listener garante toque no gráfico (onTapUp com Pan competia e falhava).
+        Widget chart = Listener(
           behavior: HitTestBehavior.opaque,
-          onPanStart: (details) {
-            _receivedPanDelta = false;
-            final hit = layout.hitTest(details.localPosition);
+          onPointerDown: (event) {
+            _downLocal = event.localPosition;
+            _movedPastSlop = false;
+            _dragUpdated = false;
+            final hit = layout.hitTest(event.localPosition);
             if (hit != null &&
                 widget.onPointMoved != null &&
                 widget.onPointTap == null) {
-              _draggingPoint = true;
-              _dragAnchor = hit;
+              _draggingHit = hit;
               _matchTime = hit.time;
               _matchValue = hit.value;
             } else {
-              _draggingPoint = false;
-              _dragAnchor = null;
+              _draggingHit = null;
               _matchTime = null;
               _matchValue = null;
             }
           },
-          onPanUpdate: (details) {
-            if (!_draggingPoint) return;
-            _receivedPanDelta = true;
+          onPointerMove: (event) {
+            if (_downLocal == null) return;
+            if ((event.localPosition - _downLocal!).distance > _tapSlop) {
+              _movedPastSlop = true;
+            }
+            final drag = _draggingHit;
             final mt = _matchTime;
             final mv = _matchValue;
-            final anchor = _dragAnchor;
-            if (mt == null || mv == null || anchor == null) return;
-            final type = anchor.type;
-            final newValue = layout.valueForY(details.localPosition.dy, type);
-            final newTime = layout.timeForX(details.localPosition.dx);
-            widget.onPointMoved!(type, mt, mv, newValue, newTime);
-            _matchTime = newTime;
-            _matchValue = newValue;
-          },
-          onPanEnd: (_) {
-            if (_draggingPoint && _receivedPanDelta) {
-              widget.onPointDragEnd?.call();
-            }
-            _resetDragState();
-          },
-          onPanCancel: () {
-            if (_draggingPoint && _receivedPanDelta) {
-              widget.onPointDragEnd?.call();
-            }
-            _resetDragState();
-          },
-          onTapUp: (details) {
-            final local = details.localPosition;
-            final hit = layout.hitTest(local);
-            if (hit != null && widget.onPointTap != null) {
-              widget.onPointTap!(hit);
-            } else if (hit == null && widget.onChartTap != null) {
-              widget.onChartTap!(
-                layout.valueForY(local.dy, widget.selectedType),
-              );
+            if (drag != null &&
+                mt != null &&
+                mv != null &&
+                widget.onPointMoved != null) {
+              _dragUpdated = true;
+              final type = drag.type;
+              final newValue = layout.valueForY(event.localPosition.dy, type);
+              final newTime = layout.timeForX(event.localPosition.dx);
+              widget.onPointMoved!(type, mt, mv, newValue, newTime);
+              _matchTime = newTime;
+              _matchValue = newValue;
             }
           },
+          onPointerUp: (event) => _handlePointerUp(layout, event.localPosition),
+          onPointerCancel: (_) => _handlePointerCancel(),
           child: CustomPaint(
             painter: _ChartPainter(layout),
             size: chartSize,
@@ -577,10 +567,53 @@ class _HemodynamicChartState extends State<HemodynamicChart> {
     );
   }
 
-  void _resetDragState() {
-    _draggingPoint = false;
-    _receivedPanDelta = false;
-    _dragAnchor = null;
+  void _handlePointerCancel() {
+    if (_draggingHit != null && _dragUpdated) {
+      widget.onPointDragEnd?.call();
+    }
+    _clearPointerState();
+  }
+
+  void _handlePointerUp(
+    HemodynamicChartLayout layout,
+    Offset local,
+  ) {
+    if (_draggingHit != null) {
+      if (_dragUpdated) {
+        widget.onPointDragEnd?.call();
+      }
+      _clearPointerState();
+      return;
+    }
+
+    final down = _downLocal;
+    if (down == null) {
+      _clearPointerState();
+      return;
+    }
+
+    if (_movedPastSlop) {
+      _clearPointerState();
+      return;
+    }
+
+    final hit = layout.hitTest(local);
+    if (hit != null && widget.onPointTap != null) {
+      widget.onPointTap!(hit);
+    } else if (hit == null && widget.onChartTap != null) {
+      widget.onChartTap!(
+        layout.valueForY(local.dy, widget.selectedType),
+      );
+    }
+
+    _clearPointerState();
+  }
+
+  void _clearPointerState() {
+    _downLocal = null;
+    _movedPastSlop = false;
+    _dragUpdated = false;
+    _draggingHit = null;
     _matchTime = null;
     _matchValue = null;
   }
