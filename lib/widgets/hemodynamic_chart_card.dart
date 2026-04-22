@@ -379,6 +379,23 @@ class HemodynamicChartCard extends StatelessWidget {
   }
 
   double _displayMaxTime() {
+    return computeDisplayMaxTime(
+      points: points,
+      markers: markers,
+      currentInlineTime: currentInlineTime,
+    );
+  }
+
+  double _minChartWidth(double maxTime) {
+    return minimumChartWidthFor(maxTime);
+  }
+
+  @visibleForTesting
+  static double computeDisplayMaxTime({
+    required List<HemodynamicPoint> points,
+    required List<HemodynamicMarker> markers,
+    required double currentInlineTime,
+  }) {
     final pointMax = points.isEmpty
         ? 0.0
         : points.map((item) => item.time).reduce((a, b) => a > b ? a : b);
@@ -392,7 +409,8 @@ class HemodynamicChartCard extends StatelessWidget {
     return (rawMax / 15).ceil() * 15.0;
   }
 
-  double _minChartWidth(double maxTime) {
+  @visibleForTesting
+  static double minimumChartWidthFor(double maxTime) {
     final blocks = (maxTime / 15).ceil();
     final chartWidth = blocks * 42.0;
     return chartWidth + 152.0;

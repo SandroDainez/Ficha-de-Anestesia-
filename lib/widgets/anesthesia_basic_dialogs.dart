@@ -148,6 +148,124 @@ class _AnesthesiologistsDialogState extends State<AnesthesiologistsDialog> {
   }
 }
 
+class NamedItemsDialog extends StatefulWidget {
+  const NamedItemsDialog({
+    super.key,
+    required this.title,
+    required this.label,
+    required this.addButtonLabel,
+    required this.emptyStateText,
+    required this.initialItems,
+    this.hintText,
+  });
+
+  final String title;
+  final String label;
+  final String addButtonLabel;
+  final String emptyStateText;
+  final String? hintText;
+  final List<String> initialItems;
+
+  @override
+  State<NamedItemsDialog> createState() => _NamedItemsDialogState();
+}
+
+class _NamedItemsDialogState extends State<NamedItemsDialog> {
+  late final TextEditingController _controller;
+  late List<String> _items;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+    _items = List<String>.from(widget.initialItems);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _addDraft() {
+    final value = _controller.text.trim();
+    if (value.isEmpty) return;
+    setState(() {
+      _items = [..._items, value];
+      _controller.clear();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.title),
+      content: SizedBox(
+        width: 520,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _controller,
+                decoration: InputDecoration(
+                  labelText: widget.label,
+                  hintText: widget.hintText,
+                ),
+                onSubmitted: (_) => _addDraft(),
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton.icon(
+                  onPressed: _addDraft,
+                  icon: const Icon(Icons.add),
+                  label: Text(widget.addButtonLabel),
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (_items.isEmpty)
+                Text(
+                  widget.emptyStateText,
+                  style: const TextStyle(color: Color(0xFF7A8EA5)),
+                ),
+              ..._items.asMap().entries.map((entry) {
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(entry.value),
+                  trailing: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _items.removeAt(entry.key);
+                      });
+                    },
+                    icon: const Icon(Icons.delete_outline),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final draft = _controller.text.trim();
+            Navigator.of(context).pop(
+              draft.isEmpty ? _items : [..._items, draft],
+            );
+          },
+          child: const Text('Salvar'),
+        ),
+      ],
+    );
+  }
+}
+
 class SingleFieldDialog extends StatefulWidget {
   const SingleFieldDialog({
     super.key,

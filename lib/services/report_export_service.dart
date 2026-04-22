@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -11,6 +11,12 @@ import '../models/patient.dart';
 
 class ReportExportService {
   const ReportExportService();
+
+  @visibleForTesting
+  bool shouldIncludeHemodynamicChart(AnesthesiaRecord record) {
+    return record.hemodynamicPoints.isNotEmpty ||
+        record.hemodynamicMarkers.isNotEmpty;
+  }
 
   List<String> _resolveAnesthesiologists(AnesthesiaRecord record) {
     if (record.anesthesiologists.isNotEmpty) {
@@ -171,7 +177,7 @@ class ReportExportService {
               _field('Marcadores hemodinâmicos', _joinHemodynamicMarkers(record)),
             ],
           ),
-          if (record.hemodynamicPoints.isNotEmpty || record.hemodynamicMarkers.isNotEmpty)
+          if (shouldIncludeHemodynamicChart(record))
             _hemodynamicChart(record),
           if (record.hemodynamicPoints.isNotEmpty)
             _hemodynamicTable(record),
@@ -801,7 +807,6 @@ class ReportExportService {
         );
       }
       buffer.writeln("<text x='38' y='18' font-size='11' font-weight='700' fill='#16a96b'>Sat</text>");
-      buffer.writeln("<text x='38' y='${(hemoTop - 8).toStringAsFixed(1)}' font-size='11' font-weight='700' fill='#5d7288'>PA / FC / PAM / PAI</text>");
       return buffer.toString();
     }
 

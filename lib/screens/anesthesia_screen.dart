@@ -80,6 +80,40 @@ class _MaintenancePreset {
   final double density;
 }
 
+class _InductionPreset {
+  const _InductionPreset({
+    required this.name,
+    required this.category,
+    required this.dosePerKg,
+    required this.unit,
+    required this.concentrationPerMl,
+    required this.concentrationLabel,
+  });
+
+  final String name;
+  final String category;
+  final double dosePerKg;
+  final String unit;
+  final double concentrationPerMl;
+  final String concentrationLabel;
+}
+
+class _AdjunctPreset {
+  const _AdjunctPreset({
+    required this.name,
+    required this.dosePerKg,
+    required this.unit,
+    required this.concentrationPerMl,
+    required this.concentrationLabel,
+  });
+
+  final String name;
+  final double dosePerKg;
+  final String unit;
+  final double concentrationPerMl;
+  final String concentrationLabel;
+}
+
 class _AirwaySupportRecommendation {
   const _AirwaySupportRecommendation({
     required this.title,
@@ -387,11 +421,164 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     'Vancomicina': '15 mg/kg',
     'Gentamicina': '4-5 mg/kg',
   };
+  static const List<String> _monitoringOptions = [
+    'ECG (5 derivações)',
+    'PA não invasiva',
+    'PAI',
+    'SpO₂',
+    'Capnografia',
+    'Temperatura',
+    'BIS',
+  ];
+  static const List<String> _timeOutOptions = [
+    'Equipe identificada por nome e funcao',
+    'Paciente, procedimento e sitio confirmados',
+    'Alergias conferidas',
+    'Antibioticoprofilaxia realizada no tempo correto',
+    'Exames e imagens disponiveis',
+    'Risco hemorragico discutido',
+    'Plano anestesico e via aerea discutidos',
+    'Instrumentais e equipamentos conferidos',
+  ];
   static const Map<String, Duration> _prophylacticRedoseIntervals = {
     'Cefazolina': Duration(hours: 4),
     'Cefuroxima': Duration(hours: 4),
     'Clindamicina': Duration(hours: 6),
   };
+  static const List<_InductionPreset> _inductionPresets = [
+    _InductionPreset(
+      name: 'Propofol',
+      category: 'Hipnótico',
+      dosePerKg: 2.0,
+      unit: 'mg',
+      concentrationPerMl: 10,
+      concentrationLabel: '10 mg/mL',
+    ),
+    _InductionPreset(
+      name: 'Etomidato',
+      category: 'Hipnótico',
+      dosePerKg: 0.25,
+      unit: 'mg',
+      concentrationPerMl: 2,
+      concentrationLabel: '2 mg/mL',
+    ),
+    _InductionPreset(
+      name: 'Cetamina',
+      category: 'Hipnótico',
+      dosePerKg: 1.5,
+      unit: 'mg',
+      concentrationPerMl: 50,
+      concentrationLabel: '50 mg/mL',
+    ),
+    _InductionPreset(
+      name: 'Fentanil',
+      category: 'Opioide',
+      dosePerKg: 3.0,
+      unit: 'mcg',
+      concentrationPerMl: 50,
+      concentrationLabel: '50 mcg/mL',
+    ),
+    _InductionPreset(
+      name: 'Alfentanil',
+      category: 'Opioide',
+      dosePerKg: 20.0,
+      unit: 'mcg',
+      concentrationPerMl: 500,
+      concentrationLabel: '500 mcg/mL',
+    ),
+    _InductionPreset(
+      name: 'Sufentanil',
+      category: 'Opioide',
+      dosePerKg: 0.3,
+      unit: 'mcg',
+      concentrationPerMl: 50,
+      concentrationLabel: '50 mcg/mL',
+    ),
+    _InductionPreset(
+      name: 'Remifentanil',
+      category: 'Opioide',
+      dosePerKg: 1.0,
+      unit: 'mcg',
+      concentrationPerMl: 50,
+      concentrationLabel: '50 mcg/mL (diluição usual)',
+    ),
+    _InductionPreset(
+      name: 'Rocurônio',
+      category: 'Bloqueador neuromuscular',
+      dosePerKg: 0.6,
+      unit: 'mg',
+      concentrationPerMl: 10,
+      concentrationLabel: '10 mg/mL',
+    ),
+    _InductionPreset(
+      name: 'Cisatracúrio',
+      category: 'Bloqueador neuromuscular',
+      dosePerKg: 0.15,
+      unit: 'mg',
+      concentrationPerMl: 2,
+      concentrationLabel: '2 mg/mL',
+    ),
+    _InductionPreset(
+      name: 'Atracúrio',
+      category: 'Bloqueador neuromuscular',
+      dosePerKg: 0.5,
+      unit: 'mg',
+      concentrationPerMl: 10,
+      concentrationLabel: '10 mg/mL',
+    ),
+    _InductionPreset(
+      name: 'Succinilcolina',
+      category: 'Bloqueador neuromuscular',
+      dosePerKg: 1.0,
+      unit: 'mg',
+      concentrationPerMl: 20,
+      concentrationLabel: '20 mg/mL',
+    ),
+  ];
+  static const List<_AdjunctPreset> _adjunctPresets = [
+    _AdjunctPreset(
+      name: 'Sulfato de Mg',
+      dosePerKg: 40,
+      unit: 'mg',
+      concentrationPerMl: 100,
+      concentrationLabel: '100 mg/mL',
+    ),
+    _AdjunctPreset(
+      name: 'Cetamina',
+      dosePerKg: 0.25,
+      unit: 'mg',
+      concentrationPerMl: 50,
+      concentrationLabel: '50 mg/mL',
+    ),
+    _AdjunctPreset(
+      name: 'Clonidina',
+      dosePerKg: 1.5,
+      unit: 'mcg',
+      concentrationPerMl: 150,
+      concentrationLabel: '150 mcg/mL',
+    ),
+    _AdjunctPreset(
+      name: 'Metadona',
+      dosePerKg: 0.15,
+      unit: 'mg',
+      concentrationPerMl: 10,
+      concentrationLabel: '10 mg/mL',
+    ),
+    _AdjunctPreset(
+      name: 'Dexmedetomidina (Precedex)',
+      dosePerKg: 0.7,
+      unit: 'mcg',
+      concentrationPerMl: 4,
+      concentrationLabel: '4 mcg/mL',
+    ),
+    _AdjunctPreset(
+      name: 'Lidocaína',
+      dosePerKg: 1.0,
+      unit: 'mg',
+      concentrationPerMl: 20,
+      concentrationLabel: '20 mg/mL (2%)',
+    ),
+  ];
   static const List<_MaintenancePreset> _maintenancePresets = [
     _MaintenancePreset(
       name: 'Propofol em BIC',
@@ -947,6 +1134,181 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     if (!preset.isInhalational) return preset.defaultDetails;
     final mlPerHour = _estimateInhalationalMlPerHour(preset);
     return '${preset.defaultDetails} • ~${mlPerHour.toStringAsFixed(1)} mL/h (estimado com FGF 2 L/min)';
+  }
+
+  String? _findDrugEntry(String name) {
+    try {
+      return _record.drugs.firstWhere((item) => item.split('|').first.trim() == name);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  List<String> _upsertDrugEntry(String encodedEntry) {
+    final name = encodedEntry.split('|').first.trim();
+    final updated = <String>[];
+    var replaced = false;
+    for (final item in _record.drugs) {
+      if (item.split('|').first.trim() == name) {
+        updated.add(encodedEntry);
+        replaced = true;
+      } else {
+        updated.add(item);
+      }
+    }
+    if (!replaced) updated.add(encodedEntry);
+    return updated;
+  }
+
+  List<String> _removeDrugEntry(String name) {
+    return _record.drugs
+        .where((item) => item.split('|').first.trim() != name)
+        .toList();
+  }
+
+  double _inductionReferenceWeightKg() {
+    final patient = _record.patient;
+    if (patient.weightKg > 0) return patient.weightKg;
+    if (patient.birthWeightKg > 0) return patient.birthWeightKg;
+    return 0;
+  }
+
+  String _formatMedicationAmount(double value) {
+    if (value == value.roundToDouble()) {
+      return value.toStringAsFixed(0);
+    }
+    if (value >= 10) return value.toStringAsFixed(1);
+    return value.toStringAsFixed(2);
+  }
+
+  String _inductionPresetDose(_InductionPreset preset) {
+    final weightKg = _inductionReferenceWeightKg();
+    if (weightKg <= 0) return 'Informe o peso para calcular';
+    final totalDose = preset.dosePerKg * weightKg;
+    final totalMl = totalDose / preset.concentrationPerMl;
+    return '${_formatMedicationAmount(totalDose)} ${preset.unit} • ~${_formatMedicationAmount(totalMl)} mL (${preset.concentrationLabel})';
+  }
+
+  Future<void> _toggleInductionPreset(_InductionPreset preset) async {
+    final existing = _findDrugEntry(preset.name);
+    final updated = existing == null
+        ? _upsertDrugEntry(
+            '${preset.name}|${_inductionPresetDose(preset)}|||1 ampola',
+          )
+        : _removeDrugEntry(preset.name);
+    setState(() {
+      _record = _record.copyWith(drugs: updated);
+    });
+    await _persistRecord();
+  }
+
+  Future<void> _editInductionPreset(_InductionPreset preset) async {
+    final existing = _findDrugEntry(preset.name);
+    final parts = existing?.split('|') ?? const <String>[];
+    final result = await showDialog<MedicationEntryEditResult>(
+      context: context,
+      builder: (_) => MedicationEntryEditDialog(
+        title: preset.name,
+        name: preset.name,
+        initialDose: parts.length > 1 && parts[1].trim().isNotEmpty
+            ? parts[1].trim()
+            : _inductionPresetDose(preset),
+        initialTime: parts.length > 2 ? parts[2].trim() : '',
+        initialRepeats: parts.length > 3 ? parts[3].trim() : '',
+        initialInfusion: parts.length > 4 ? parts[4].trim() : '',
+        initialAmpoules: parts.length > 5 && parts[5].trim().isNotEmpty
+            ? parts[5].trim()
+            : '1 ampola',
+      ),
+    );
+    if (result == null) return;
+    final updated = result.remove
+        ? _removeDrugEntry(preset.name)
+        : _upsertDrugEntry(result.encodedEntry);
+    setState(() {
+      _record = _record.copyWith(drugs: updated);
+    });
+    await _persistRecord();
+  }
+
+  String? _findAdjunctEntry(String name) {
+    try {
+      return _record.adjuncts.firstWhere((item) => item.split('|').first.trim() == name);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  List<String> _upsertAdjunctEntry(String encodedEntry) {
+    final name = encodedEntry.split('|').first.trim();
+    final updated = <String>[];
+    var replaced = false;
+    for (final item in _record.adjuncts) {
+      if (item.split('|').first.trim() == name) {
+        updated.add(encodedEntry);
+        replaced = true;
+      } else {
+        updated.add(item);
+      }
+    }
+    if (!replaced) updated.add(encodedEntry);
+    return updated;
+  }
+
+  List<String> _removeAdjunctEntry(String name) {
+    return _record.adjuncts
+        .where((item) => item.split('|').first.trim() != name)
+        .toList();
+  }
+
+  String _adjunctPresetDose(_AdjunctPreset preset) {
+    final weightKg = _inductionReferenceWeightKg();
+    if (weightKg <= 0) return 'Informe o peso para calcular';
+    final totalDose = preset.dosePerKg * weightKg;
+    final totalMl = totalDose / preset.concentrationPerMl;
+    return '${_formatMedicationAmount(totalDose)} ${preset.unit} • ~${_formatMedicationAmount(totalMl)} mL (${preset.concentrationLabel})';
+  }
+
+  Future<void> _toggleAdjunctPreset(_AdjunctPreset preset) async {
+    final existing = _findAdjunctEntry(preset.name);
+    final updated = existing == null
+        ? _upsertAdjunctEntry(
+            '${preset.name}|${_adjunctPresetDose(preset)}|||1 ampola',
+          )
+        : _removeAdjunctEntry(preset.name);
+    setState(() {
+      _record = _record.copyWith(adjuncts: updated);
+    });
+    await _persistRecord();
+  }
+
+  Future<void> _editAdjunctPreset(_AdjunctPreset preset) async {
+    final existing = _findAdjunctEntry(preset.name);
+    final parts = existing?.split('|') ?? const <String>[];
+    final result = await showDialog<MedicationEntryEditResult>(
+      context: context,
+      builder: (_) => MedicationEntryEditDialog(
+        title: preset.name,
+        name: preset.name,
+        initialDose: parts.length > 1 && parts[1].trim().isNotEmpty
+            ? parts[1].trim()
+            : _adjunctPresetDose(preset),
+        initialTime: parts.length > 2 ? parts[2].trim() : '',
+        initialRepeats: parts.length > 3 ? parts[3].trim() : '',
+        initialInfusion: parts.length > 4 ? parts[4].trim() : '',
+        initialAmpoules: parts.length > 5 && parts[5].trim().isNotEmpty
+            ? parts[5].trim()
+            : '1 ampola',
+      ),
+    );
+    if (result == null) return;
+    final updated = result.remove
+        ? _removeAdjunctEntry(preset.name)
+        : _upsertAdjunctEntry(result.encodedEntry);
+    setState(() {
+      _record = _record.copyWith(adjuncts: updated);
+    });
+    await _persistRecord();
   }
 
   Future<void> _toggleMaintenancePreset(_MaintenancePreset preset) async {
@@ -2104,18 +2466,46 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     await _persistRecord();
   }
 
-  Future<void> _editMonitorizacao() async {
+  Future<void> _toggleMonitoringItem(String item) async {
+    final next = List<String>.from(_monitoringItems);
+    if (next.contains(item)) {
+      next.remove(item);
+    } else {
+      next.add(item);
+    }
+    final customItems = next
+        .where((entry) => !_monitoringOptions.contains(entry))
+        .toList();
+    final orderedStandardItems = _monitoringOptions
+        .where(next.contains)
+        .toList();
+
+    setState(() {
+      _monitoringItems = [...orderedStandardItems, ...customItems];
+      _record = _record.copyWith(monitoringItems: _monitoringItems);
+    });
+    await _persistRecord();
+  }
+
+  Future<void> _editCustomMonitoringItems() async {
     final result = await showDialog<List<String>>(
       context: context,
-      builder: (_) => MonitoringDialog(
-        initialItems: _monitoringItems,
-        patient: _record.patient,
+      builder: (_) => ListFieldDialog(
+        title: 'Outros itens de monitorização',
+        label: 'Outros',
+        initialItems: _monitoringItems
+            .where((item) => !_monitoringOptions.contains(item))
+            .toList(),
+        hintText: 'Um item por linha',
       ),
     );
     if (result == null) return;
+    final orderedStandardItems = _monitoringOptions
+        .where(_monitoringItems.contains)
+        .toList();
     setState(() {
-      _monitoringItems = result;
-      _record = _record.copyWith(monitoringItems: result);
+      _monitoringItems = [...orderedStandardItems, ...result];
+      _record = _record.copyWith(monitoringItems: _monitoringItems);
     });
     await _persistRecord();
   }
@@ -2230,11 +2620,13 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     if (section == SurgeryInfoSection.surgeon) {
       final result = await showDialog<List<String>>(
         context: context,
-        builder: (_) => ListFieldDialog(
-          title: 'Cirurgião',
-          label: 'Cirurgião',
+        builder: (_) => NamedItemsDialog(
+          title: 'Cirurgiões',
+          label: 'Nome do cirurgião',
+          addButtonLabel: 'Adicionar cirurgião',
+          emptyStateText: 'Nenhum cirurgião adicionado.',
           initialItems: _lineItems(_record.surgeonName),
-          hintText: 'Um nome por linha',
+          hintText: 'Ex: Dr. Fulano',
         ),
       );
       if (result == null) return;
@@ -2248,11 +2640,13 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     if (section == SurgeryInfoSection.assistants) {
       final result = await showDialog<List<String>>(
         context: context,
-        builder: (_) => ListFieldDialog(
+        builder: (_) => NamedItemsDialog(
           title: 'Auxiliares',
-          label: 'Auxiliares',
+          label: 'Nome do auxiliar',
+          addButtonLabel: 'Adicionar auxiliar',
+          emptyStateText: 'Nenhum auxiliar adicionado.',
           initialItems: _record.assistantNames,
-          hintText: 'Um nome por linha',
+          hintText: 'Ex: Dra. Ciclana',
         ),
       );
       if (result == null) return;
@@ -2336,6 +2730,33 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         anesthesiologistCrm: first[1].trim(),
         anesthesiologistDetails: first[2].trim(),
       );
+    });
+    await _persistRecord();
+  }
+
+  Future<void> _toggleTimeOutChecklistItem(String item) async {
+    final next = List<String>.from(_record.timeOutChecklist);
+    if (next.contains(item)) {
+      next.remove(item);
+    } else {
+      next.add(item);
+    }
+
+    setState(() {
+      _record = _record.copyWith(
+        timeOutChecklist: next,
+        timeOutCompleted: next.length == _timeOutOptions.length
+            ? _record.timeOutCompleted
+            : false,
+      );
+    });
+    await _persistRecord();
+  }
+
+  Future<void> _finalizeTimeOutFromCard() async {
+    if (_record.timeOutChecklist.length != _timeOutOptions.length) return;
+    setState(() {
+      _record = _record.copyWith(timeOutCompleted: true);
     });
     await _persistRecord();
   }
@@ -3063,7 +3484,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return _buildCompactOperationalCard(
       key: const Key('venous-access-card'),
       tapKey: const Key('venous-access-entry'),
-      title: '9) Acesso venoso',
+      title: '8) Acesso venoso',
       titleColor: _accessRowColor,
       icon: Icons.vaccines_outlined,
       minHeight: 92,
@@ -3086,7 +3507,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return _buildCompactOperationalCard(
       key: const Key('arterial-access-card'),
       tapKey: const Key('arterial-access-entry'),
-      title: 'Cateter de PAI',
+      title: '9) Cateter de PAI',
       titleColor: _accessRowColor,
       icon: Icons.timeline_outlined,
       minHeight: 92,
@@ -3102,6 +3523,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     final missingRecommended = recommended
         .where((item) => !_monitoringItems.contains(item))
         .toList();
+    final customItems = _monitoringItems
+        .where((item) => !_monitoringOptions.contains(item))
+        .toList();
     final status = _monitoringItems.isEmpty
         ? 'Monitorização pendente'
         : '${_monitoringItems.length} item(ns) selecionados';
@@ -3111,16 +3535,133 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             empty: 'Toque para selecionar a monitorização',
           )
         : 'Sugeridos ausentes: ${missingRecommended.join(', ')}';
-    return _buildCompactOperationalCard(
+    return PanelCard(
       key: const Key('monitoring-card'),
       title: '10) Monitorização',
       titleColor: _accessRowColor,
       icon: Icons.monitor_heart_outlined,
-      minHeight: 92,
-      status: status,
-      summary: summary,
-      onTap: _editMonitorizacao,
+      minHeight: 250,
       isCompleted: _monitoringItems.isNotEmpty,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            status,
+            style: const TextStyle(
+              color: Color(0xFF17324D),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            summary,
+            style: const TextStyle(
+              color: Color(0xFF5D7288),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ..._monitoringOptions.asMap().entries.map(
+            (entry) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: InkWell(
+                key: Key('monitoring-item-${entry.key + 1}'),
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => _toggleMonitoringItem(entry.value),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _monitoringItems.contains(entry.value)
+                        ? const Color(0xFFEAF2FF)
+                        : const Color(0xFFF8FAFE),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _monitoringItems.contains(entry.value)
+                          ? const Color(0xFF2B76D2)
+                          : recommended.contains(entry.value)
+                              ? const Color(0xFF9CC0EC)
+                              : const Color(0xFFDCE7F3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 26,
+                        height: 26,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: _monitoringItems.contains(entry.value)
+                              ? const Color(0xFF2B76D2)
+                              : const Color(0xFFEAF2FF),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          '${entry.key + 1}',
+                          style: TextStyle(
+                            color: _monitoringItems.contains(entry.value)
+                                ? Colors.white
+                                : const Color(0xFF2B76D2),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          entry.value,
+                          style: TextStyle(
+                            color: recommended.contains(entry.value)
+                                ? const Color(0xFF315E8D)
+                                : const Color(0xFF17324D),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        _monitoringItems.contains(entry.value)
+                            ? Icons.check_circle_rounded
+                            : Icons.radio_button_unchecked_rounded,
+                        color: _monitoringItems.contains(entry.value)
+                            ? const Color(0xFF2B76D2)
+                            : const Color(0xFF8CA0B5),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              OutlinedButton.icon(
+                key: const Key('monitoring-other-items-button'),
+                onPressed: _editCustomMonitoringItems,
+                icon: const Icon(Icons.edit_outlined),
+                label: const Text('Outros'),
+              ),
+              if (customItems.isNotEmpty) ...[
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    customItems.join(', '),
+                    style: const TextStyle(
+                      color: Color(0xFF5D7288),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -3487,7 +4028,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               FilledButton.icon(
                 onPressed: () => _toggleMaintenancePreset(preset),
@@ -3496,7 +4039,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                 ),
                 label: Text(selected ? 'Confirmado' : 'Confirmar'),
               ),
-              const SizedBox(width: 8),
               OutlinedButton.icon(
                 onPressed: () => _editMaintenancePreset(preset),
                 icon: const Icon(Icons.edit_outlined),
@@ -3514,39 +4056,146 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     final summary = _record.timeOutChecklist.isEmpty
         ? 'Toque para preencher'
         : '${_record.timeOutChecklist.length} itens confirmados';
-    return _buildCompactOperationalCard(
+    return PanelCard(
       key: const Key('surgery-timeout-card'),
-      tapKey: const Key('surgery-timeout-entry'),
       title: '11) Time-out',
       titleColor: _timeoutRowColor,
       icon: Icons.alarm_on_outlined,
-      minHeight: 92,
+      minHeight: 220,
       isAttention: _hasPendingTimeOut,
-      status: completed ? 'Time-out finalizado' : 'Time-out pendente',
-      statusColor:
-          completed ? const Color(0xFF169653) : const Color(0xFFF59E0B),
-      summary: summary,
-      onTap: () => _editSurgerySection(SurgeryInfoSection.timeOut),
       isCompleted: completed,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            completed ? 'Time-out finalizado' : 'Time-out pendente',
+            style: TextStyle(
+              color:
+                  completed ? const Color(0xFF169653) : const Color(0xFFF59E0B),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            summary,
+            style: const TextStyle(
+              color: Color(0xFF5D7288),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ..._timeOutOptions.asMap().entries.map(
+            (entry) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: InkWell(
+                key: Key('surgery-timeout-item-${entry.key + 1}'),
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => _toggleTimeOutChecklistItem(entry.value),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _record.timeOutChecklist.contains(entry.value)
+                        ? const Color(0xFFEAF6EE)
+                        : const Color(0xFFF8FAFE),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _record.timeOutChecklist.contains(entry.value)
+                          ? const Color(0xFF8DD0A3)
+                          : const Color(0xFFDCE7F3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 26,
+                        height: 26,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: _record.timeOutChecklist.contains(entry.value)
+                              ? const Color(0xFF169653)
+                              : const Color(0xFFEAF2FF),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          '${entry.key + 1}',
+                          style: TextStyle(
+                            color: _record.timeOutChecklist.contains(entry.value)
+                                ? Colors.white
+                                : const Color(0xFF2B76D2),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          entry.value,
+                          style: const TextStyle(
+                            color: Color(0xFF17324D),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        _record.timeOutChecklist.contains(entry.value)
+                            ? Icons.check_circle_rounded
+                            : Icons.radio_button_unchecked_rounded,
+                        color: _record.timeOutChecklist.contains(entry.value)
+                            ? const Color(0xFF169653)
+                            : const Color(0xFF8CA0B5),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              key: const Key('surgery-complete-timeout-button'),
+              onPressed: _record.timeOutChecklist.length == _timeOutOptions.length
+                  ? _finalizeTimeOutFromCard
+                  : null,
+              icon: const Icon(Icons.check_circle_outline),
+              label: Text(
+                completed ? 'Time-out finalizado' : 'Finalizar time-out',
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildAntibioticProphylaxisCard() {
     final redoseAlerts = _antibioticRedoseAlerts;
     final antibiotics = _record.prophylacticAntibiotics;
+    final suggestedScheme = _surgeryBasedAntibioticSuggestions.isEmpty
+        ? null
+        : _surgeryBasedAntibioticSuggestions.first;
     final status = redoseAlerts.isNotEmpty
         ? '${redoseAlerts.first.name}: ${redoseAlerts.first.message}'
         : antibiotics.isEmpty
-            ? 'Nenhum antibiótico registrado'
+            ? suggestedScheme == null
+                ? 'Nenhum antibiótico registrado'
+                : 'Sugestão: ${suggestedScheme.title}'
             : antibiotics.length == 1
                 ? antibiotics.first.split('|').first
                 : '${antibiotics.length} antibióticos registrados';
     final summary = redoseAlerts.isNotEmpty
         ? redoseAlerts.first.detail
         : antibiotics.isEmpty
-            ? _surgeryBasedAntibioticSuggestions.isEmpty
+            ? suggestedScheme == null
                 ? 'Toque para registrar dose e horário'
-                : 'Há sugestão automática pela cirurgia selecionada'
+                : '${suggestedScheme.medicationName} ${suggestedScheme.dose} • ${suggestedScheme.repeatGuidance}'
             : () {
                 final first = antibiotics.first.split('|');
                 final dose = _medicationDoseSummary(first);
@@ -3563,7 +4212,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return _buildCompactOperationalCard(
       key: const Key('antibiotic-entry-card'),
       tapKey: const Key('antibiotic-entry'),
-      title: '8) Antibiótico profilaxia',
+      title: '7) Antibiótico profilaxia',
       titleColor: _timeoutRowColor,
       icon: Icons.medical_services_outlined,
       minHeight: 92,
@@ -3681,18 +4330,116 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         : '${_record.drugs.length} item(ns) registrados';
     return KeyedSubtree(
       key: _drugsSectionKey,
-      child: _buildCompactOperationalCard(
+      child: PanelCard(
         key: const Key('drugs-card'),
-        tapKey: const Key('drugs-entry'),
         title: '13) Indução',
         titleColor: _techniqueRowColor,
         icon: Icons.medication_outlined,
-        minHeight: 92,
-        status: status,
-        summary: summary,
-        onTap: _editDrogasInfusoes,
+        minHeight: 320,
         isAttention: _hasPendingDrugs,
         isCompleted: _record.drugs.isNotEmpty,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              status,
+              style: const TextStyle(
+                color: Color(0xFF17324D),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              summary,
+              style: const TextStyle(
+                color: Color(0xFF5D7288),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ..._inductionPresets.map(
+              (preset) {
+                final encodedEntry = _findDrugEntry(preset.name);
+                final selected = encodedEntry != null;
+                final parts = encodedEntry?.split('|') ?? const <String>[];
+                final detail = parts.length > 1 && parts[1].trim().isNotEmpty
+                    ? parts[1].trim()
+                    : _inductionPresetDose(preset);
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? _techniqueRowColor.withAlpha(16)
+                          : const Color(0xFFF8FAFE),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: selected
+                            ? _techniqueRowColor
+                            : const Color(0xFFDCE7F3),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          preset.name,
+                          style: const TextStyle(
+                            color: Color(0xFF17324D),
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          preset.category,
+                          style: const TextStyle(
+                            color: Color(0xFF5D7288),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          detail,
+                          style: const TextStyle(
+                            color: Color(0xFF17324D),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            FilledButton.icon(
+                              onPressed: () => _toggleInductionPreset(preset),
+                              icon: Icon(
+                                selected
+                                    ? Icons.check_circle_rounded
+                                    : Icons.add_task_rounded,
+                              ),
+                              label: Text(selected ? 'Confirmado' : 'Confirmar'),
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: () => _editInductionPreset(preset),
+                              icon: const Icon(Icons.edit_outlined),
+                              label: const Text('Editar'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+            AddButton(
+              label: 'Edição avançada',
+              onTap: _editDrogasInfusoes,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -3704,15 +4451,106 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     final summary = _record.adjuncts.isEmpty
         ? 'Toque para registrar adjuvantes e doses'
         : '${_record.adjuncts.length} item(ns) registrados';
-    return _buildCompactOperationalCard(
+    return PanelCard(
       title: '14) Adjuvantes',
       titleColor: _techniqueRowColor,
       icon: Icons.auto_awesome_outlined,
-      minHeight: 92,
-      status: status,
-      summary: summary,
-      onTap: _editAdjuvantes,
+      minHeight: 280,
       isCompleted: _record.adjuncts.isNotEmpty,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            status,
+            style: const TextStyle(
+              color: Color(0xFF17324D),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            summary,
+            style: const TextStyle(
+              color: Color(0xFF5D7288),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ..._adjunctPresets.map(
+            (preset) {
+              final encodedEntry = _findAdjunctEntry(preset.name);
+              final selected = encodedEntry != null;
+              final parts = encodedEntry?.split('|') ?? const <String>[];
+              final detail = parts.length > 1 && parts[1].trim().isNotEmpty
+                  ? parts[1].trim()
+                  : _adjunctPresetDose(preset);
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? _techniqueRowColor.withAlpha(16)
+                        : const Color(0xFFF8FAFE),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: selected
+                          ? _techniqueRowColor
+                          : const Color(0xFFDCE7F3),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        preset.name,
+                        style: const TextStyle(
+                          color: Color(0xFF17324D),
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        detail,
+                        style: const TextStyle(
+                          color: Color(0xFF17324D),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          FilledButton.icon(
+                            onPressed: () => _toggleAdjunctPreset(preset),
+                            icon: Icon(
+                              selected
+                                  ? Icons.check_circle_rounded
+                                  : Icons.add_task_rounded,
+                            ),
+                            label: Text(selected ? 'Confirmado' : 'Confirmar'),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () => _editAdjunctPreset(preset),
+                            icon: const Icon(Icons.edit_outlined),
+                            label: const Text('Editar'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+          AddButton(
+            label: 'Edição avançada',
+            onTap: _editAdjuvantes,
+          ),
+        ],
+      ),
     );
   }
 
@@ -3787,24 +4625,97 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     );
   }
 
-  Widget _buildUsageSummaryCard() {
-    final summary = <String>[
-      if (_record.drugs.isNotEmpty) 'Indução: ${_record.drugs.length} item(ns)',
-      if (_record.adjuncts.isNotEmpty)
-        'Adjuvantes: ${_record.adjuncts.length} item(ns)',
-      if (_record.sedationMedications.isNotEmpty)
-        'Sedação: ${_record.sedationMedications.length} item(ns)',
-      if (_record.vasoactiveDrugs.isNotEmpty)
-        'Vasoativas: ${_record.vasoactiveDrugs.length} item(ns)',
-      if (_record.venousAccesses.isNotEmpty)
-        'Acesso venoso: ${_record.venousAccesses.length} item(ns)',
-      if (_record.arterialAccesses.isNotEmpty)
-        'Acesso arterial: ${_record.arterialAccesses.length} item(ns)',
-      if (_record.neuraxialNeedles.isNotEmpty)
-        'Agulhas neuraxiais: ${_record.neuraxialNeedles.length} item(ns)',
-      if (_record.anesthesiaMaterials.isNotEmpty)
-        'Materiais livres: ${_record.anesthesiaMaterials.length} item(ns)',
+  List<String> _buildUsageSummaryLines() {
+    final lines = <String>[
+      ..._usageLinesFromEncodedEntries(
+        'Indução',
+        _record.drugs,
+        quantityIndex: 4,
+        fallbackDetailIndex: 1,
+      ),
+      ..._usageLinesFromEncodedEntries(
+        'Adjuvantes',
+        _record.adjuncts,
+        quantityIndex: 4,
+        fallbackDetailIndex: 1,
+      ),
+      ..._usageLinesFromEncodedEntries(
+        'Sedação',
+        _record.sedationMedications,
+        quantityIndex: 4,
+        fallbackDetailIndex: 1,
+      ),
+      ..._usageLinesFromEncodedEntries(
+        'Outras medicações',
+        _record.otherMedications,
+        quantityIndex: 4,
+        fallbackDetailIndex: 1,
+      ),
+      ..._usageLinesFromEncodedEntries(
+        'Vasoativas',
+        _record.vasoactiveDrugs,
+        quantityIndex: 4,
+        fallbackDetailIndex: 1,
+      ),
+      ..._usageLinesFromPlainEntries('Acesso venoso', _record.venousAccesses),
+      ..._usageLinesFromPlainEntries('Acesso arterial', _record.arterialAccesses),
+      ..._usageLinesFromPlainEntries(
+        'Agulhas neuraxiais',
+        _record.neuraxialNeedles,
+      ),
+      ..._usageLinesFromFluidEntries(
+        'Cristaloides',
+        _record.fluidBalance.crystalloidEntries,
+      ),
+      ..._usageLinesFromFluidEntries(
+        'Coloides',
+        _record.fluidBalance.colloidEntries,
+      ),
+      ..._usageLinesFromFluidEntries(
+        'Sangue e derivados',
+        _record.fluidBalance.bloodEntries,
+      ),
+      ..._usageLinesFromPlainEntries(
+        'Materiais livres',
+        _record.anesthesiaMaterials,
+      ),
     ];
+    return lines;
+  }
+
+  List<String> _usageLinesFromEncodedEntries(
+    String prefix,
+    List<String> entries, {
+    required int quantityIndex,
+    required int fallbackDetailIndex,
+  }) {
+    return entries.map((entry) {
+      final parts = entry.split('|');
+      final name = parts.isNotEmpty ? parts.first.trim() : entry.trim();
+      final quantity = parts.length > quantityIndex
+          ? parts[quantityIndex].trim()
+          : '';
+      final fallbackDetail = parts.length > fallbackDetailIndex
+          ? parts[fallbackDetailIndex].trim()
+          : '';
+      final detail = quantity.isNotEmpty ? quantity : fallbackDetail;
+      if (detail.isEmpty) return '$prefix: $name';
+      return '$prefix: $name • $detail';
+    }).toList();
+  }
+
+  List<String> _usageLinesFromPlainEntries(String prefix, List<String> entries) {
+    return entries.map((entry) => '$prefix: ${entry.trim()}').toList();
+  }
+
+  List<String> _usageLinesFromFluidEntries(String prefix, List<String> entries) {
+    return entries
+        .map((entry) => '$prefix: ${entry.replaceAll('|', ' • ').trim()}')
+        .toList();
+  }
+
+  Widget _buildUsageSummaryCard() {
+    final summary = _buildUsageSummaryLines();
 
     return PanelCard(
       title: 'Resumo de uso',

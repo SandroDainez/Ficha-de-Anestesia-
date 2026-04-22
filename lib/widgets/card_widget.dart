@@ -4,7 +4,7 @@ import 'package:pointer_interceptor/pointer_interceptor.dart';
 
 import '../models/hemodynamic_point.dart';
 
-class PanelCard extends StatelessWidget {
+class PanelCard extends StatefulWidget {
   const PanelCard({
     super.key,
     required this.title,
@@ -16,6 +16,8 @@ class PanelCard extends StatelessWidget {
     this.minHeight,
     this.isAttention = false,
     this.isCompleted = false,
+    this.collapsible = true,
+    this.initiallyExpanded = false,
   });
 
   final String title;
@@ -27,39 +29,56 @@ class PanelCard extends StatelessWidget {
   final double? minHeight;
   final bool isAttention;
   final bool isCompleted;
+  final bool collapsible;
+  final bool initiallyExpanded;
+
+  @override
+  State<PanelCard> createState() => _PanelCardState();
+}
+
+class _PanelCardState extends State<PanelCard> {
+  late bool _isExpanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _isExpanded = widget.initiallyExpanded;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final isSuccess = isCompleted && !isAttention;
-    final headerBackground = isAttention
+    final isSuccess = widget.isCompleted && !widget.isAttention;
+    final headerBackground = widget.isAttention
         ? Color.alphaBlend(
             const Color(0x14F0A11F),
-            titleColor.withAlpha(18),
+            widget.titleColor.withAlpha(18),
           )
         : isSuccess
             ? const Color(0xFFE7F6EC)
-            : titleColor.withAlpha(18);
-    final headerDivider = isAttention
+            : widget.titleColor.withAlpha(18);
+    final headerDivider = widget.isAttention
         ? Color.alphaBlend(
             const Color(0x40F0A11F),
-            titleColor.withAlpha(48),
+            widget.titleColor.withAlpha(48),
           )
         : isSuccess
             ? const Color(0xFF8DD0A3)
-            : titleColor.withAlpha(48);
+            : widget.titleColor.withAlpha(48);
     final cardBackground = isSuccess ? const Color(0xFFF4FBF6) : Colors.white;
-    final cardBorder = isAttention
+    final cardBorder = widget.isAttention
         ? const Color(0xFFF2C879)
         : isSuccess
             ? const Color(0xFF8DD0A3)
             : const Color(0xFFBCD0E4);
     final effectiveTitleColor =
-        isSuccess ? const Color(0xFF177245) : titleColor;
+        isSuccess ? const Color(0xFF177245) : widget.titleColor;
 
     return Container(
       width: double.infinity,
       constraints:
-          minHeight == null ? null : BoxConstraints(minHeight: minHeight!),
+          _isExpanded && widget.minHeight != null
+              ? BoxConstraints(minHeight: widget.minHeight!)
+              : null,
       decoration: BoxDecoration(
         color: cardBackground,
         borderRadius: BorderRadius.circular(14),
@@ -75,52 +94,73 @@ class PanelCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-            decoration: BoxDecoration(
-              color: headerBackground,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(13),
-                topRight: Radius.circular(13),
-              ),
-              border: Border(
-                bottom: BorderSide(color: headerDivider),
-              ),
+          InkWell(
+            borderRadius: BorderRadius.vertical(
+              top: const Radius.circular(13),
+              bottom: Radius.circular(_isExpanded ? 0 : 13),
             ),
-            child: Row(
-              children: [
-                Icon(icon, size: 15, color: effectiveTitleColor),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    title.toUpperCase(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: effectiveTitleColor,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12,
-                      letterSpacing: 0.2,
-                    ),
+            onTap: widget.collapsible
+                ? () => setState(() => _isExpanded = !_isExpanded)
+                : null,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(
+                color: headerBackground,
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(13),
+                  topRight: const Radius.circular(13),
+                  bottomLeft: Radius.circular(_isExpanded ? 0 : 13),
+                  bottomRight: Radius.circular(_isExpanded ? 0 : 13),
+                ),
+                border: Border(
+                  bottom: BorderSide(
+                    color: _isExpanded ? headerDivider : Colors.transparent,
                   ),
                 ),
-                const SizedBox(width: 8),
-                trailing ?? const SizedBox.shrink(),
-              ],
+              ),
+              child: Row(
+                children: [
+                  Icon(widget.icon, size: 15, color: effectiveTitleColor),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      widget.title.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: effectiveTitleColor,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  if (widget.trailing != null) widget.trailing!,
+                  if (widget.collapsible)
+                    Icon(
+                      _isExpanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      color: const Color(0xFF7D93AA),
+                    ),
+                ],
+              ),
             ),
           ),
-          if (fillChild)
-            Expanded(
-              child: Padding(
+          if (_isExpanded)
+            if (widget.fillChild)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: widget.child,
+                ),
+              )
+            else
+              Padding(
                 padding: const EdgeInsets.all(12),
-                child: child,
+                child: widget.child,
               ),
-            )
-          else
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: child,
-            ),
         ],
       ),
     );

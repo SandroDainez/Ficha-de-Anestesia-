@@ -80,7 +80,6 @@ class _PostAnesthesiaRecoveryScreenState
     'Ramsay 6',
   ];
   static const List<String> _destinationOptions = [
-    'Alta da RPA',
     'Enfermaria',
     'UTI',
     'Centro cirúrgico',
@@ -515,6 +514,7 @@ class _PostAnesthesiaRecoveryScreenState
                           SizedBox(
                             width: 220,
                             child: DropdownButtonFormField<String>(
+                              isExpanded: true,
                               initialValue: _recovery.destinationAfterRecovery.isEmpty
                                   ? null
                                   : _recovery.destinationAfterRecovery,

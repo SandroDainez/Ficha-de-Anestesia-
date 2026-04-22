@@ -390,6 +390,7 @@ class _DrugInfusionsDialogState extends State<DrugInfusionsDialog> {
                 ),
                 const SizedBox(height: 8),
                 TextField(
+                  key: Key('drug-repeat-field-$name'),
                   controller: _repeatControllers[name],
                   decoration: const InputDecoration(
                     labelText: 'Repiques / novas doses',
@@ -398,6 +399,7 @@ class _DrugInfusionsDialogState extends State<DrugInfusionsDialog> {
                 ),
                 const SizedBox(height: 8),
                 TextField(
+                  key: Key('drug-infusion-field-$name'),
                   controller: _infusionControllers[name],
                   decoration: const InputDecoration(
                     labelText: 'Infusão contínua',
@@ -406,6 +408,7 @@ class _DrugInfusionsDialogState extends State<DrugInfusionsDialog> {
                 ),
                 const SizedBox(height: 8),
                 TextField(
+                  key: Key('drug-ampoules-field-$name'),
                   controller: _ampouleControllers[name],
                   decoration: const InputDecoration(
                     labelText: 'Ampolas / frascos usados',

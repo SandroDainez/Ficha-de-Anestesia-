@@ -133,6 +133,51 @@ void main() {
     expect(find.text('FINALIZAR CASO'), findsOneWidget);
   });
 
+  testWidgets('shows antibiotic prophylaxis suggestion from selected surgery in the edit flow', (
+    WidgetTester tester,
+  ) async {
+    final record = buildRecord().copyWith(
+      prophylacticAntibiotics: const [],
+      surgeryDescription: 'Colecistectomia',
+    );
+
+    await pumpScreen(tester, record);
+    await tester.tap(find.text('7) ANTIBIÓTICO PROFILAXIA'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('antibiotic-entry')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sugestões pela cirurgia selecionada'), findsOneWidget);
+    expect(find.text('Ginecológica / abdominal limpa-contaminada'), findsOneWidget);
+    expect(
+      find.text(
+        'Cefazolina • Dose: 2 g IV',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Repique/redose: Redose em 4 h se cirurgia prolongada ou perda sanguínea importante.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Aplicar sugestão'), findsOneWidget);
+  });
+
+  testWidgets('renumbers cards after fasting moves to the header', (
+    WidgetTester tester,
+  ) async {
+    await pumpScreen(tester, buildRecord());
+
+    expect(find.text('7) ANTIBIÓTICO PROFILAXIA'), findsOneWidget);
+    expect(find.text('8) ACESSO VENOSO'), findsOneWidget);
+    expect(find.text('9) CATETER DE PAI'), findsOneWidget);
+    expect(find.text('10) MONITORIZAÇÃO'), findsOneWidget);
+    expect(find.text('11) TIME-OUT'), findsOneWidget);
+    expect(find.text('21) DESTINO PÓS-OPERATÓRIO'), findsOneWidget);
+    expect(find.text('20) DESTINO PÓS-OPERATÓRIO'), findsNothing);
+  });
+
   testWidgets('summarizes pediatric fasting by intake type in anesthesia screen', (
     WidgetTester tester,
   ) async {
@@ -166,7 +211,13 @@ void main() {
     expect(chartRect.width, greaterThan(airwayRect.width));
     expect(chartRect.width, greaterThan(techniqueRect.width));
     expect(chartRect.left, lessThanOrEqualTo(techniqueRect.left));
+    await tester.tap(find.text('GRÁFICO HEMODINÂMICO'));
+    await tester.pumpAndSettle();
     expect(find.text('FC atual'), findsOneWidget);
+    expect(find.text('PAM'), findsWidgets);
+    expect(find.text('Sat'), findsWidgets);
+    expect(find.text('pam'), findsNothing);
+    expect(find.text('SpO2'), findsNothing);
   });
 
   testWidgets('opens record analysis dialog from footer action', (
@@ -253,6 +304,40 @@ void main() {
     expect(endSurgeryButton.onPressed, isNotNull);
   });
 
+  testWidgets('time-out card shows numbered clickable items and can finalize in place', (
+    WidgetTester tester,
+  ) async {
+    final record = buildRecord().copyWith(
+      timeOutChecklist: const [],
+      timeOutCompleted: false,
+    );
+    await pumpScreen(tester, record);
+
+    await tester.tap(find.text('11) TIME-OUT'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('1'), findsOneWidget);
+    expect(find.text('2'), findsOneWidget);
+    expect(find.text('Equipe identificada por nome e funcao'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('surgery-timeout-item-1')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 itens confirmados'), findsOneWidget);
+
+    for (var i = 2; i <= 8; i++) {
+      await tester.ensureVisible(find.byKey(Key('surgery-timeout-item-$i')));
+      await tester.tap(find.byKey(Key('surgery-timeout-item-$i')));
+      await tester.pumpAndSettle();
+    }
+
+    await tester.ensureVisible(find.byKey(const Key('surgery-complete-timeout-button')));
+    await tester.tap(find.byKey(const Key('surgery-complete-timeout-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Time-out finalizado'), findsWidgets);
+  });
+
   testWidgets('hemodynamic area toggles between register and correction modes', (
     WidgetTester tester,
   ) async {
@@ -299,6 +384,79 @@ void main() {
 
     expect(find.text('TIVA'), findsOneWidget);
     expect(find.text('Bloqueio periférico'), findsOneWidget);
+  });
+
+  testWidgets('shows induction suggestions by weight and confirms a selected drug', (
+    WidgetTester tester,
+  ) async {
+    final record = buildRecord().copyWith(
+      drugs: const [],
+      patient: buildRecord().patient.copyWith(weightKg: 68),
+    );
+
+    await pumpScreen(tester, record);
+
+    await tester.tap(find.text('13) INDUÇÃO'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Propofol'), findsOneWidget);
+    expect(find.text('136 mg • ~13.6 mL (10 mg/mL)'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Confirmar').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 item(ns) registrados'), findsOneWidget);
+  });
+
+  testWidgets('sedation card is available for techniques that may require associated sedation', (
+    WidgetTester tester,
+  ) async {
+    final record = buildRecord().copyWith(
+      sedationMedications: const [],
+      anesthesiaTechnique: 'Raquianestesia\nBloqueio periférico',
+    );
+
+    await pumpScreen(tester, record);
+
+    expect(find.text('12) SEDAÇÃO ASSOCIADA'), findsOneWidget);
+  });
+
+  testWidgets('technique section uses tecnica anestesica and brief editable description', (
+    WidgetTester tester,
+  ) async {
+    await pumpScreen(tester, buildRecord());
+
+    expect(find.text('TÉCNICA ANESTÉSICA'), findsOneWidget);
+    expect(find.text('Eventos'), findsNothing);
+
+    await tester.tap(find.text('TÉCNICA ANESTÉSICA'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('events-entry')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Editar Técnica anestésica'), findsOneWidget);
+  });
+
+  testWidgets('shows adjunct suggestions by weight and confirms a selected adjunct', (
+    WidgetTester tester,
+  ) async {
+    final record = buildRecord().copyWith(
+      adjuncts: const [],
+      patient: buildRecord().patient.copyWith(weightKg: 68),
+    );
+
+    await pumpScreen(tester, record);
+
+    await tester.tap(find.text('14) ADJUVANTES'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sulfato de Mg'), findsOneWidget);
+    expect(find.text('2720 mg • ~27.2 mL (100 mg/mL)'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Confirmar').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 item(ns) registrados'), findsOneWidget);
   });
 
   testWidgets('shows pediatric fluid support based on Holliday-Segar', (
@@ -375,6 +533,145 @@ void main() {
     expect(find.text('Mallampati'), findsNothing);
   });
 
+  testWidgets('airway card uses materiais de apoio label', (
+    WidgetTester tester,
+  ) async {
+    await pumpScreen(tester, buildRecord());
+
+    await tester.tap(find.text('15) VIA AÉREA'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Materiais de apoio'), findsOneWidget);
+    expect(find.text('Observações'), findsNothing);
+  });
+
+  testWidgets('maintenance card shows clickable groups and inhalational estimate in ml per hour', (
+    WidgetTester tester,
+  ) async {
+    await pumpScreen(tester, buildRecord());
+
+    await tester.tap(find.text('16) MANUTENÇÃO DA ANESTESIA'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Anestésicos EV contínuo'), findsWidgets);
+    expect(find.text('Anestésicos inalatórios'), findsWidgets);
+    expect(find.text('Opioides'), findsWidgets);
+    expect(find.text('Bloqueadores neuromusculares'), findsWidgets);
+    expect(find.textContaining('mL/h (estimado com FGF 2 L/min)'), findsWidgets);
+    expect(find.widgetWithText(FilledButton, 'Confirmar'), findsWidgets);
+  });
+
+  testWidgets('fluid replacement dialog suggests surgical size and supports multiple crystalloid entries', (
+    WidgetTester tester,
+  ) async {
+    final record = buildRecord().copyWith(
+      surgeryDescription: 'Colecistectomia',
+      surgicalSize: '',
+      fluidBalance: buildRecord().fluidBalance.copyWith(
+        crystalloids: '',
+        crystalloidEntries: const [],
+      ),
+      fastingHours: '8',
+    );
+
+    await pumpScreen(tester, record);
+
+    await tester.tap(find.text('19) REPOSIÇÃO VOLÊMICA, SANGUE E DERIVADOS'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apoio clínico adulto'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sugestão automática: Medio'), findsOneWidget);
+    expect(find.textContaining('Aplicar jejum sugerido'), findsOneWidget);
+    expect(find.textContaining('Aplicar intraop sugerida'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(ActionChip, 'RL +500 mL').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ActionChip, 'SF 0,9% +500 mL').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('RL • 500'), findsOneWidget);
+    expect(find.text('SF 0,9% • 500'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.close).first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('RL • 500'), findsNothing);
+    expect(find.text('SF 0,9% • 500'), findsOneWidget);
+  });
+
+  testWidgets('blood components are added by unit and converted to average volume in balance flow', (
+    WidgetTester tester,
+  ) async {
+    final record = buildRecord().copyWith(
+      fluidBalance: buildRecord().fluidBalance.copyWith(
+        blood: '',
+        bloodEntries: const [],
+      ),
+    );
+
+    await pumpScreen(tester, record);
+
+    await tester.tap(find.text('19) REPOSIÇÃO VOLÊMICA, SANGUE E DERIVADOS'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apoio clínico adulto'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('+1 UI Concentrado de hemácias'), findsOneWidget);
+    expect(find.text('+1 UI Plasma fresco congelado'), findsOneWidget);
+    expect(find.text('Albumina 5% +100 mL'), findsOneWidget);
+    expect(find.text('Gelatina'), findsNothing);
+
+    await tester.tap(find.widgetWithText(ActionChip, '+1 UI Concentrado de hemácias'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Concentrado de hemácias • 1 UI • 280'), findsOneWidget);
+  });
+
+  testWidgets('balance dialog supports partial blood loss and other loss presets', (
+    WidgetTester tester,
+  ) async {
+    final record = buildRecord().copyWith(
+      fluidBalance: buildRecord().fluidBalance.copyWith(
+        bloodLossEntries: const [],
+        otherLossEntries: const [],
+      ),
+    );
+
+    await pumpScreen(tester, record);
+
+    await tester.tap(find.text('20) BALANÇO HÍDRICO'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('fluid-balance-entry')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Adicionar perdas sanguíneas parciais'), findsOneWidget);
+    expect(find.text('Perdas insensíveis +50 mL'), findsOneWidget);
+    expect(find.text('Ventilação mecânica +50 mL'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(ActionChip, '100 mL'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ActionChip, 'Perdas insensíveis +50 mL'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ActionChip, 'Ventilação mecânica +50 mL'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Perda parcial • 100'), findsOneWidget);
+    expect(find.text('Perdas insensíveis • 50'), findsOneWidget);
+    expect(find.text('Ventilação mecânica • 50'), findsOneWidget);
+  });
+
+  testWidgets('arterial access card stays next to venous access in overview', (
+    WidgetTester tester,
+  ) async {
+    await pumpScreen(tester, buildRecord());
+
+    final venousRect = tester.getRect(find.byKey(const Key('venous-access-card')));
+    final arterialRect = tester.getRect(find.byKey(const Key('arterial-access-card')));
+
+    expect((arterialRect.top - venousRect.top).abs(), lessThan(5));
+  });
+
   testWidgets('shows neonatal airway reference support in the airway card', (
     WidgetTester tester,
   ) async {
@@ -438,7 +735,7 @@ void main() {
     );
   });
 
-  testWidgets('shows pediatric monitoring guidance in the monitoring dialog', (
+  testWidgets('shows pediatric monitoring guidance in the monitoring card', (
     WidgetTester tester,
   ) async {
     final record = buildRecord().copyWith(
@@ -450,35 +747,29 @@ void main() {
 
     await pumpScreen(tester, record);
 
-    await tester.tap(find.text('Nenhum item de monitorização'));
+    await tester.tap(find.text('10) MONITORIZAÇÃO'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Editar Monitorização'), findsOneWidget);
-    expect(find.text('Sugestão pediátrica'), findsOneWidget);
-    expect(
-      find.text(
-        'Monitorização básica intraoperatória: ECG, PA não invasiva, SpO₂, capnografia e temperatura.',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('1'), findsOneWidget);
+    expect(find.text('2'), findsOneWidget);
+    expect(find.text('ECG (5 derivações)'), findsOneWidget);
+    expect(find.text('PA não invasiva'), findsOneWidget);
   });
 
-  testWidgets('saves monitoring items through the monitoring dialog', (
+  testWidgets('saves monitoring items through the monitoring card', (
     WidgetTester tester,
   ) async {
     await pumpScreen(tester, buildRecord());
 
-    await tester.tap(find.text('Nenhum item de monitorização'));
+    await tester.tap(find.text('10) MONITORIZAÇÃO'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.widgetWithText(FilterChip, 'ECG (5 derivações)'));
+    await tester.tap(find.byKey(const Key('monitoring-item-1')));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilterChip, 'SpO₂'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Salvar'));
+    await tester.tap(find.byKey(const Key('monitoring-item-4')));
     await tester.pumpAndSettle();
 
-    expect(find.text('ECG (5 derivações), SpO₂'), findsOneWidget);
+    expect(find.text('2 item(ns) selecionados'), findsOneWidget);
     expect(find.textContaining('Sugeridos ausentes:'), findsOneWidget);
   });
 
@@ -602,6 +893,51 @@ void main() {
     expect(find.text('Etilefrina'), findsWidgets);
     expect(find.textContaining('Inicial: 10 mg'), findsOneWidget);
     expect(find.textContaining('Repiques: 5 mg 08:45'), findsOneWidget);
+  });
+
+  testWidgets('neuraxial needle card requests raqui or peridural needles when neuraxial technique is selected', (
+    WidgetTester tester,
+  ) async {
+    final record = buildRecord().copyWith(
+      anesthesiaTechnique: 'Raquianestesia',
+      neuraxialNeedles: const [],
+    );
+
+    await pumpScreen(tester, record);
+    await tester.ensureVisible(find.text('AGULHAS RAQUI / PERIDURAL'));
+    await tester.tap(find.text('AGULHAS RAQUI / PERIDURAL'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('AGULHAS RAQUI / PERIDURAL'), findsOneWidget);
+    expect(find.text('Nenhuma agulha neuraxial registrada'), findsOneWidget);
+    expect(find.text('Relacionar agulhas usadas na raqui/peridural'), findsOneWidget);
+  });
+
+  testWidgets('usage summary card consolidates medications materials fluids and blood products used', (
+    WidgetTester tester,
+  ) async {
+    final record = buildRecord().copyWith(
+      drugs: const ['Propofol|150 mg|||2 ampolas'],
+      venousAccesses: const ['AVP MSE - 18G'],
+      arterialAccesses: const ['PAI - radial esquerda 20G'],
+      anesthesiaMaterials: const ['TOT 7,5 1 un'],
+      fluidBalance: buildRecord().fluidBalance.copyWith(
+        crystalloidEntries: const ['RL|500'],
+        bloodEntries: const ['Concentrado de hemácias|1 UI|280'],
+      ),
+    );
+
+    await pumpScreen(tester, record);
+    await tester.ensureVisible(find.text('RESUMO DE USO'));
+    await tester.tap(find.text('RESUMO DE USO'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Indução: Propofol • 2 ampolas'), findsOneWidget);
+    expect(find.text('Acesso venoso: AVP MSE - 18G'), findsOneWidget);
+    expect(find.text('Acesso arterial: PAI - radial esquerda 20G'), findsOneWidget);
+    expect(find.text('Cristaloides: RL • 500'), findsOneWidget);
+    expect(find.text('Sangue e derivados: Concentrado de hemácias • 1 UI • 280'), findsOneWidget);
+    expect(find.text('Materiais livres: TOT 7,5 1 un'), findsOneWidget);
   });
 
   testWidgets('adds FC through manual hemodynamic entry dialog', (
