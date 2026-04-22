@@ -430,7 +430,7 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
                   color: _airwayRiskColor(preAnestheticAssessment),
                 ),
                 ClinicalChip(
-                  label: 'Ventilação',
+                  label: 'Ventilação difícil',
                   value: difficultVentilationLabel,
                   color: _ventilationRiskColor(preAnestheticAssessment),
                 ),

@@ -28,7 +28,6 @@ class HemodynamicChartCard extends StatelessWidget {
     required this.hasAnesthesiaEndMarker,
     required this.hasSurgeryEndMarker,
     required this.onToggleRemoveMode,
-    required this.onManualEntry,
     required this.onSelectType,
     required this.onQuickSpo2,
     required this.onPointTap,
@@ -59,7 +58,6 @@ class HemodynamicChartCard extends StatelessWidget {
   final bool hasAnesthesiaEndMarker;
   final bool hasSurgeryEndMarker;
   final VoidCallback onToggleRemoveMode;
-  final VoidCallback onManualEntry;
   final ValueChanged<String> onSelectType;
   final ValueChanged<double> onQuickSpo2;
   final ValueChanged<HemodynamicPoint>? onPointTap;
@@ -73,6 +71,7 @@ class HemodynamicChartCard extends StatelessWidget {
     final chartHeight = dominant ? 680.0 : 540.0;
     final displayMaxTime = _displayMaxTime();
     final minChartWidth = _minChartWidth(displayMaxTime);
+    final viewWidth = MediaQuery.sizeOf(context).width;
     final instructionText = inlineHemodynamicRemoveMode
         ? 'Modo correção ativo. Toque em um ponto do gráfico para apagar.'
         : (hasAnesthesiaStartMarker
@@ -170,31 +169,14 @@ class HemodynamicChartCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    FilledButton.tonalIcon(
-                      key: const Key('hemo-manual-entry-button'),
-                      onPressed: hasAnesthesiaStartMarker &&
-                              !inlineHemodynamicRemoveMode
-                          ? onManualEntry
-                          : null,
-                      icon: const Icon(Icons.add_chart_outlined),
-                      label: Text(
-                        'Lançar ${inlineHemodynamicType == 'SpO2' ? 'Sat' : inlineHemodynamicType}',
-                      ),
+                if (!inlineHemodynamicRemoveMode)
+                  const Text(
+                    'Selecione o parâmetro na lateral e toque no gráfico para registrar; depois arraste o ponto para ajustar.',
+                    style: TextStyle(
+                      color: Color(0xFF7A8EA5),
+                      fontWeight: FontWeight.w600,
                     ),
-                    if (!inlineHemodynamicRemoveMode)
-                      Text(
-                        'Toque no gráfico para registrar; arraste um ponto para mover (dedo ou caneta).',
-                        style: const TextStyle(
-                          color: Color(0xFF7A8EA5),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                  ],
-                ),
+                  ),
                 const SizedBox(height: 8),
                 Text(
                   hasAnesthesiaStartMarker
@@ -211,7 +193,7 @@ class HemodynamicChartCard extends StatelessWidget {
                     !inlineHemodynamicRemoveMode) ...[
                   const SizedBox(height: 10),
                   const Text(
-                    'SpO₂ rápida',
+                    'Sat rápida',
                     style: TextStyle(
                       color: Color(0xFF17324D),
                       fontWeight: FontWeight.w800,
@@ -269,7 +251,6 @@ class HemodynamicChartCard extends StatelessWidget {
           const SizedBox(height: 10),
           Builder(
             builder: (context) {
-              final viewWidth = MediaQuery.sizeOf(context).width;
               final chartStack = SizedBox(
                 height: chartHeight,
                 child: Stack(
@@ -313,21 +294,16 @@ class HemodynamicChartCard extends StatelessWidget {
                 ],
               );
 
-              if (viewWidth < 560) {
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(minWidth: minChartWidth),
-                    child: row,
-                  ),
-                );
+              final requiresHorizontalScroll =
+                  viewWidth < 560 || minChartWidth > viewWidth;
+              if (!requiresHorizontalScroll) {
+                return row;
               }
+
               return SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minWidth: minChartWidth > viewWidth ? minChartWidth : viewWidth,
-                  ),
+                  constraints: BoxConstraints(minWidth: minChartWidth),
                   child: row,
                 ),
               );
@@ -381,7 +357,7 @@ class HemodynamicChartCard extends StatelessWidget {
               SizedBox(
                 width: 140,
                 child: MetricTile(
-                  label: 'SpO₂',
+                  label: 'Sat',
                   value: latestSpo2,
                   background: const Color(0xFFEFFAF2),
                   valueColor: const Color(0xFF169653),

@@ -58,42 +58,6 @@ class _SurgeryAntibioticSuggestionRule {
   final String additionalNotes;
 }
 
-class _SelectableMedicationPreset {
-  const _SelectableMedicationPreset({
-    required this.name,
-    required this.label,
-    required this.amountPerKg,
-    required this.unit,
-    required this.concentrationPerMl,
-    required this.concentrationUnit,
-    required this.repeatGuidance,
-  });
-
-  final String name;
-  final String label;
-  final double amountPerKg;
-  final String unit;
-  final double concentrationPerMl;
-  final String concentrationUnit;
-  final String repeatGuidance;
-}
-
-class _MedicationPresetSuggestion {
-  const _MedicationPresetSuggestion({
-    required this.name,
-    required this.number,
-    required this.label,
-    required this.doseText,
-    required this.repeatGuidance,
-  });
-
-  final String name;
-  final int number;
-  final String label;
-  final String doseText;
-  final String repeatGuidance;
-}
-
 class _MaintenancePreset {
   const _MaintenancePreset({
     required this.name,
@@ -115,27 +79,6 @@ class _MaintenancePreset {
   final double molecularWeight;
   final double density;
 }
-
-const List<String> _timeOutCardOptions = [
-  'Equipe identificada por nome e função',
-  'Paciente, procedimento e sítio confirmados',
-  'Alergias conferidas',
-  'Antibioticoprofilaxia realizada no tempo correto',
-  'Exames e imagens disponíveis',
-  'Risco hemorrágico discutido',
-  'Plano anestésico e via aérea discutidos',
-  'Instrumentais e equipamentos conferidos',
-];
-
-const List<String> _monitoringCardOptions = [
-  'ECG (5 derivações)',
-  'PA não invasiva',
-  'PAI',
-  'SpO₂',
-  'Capnografia',
-  'Temperatura',
-  'BIS',
-];
 
 class _AirwaySupportRecommendation {
   const _AirwaySupportRecommendation({
@@ -449,154 +392,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     'Cefuroxima': Duration(hours: 4),
     'Clindamicina': Duration(hours: 6),
   };
-  static const List<_SelectableMedicationPreset> _inductionPresets = [
-    _SelectableMedicationPreset(
-      name: 'Propofol',
-      label: 'Hipnótico',
-      amountPerKg: 2,
-      unit: 'mg',
-      concentrationPerMl: 10,
-      concentrationUnit: 'mg/mL',
-      repeatGuidance: 'Titular em bolus adicionais de 20-50 mg conforme resposta clínica.',
-    ),
-    _SelectableMedicationPreset(
-      name: 'Etomidato',
-      label: 'Hipnótico',
-      amountPerKg: 0.3,
-      unit: 'mg',
-      concentrationPerMl: 2,
-      concentrationUnit: 'mg/mL',
-      repeatGuidance: 'Reaplicar apenas se necessário, em bolus fracionados pequenos.',
-    ),
-    _SelectableMedicationPreset(
-      name: 'Cetamina',
-      label: 'Hipnótico/analgésico',
-      amountPerKg: 1,
-      unit: 'mg',
-      concentrationPerMl: 50,
-      concentrationUnit: 'mg/mL',
-      repeatGuidance: 'Reforço de 0,25-0,5 mg/kg conforme plano anestésico.',
-    ),
-    _SelectableMedicationPreset(
-      name: 'Fentanil',
-      label: 'Opioide',
-      amountPerKg: 3,
-      unit: 'mcg',
-      concentrationPerMl: 50,
-      concentrationUnit: 'mcg/mL',
-      repeatGuidance: 'Repiques usuais de 25-50 mcg conforme estímulo cirúrgico.',
-    ),
-    _SelectableMedicationPreset(
-      name: 'Alfentanil',
-      label: 'Opioide',
-      amountPerKg: 15,
-      unit: 'mcg',
-      concentrationPerMl: 500,
-      concentrationUnit: 'mcg/mL',
-      repeatGuidance: 'Reforços titulados conforme laringoscopia e estímulo inicial.',
-    ),
-    _SelectableMedicationPreset(
-      name: 'Sufentanil',
-      label: 'Opioide',
-      amountPerKg: 0.3,
-      unit: 'mcg',
-      concentrationPerMl: 50,
-      concentrationUnit: 'mcg/mL',
-      repeatGuidance: 'Geralmente sem repique imediato; titular conforme contexto.',
-    ),
-    _SelectableMedicationPreset(
-      name: 'Rocurônio',
-      label: 'Bloqueador neuromuscular',
-      amountPerKg: 0.6,
-      unit: 'mg',
-      concentrationPerMl: 10,
-      concentrationUnit: 'mg/mL',
-      repeatGuidance: 'Repiques usuais de 0,1-0,2 mg/kg guiados por TOF.',
-    ),
-    _SelectableMedicationPreset(
-      name: 'Cisatracúrio',
-      label: 'Bloqueador neuromuscular',
-      amountPerKg: 0.15,
-      unit: 'mg',
-      concentrationPerMl: 2,
-      concentrationUnit: 'mg/mL',
-      repeatGuidance: 'Repiques de 0,03 mg/kg conforme monitorização neuromuscular.',
-    ),
-    _SelectableMedicationPreset(
-      name: 'Atracúrio',
-      label: 'Bloqueador neuromuscular',
-      amountPerKg: 0.5,
-      unit: 'mg',
-      concentrationPerMl: 10,
-      concentrationUnit: 'mg/mL',
-      repeatGuidance: 'Repiques de 0,1-0,2 mg/kg conforme TOF.',
-    ),
-    _SelectableMedicationPreset(
-      name: 'Succinilcolina',
-      label: 'Bloqueador neuromuscular',
-      amountPerKg: 1,
-      unit: 'mg',
-      concentrationPerMl: 20,
-      concentrationUnit: 'mg/mL',
-      repeatGuidance: 'Geralmente dose única; reavaliar antes de repetir.',
-    ),
-  ];
-  static const List<_SelectableMedicationPreset> _adjunctPresets = [
-    _SelectableMedicationPreset(
-      name: 'Sulfato de Mg',
-      label: 'Adjuvante',
-      amountPerKg: 40,
-      unit: 'mg',
-      concentrationPerMl: 100,
-      concentrationUnit: 'mg/mL',
-      repeatGuidance: 'Usar em infusão lenta; reavaliar necessidade de complementação.',
-    ),
-    _SelectableMedicationPreset(
-      name: 'Cetamina',
-      label: 'Adjuvante',
-      amountPerKg: 0.3,
-      unit: 'mg',
-      concentrationPerMl: 50,
-      concentrationUnit: 'mg/mL',
-      repeatGuidance: 'Reforços de 0,1-0,2 mg/kg se necessário.',
-    ),
-    _SelectableMedicationPreset(
-      name: 'Clonidina',
-      label: 'Adjuvante',
-      amountPerKg: 1.5,
-      unit: 'mcg',
-      concentrationPerMl: 150,
-      concentrationUnit: 'mcg/mL',
-      repeatGuidance: 'Usar com cautela em dose única; evitar repiques rotineiros.',
-    ),
-    _SelectableMedicationPreset(
-      name: 'Metadona',
-      label: 'Adjuvante',
-      amountPerKg: 0.15,
-      unit: 'mg',
-      concentrationPerMl: 10,
-      concentrationUnit: 'mg/mL',
-      repeatGuidance: 'Em geral dose única; reavaliar conforme duração e analgesia.',
-    ),
-    _SelectableMedicationPreset(
-      name: 'Dexmedetomidina (Precedex)',
-      label: 'Adjuvante',
-      amountPerKg: 0.5,
-      unit: 'mcg',
-      concentrationPerMl: 4,
-      concentrationUnit: 'mcg/mL',
-      repeatGuidance: 'Considerar manutenção em infusão conforme contexto.',
-    ),
-    _SelectableMedicationPreset(
-      name: 'Lidocaína',
-      label: 'Adjuvante',
-      amountPerKg: 1.5,
-      unit: 'mg',
-      concentrationPerMl: 20,
-      concentrationUnit: 'mg/mL',
-      repeatGuidance: 'Pode seguir com infusão se planejado; evitar toxicidade cumulativa.',
-    ),
-  ];
   static const List<_MaintenancePreset> _maintenancePresets = [
     _MaintenancePreset(
       name: 'Propofol em BIC',
@@ -1076,16 +871,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return normalized.join(', ');
   }
 
-  String? _findMedicationEntry(List<String> items, String name) {
-    for (final item in items) {
-      final parts = item.split('|');
-      if (parts.isNotEmpty && parts.first.trim() == name) {
-        return item;
-      }
-    }
-    return null;
-  }
-
   String? _findMaintenanceEntry(String name) {
     for (final item in _lineItems(_record.maintenanceAgents)) {
       if (item.split('|').first.trim() == name) return item;
@@ -1113,63 +898,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   List<String> _removeMaintenanceEntry(String name) {
     return _lineItems(_record.maintenanceAgents)
         .where((item) => item.split('|').first.trim() != name)
-        .toList();
-  }
-
-  List<String> _upsertMedicationEntry(List<String> items, String encodedEntry) {
-    final parts = encodedEntry.split('|');
-    final name = parts.isEmpty ? '' : parts.first.trim();
-    if (name.isEmpty) return items;
-    final updated = <String>[];
-    var replaced = false;
-    for (final item in items) {
-      final currentName = item.split('|').first.trim();
-      if (currentName == name) {
-        updated.add(encodedEntry);
-        replaced = true;
-      } else {
-        updated.add(item);
-      }
-    }
-    if (!replaced) updated.add(encodedEntry);
-    return updated;
-  }
-
-  List<String> _removeMedicationEntry(List<String> items, String name) {
-    return items
-        .where((item) => item.split('|').first.trim() != name)
-        .toList();
-  }
-
-  String _formatMedicationDoseText(_SelectableMedicationPreset preset) {
-    final weight = _record.patient.weightKg;
-    if (weight <= 0) {
-      return '${preset.amountPerKg} ${preset.unit}/kg';
-    }
-    final dose = preset.amountPerKg * weight;
-    final ml = dose / preset.concentrationPerMl;
-    final doseText = preset.unit == 'mg'
-        ? '${dose.toStringAsFixed(dose >= 10 ? 0 : 1)} mg'
-        : '${dose.toStringAsFixed(dose >= 10 ? 0 : 1)} mcg';
-    final volumeText = '${ml.toStringAsFixed(ml >= 10 ? 0 : 1)} mL';
-    return '$doseText ($volumeText a ${preset.concentrationPerMl.toStringAsFixed(preset.concentrationPerMl.truncateToDouble() == preset.concentrationPerMl ? 0 : 1)} ${preset.concentrationUnit})';
-  }
-
-  List<_MedicationPresetSuggestion> _buildMedicationSuggestions(
-    List<_SelectableMedicationPreset> presets,
-  ) {
-    return presets
-        .asMap()
-        .entries
-        .map(
-          (entry) => _MedicationPresetSuggestion(
-            name: entry.value.name,
-            number: entry.key + 1,
-            label: entry.value.label,
-            doseText: _formatMedicationDoseText(entry.value),
-            repeatGuidance: entry.value.repeatGuidance,
-          ),
-        )
         .toList();
   }
 
@@ -1260,102 +988,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           );
     setState(() {
       _record = _record.copyWith(maintenanceAgents: updated.join('\n'));
-    });
-    await _persistRecord();
-  }
-
-  Future<void> _toggleMonitoringCardItem(String item) async {
-    setState(() {
-      if (_monitoringItems.contains(item)) {
-        _monitoringItems.remove(item);
-      } else {
-        _monitoringItems.add(item);
-      }
-      _record = _record.copyWith(monitoringItems: _monitoringItems);
-    });
-    await _persistRecord();
-  }
-
-  Future<void> _toggleTimeOutCardItem(String item) async {
-    setState(() {
-      final next = List<String>.from(_record.timeOutChecklist);
-      if (next.contains(item)) {
-        next.remove(item);
-      } else {
-        next.add(item);
-      }
-      _record = _record.copyWith(
-        timeOutChecklist: next,
-        timeOutCompleted: next.length == _timeOutCardOptions.length,
-      );
-    });
-    await _persistRecord();
-  }
-
-  Future<void> _finalizeTimeOutCard() async {
-    setState(() {
-      _record = _record.copyWith(
-        timeOutChecklist: List<String>.from(_timeOutCardOptions),
-        timeOutCompleted: true,
-      );
-    });
-    await _persistRecord();
-  }
-
-  Future<void> _toggleMedicationPreset({
-    required _MedicationPresetSuggestion suggestion,
-    required bool adjunct,
-  }) async {
-    final source = adjunct ? _record.adjuncts : _record.drugs;
-    final existing = _findMedicationEntry(source, suggestion.name);
-    final updated = existing == null
-        ? _upsertMedicationEntry(
-            source,
-            '${suggestion.name}|${suggestion.doseText}||${suggestion.repeatGuidance}|',
-          )
-        : _removeMedicationEntry(source, suggestion.name);
-
-    setState(() {
-      _record = adjunct
-          ? _record.copyWith(adjuncts: updated)
-          : _record.copyWith(drugs: updated);
-    });
-    await _persistRecord();
-  }
-
-  Future<void> _editMedicationPreset({
-    required _MedicationPresetSuggestion suggestion,
-    required bool adjunct,
-  }) async {
-    final source = adjunct ? _record.adjuncts : _record.drugs;
-    final existing = _findMedicationEntry(source, suggestion.name);
-    final parts = existing?.split('|') ?? const <String>[];
-    final result = await showDialog<MedicationEntryEditResult>(
-      context: context,
-      builder: (_) => MedicationEntryEditDialog(
-        title: suggestion.name,
-        name: suggestion.name,
-        initialDose: parts.length > 1 && parts[1].trim().isNotEmpty
-            ? parts[1].trim()
-            : suggestion.doseText,
-        initialTime: parts.length > 2 ? parts[2].trim() : '',
-        initialRepeats: parts.length > 3 && parts[3].trim().isNotEmpty
-            ? parts[3].trim()
-            : suggestion.repeatGuidance,
-        initialInfusion: parts.length > 4 ? parts[4].trim() : '',
-      ),
-    );
-
-    if (result == null) return;
-
-    final updated = result.remove
-        ? _removeMedicationEntry(source, suggestion.name)
-        : _upsertMedicationEntry(source, result.encodedEntry);
-
-    setState(() {
-      _record = adjunct
-          ? _record.copyWith(adjuncts: updated)
-          : _record.copyWith(drugs: updated);
     });
     await _persistRecord();
   }
@@ -2488,38 +2120,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     await _persistRecord();
   }
 
-  Future<void> _openManualHemodynamicEntry() async {
-    if (!_hasAnesthesiaStartMarker || _inlineHemodynamicRemoveMode) return;
-
-    final label = switch (_inlineHemodynamicType) {
-      'SpO2' => 'SpO₂ (%)',
-      'FC' => 'FC (bpm)',
-      'PAI' => 'PAI (mmHg)',
-      'PAS' => 'PAS (mmHg)',
-      'PAD' => 'PAD (mmHg)',
-      _ => 'Valor',
-    };
-
-    final result = await showDialog<String>(
-      context: context,
-      builder: (_) => SingleFieldDialog(
-        title: 'Lançar $_inlineHemodynamicType',
-        label: label,
-        initialValue: '',
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        inputFormatters: [
-          FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
-        ],
-        hintText: 'Digite o valor e salve',
-      ),
-    );
-
-    if (result == null) return;
-    final value = double.tryParse(result.replaceAll(',', '.'));
-    if (value == null) return;
-    await _addInlineHemodynamicPoint(value);
-  }
-
   Future<void> _editSedationMedications() async {
     final result = await showDialog<List<String>>(
       context: context,
@@ -3502,69 +3102,25 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     final missingRecommended = recommended
         .where((item) => !_monitoringItems.contains(item))
         .toList();
-    final customItems = _monitoringItems
-        .where((item) => !_monitoringCardOptions.contains(item))
-        .toList();
-    return PanelCard(
+    final status = _monitoringItems.isEmpty
+        ? 'Monitorização pendente'
+        : '${_monitoringItems.length} item(ns) selecionados';
+    final summary = missingRecommended.isEmpty
+        ? _displayListEntries(
+            _monitoringItems,
+            empty: 'Toque para selecionar a monitorização',
+          )
+        : 'Sugeridos ausentes: ${missingRecommended.join(', ')}';
+    return _buildCompactOperationalCard(
       key: const Key('monitoring-card'),
       title: '10) Monitorização',
       titleColor: _accessRowColor,
       icon: Icons.monitor_heart_outlined,
-      minHeight: 212,
+      minHeight: 92,
+      status: status,
+      summary: summary,
+      onTap: _editMonitorizacao,
       isCompleted: _monitoringItems.isNotEmpty,
-      child: Column(
-        children: [
-          ..._monitoringCardOptions.asMap().entries.map(
-            (entry) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _buildNumberedToggleTile(
-                number: entry.key + 1,
-                label: entry.value,
-                selected: _monitoringItems.contains(entry.value),
-                accent: _accessRowColor,
-                hint: recommended.contains(entry.value)
-                    ? 'Monitorização recomendada'
-                    : 'Opcional conforme contexto',
-                onTap: () => _toggleMonitoringCardItem(entry.value),
-              ),
-            ),
-          ),
-          if (customItems.isNotEmpty)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  'Outros: ${customItems.join(', ')}',
-                  style: const TextStyle(
-                    color: Color(0xFF5D7288),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  missingRecommended.isEmpty
-                      ? '${_monitoringItems.length} item(ns) ativos'
-                      : 'Sugeridos ausentes: ${missingRecommended.join(', ')}',
-                  style: const TextStyle(
-                    color: Color(0xFF5D7288),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton(
-                onPressed: _editMonitorizacao,
-                child: const Text('Outros'),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 
@@ -3617,7 +3173,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           _inlineHemodynamicRemoveMode = !_inlineHemodynamicRemoveMode;
         });
       },
-      onManualEntry: _openManualHemodynamicEntry,
       onSelectType: (type) {
         setState(() => _inlineHemodynamicType = type);
       },
@@ -3881,196 +3436,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     );
   }
 
-  Widget _buildNumberedToggleTile({
-    required int number,
-    required String label,
-    required bool selected,
-    required Color accent,
-    required String hint,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: selected ? accent.withAlpha(20) : const Color(0xFFF8FAFE),
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: selected ? accent : const Color(0xFFDCE7F3),
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: selected ? accent : Colors.white,
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: accent.withAlpha(120)),
-                ),
-                child: Text(
-                  '$number',
-                  style: TextStyle(
-                    color: selected ? Colors.white : accent,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      style: const TextStyle(
-                        color: Color(0xFF17324D),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      hint,
-                      style: const TextStyle(
-                        color: Color(0xFF5D7288),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Icon(
-                selected
-                    ? Icons.check_circle_rounded
-                    : Icons.radio_button_unchecked_rounded,
-                color: selected ? accent : const Color(0xFF9DB0C5),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMedicationPresetTile({
-    required _MedicationPresetSuggestion suggestion,
-    required String? encodedEntry,
-    required Color accent,
-    required VoidCallback onToggle,
-    required VoidCallback onEdit,
-  }) {
-    final parts = encodedEntry?.split('|') ?? const <String>[];
-    final selected = encodedEntry != null;
-    final currentDose = parts.length > 1 && parts[1].trim().isNotEmpty
-        ? parts[1].trim()
-        : suggestion.doseText;
-    final currentTime = parts.length > 2 ? parts[2].trim() : '';
-    final currentRepeat = parts.length > 3 && parts[3].trim().isNotEmpty
-        ? parts[3].trim()
-        : suggestion.repeatGuidance;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: selected ? accent.withAlpha(16) : const Color(0xFFF8FAFE),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: selected ? accent : const Color(0xFFDCE7F3),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: selected ? accent : Colors.white,
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: accent.withAlpha(120)),
-                ),
-                child: Text(
-                  '${suggestion.number}',
-                  style: TextStyle(
-                    color: selected ? Colors.white : accent,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  '${suggestion.name} • ${suggestion.label}',
-                  style: const TextStyle(
-                    color: Color(0xFF17324D),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            selected ? 'Registrado: $currentDose' : 'Sugestão: ${suggestion.doseText}',
-            style: const TextStyle(
-              color: Color(0xFF17324D),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            currentRepeat,
-            style: const TextStyle(
-              color: Color(0xFF5D7288),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          if (currentTime.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              'Horário: $currentTime',
-              style: const TextStyle(
-                color: Color(0xFF5D7288),
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              FilledButton.icon(
-                onPressed: onToggle,
-                icon: Icon(
-                  selected ? Icons.check_circle_rounded : Icons.add_task_rounded,
-                ),
-                label: Text(selected ? 'Confirmado' : 'Confirmar'),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton.icon(
-                onPressed: onEdit,
-                icon: const Icon(Icons.edit_outlined),
-                label: const Text('Editar'),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildMaintenancePresetTile(_MaintenancePreset preset) {
     final encodedEntry = _findMaintenanceEntry(preset.name);
     final selected = encodedEntry != null;
@@ -4146,55 +3511,23 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
 
   Widget _buildTimeOutCard() {
     final completed = _record.timeOutCompleted;
-    return PanelCard(
+    final summary = _record.timeOutChecklist.isEmpty
+        ? 'Toque para preencher'
+        : '${_record.timeOutChecklist.length} itens confirmados';
+    return _buildCompactOperationalCard(
       key: const Key('surgery-timeout-card'),
+      tapKey: const Key('surgery-timeout-entry'),
       title: '11) Time-out',
       titleColor: _timeoutRowColor,
       icon: Icons.alarm_on_outlined,
+      minHeight: 92,
       isAttention: _hasPendingTimeOut,
-      minHeight: 240,
-      trailing: completed
-          ? null
-          : AddButton(
-              label: 'Finalizar',
-              onTap: _record.timeOutChecklist.length == _timeOutCardOptions.length
-                  ? _finalizeTimeOutCard
-                  : null,
-            ),
+      status: completed ? 'Time-out finalizado' : 'Time-out pendente',
+      statusColor:
+          completed ? const Color(0xFF169653) : const Color(0xFFF59E0B),
+      summary: summary,
+      onTap: () => _editSurgerySection(SurgeryInfoSection.timeOut),
       isCompleted: completed,
-      child: Column(
-        children: [
-          ..._timeOutCardOptions.asMap().entries.map(
-            (entry) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _buildNumberedToggleTile(
-                number: entry.key + 1,
-                label: entry.value,
-                selected: _record.timeOutChecklist.contains(entry.value),
-                accent: _timeoutRowColor,
-                hint: _record.timeOutChecklist.contains(entry.value)
-                    ? 'Confirmado'
-                    : 'Toque para confirmar',
-                onTap: () => _toggleTimeOutCardItem(entry.value),
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              completed
-                  ? 'Time-out finalizado'
-                  : '${_record.timeOutChecklist.length}/${_timeOutCardOptions.length} itens confirmados',
-              style: TextStyle(
-                color: completed
-                    ? const Color(0xFF169653)
-                    : const Color(0xFFF59E0B),
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -4316,290 +3649,140 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Widget _buildTechniqueCard() {
+    final status = _record.sedationMedications.isEmpty
+        ? 'Nenhuma sedação registrada'
+        : _record.sedationMedications.first.split('|').first;
+    final summary = _record.sedationMedications.isEmpty
+        ? 'Registrar medicações de sedação para anestesia local, bloqueios, raqui e técnicas associadas.'
+        : '${_record.sedationMedications.length} medicação(ões) registradas';
     return KeyedSubtree(
       key: _techniqueSectionKey,
-      child: PanelCard(
+      child: _buildCompactOperationalCard(
         key: const Key('technique-card'),
+        tapKey: const Key('technique-entry'),
         title: '12) Sedação associada',
         titleColor: _techniqueRowColor,
         icon: Icons.air_outlined,
-        minHeight: 168,
+        minHeight: 92,
+        status: status,
+        summary: summary,
+        onTap: _editSedationMedications,
         isCompleted: _record.sedationMedications.isNotEmpty,
-        child: InkWell(
-          key: const Key('technique-entry'),
-          borderRadius: BorderRadius.circular(18),
-          onTap: _editSedationMedications,
-          child: Column(
-            children: [
-              if (_record.sedationMedications.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 10),
-                  child: StatusHint(
-                    text:
-                        'Registrar medicações de sedação para anestesia local, bloqueios, raqui e técnicas associadas.',
-                  ),
-                ),
-              ..._record.sedationMedications.map(
-                (item) {
-                  final parts = item.split('|');
-                  final name = parts.isNotEmpty ? parts[0] : '';
-                  final doseSummary = _medicationDoseSummary(parts);
-                  final time = parts.length > 2 ? parts[2] : '--:--';
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: DoseRow(
-                      drug: name,
-                      dose: doseSummary,
-                      time: time.isEmpty ? '--:--' : time,
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 4),
-              AddButton(
-                label: 'Adicionar sedação',
-                onTap: _editSedationMedications,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
 
   Widget _buildDrugsCard() {
-    final suggestions = _buildMedicationSuggestions(_inductionPresets);
+    final status = _record.drugs.isEmpty
+        ? 'Nenhuma droga de indução registrada'
+        : _record.drugs.first.split('|').first;
+    final summary = _record.drugs.isEmpty
+        ? 'Toque para registrar indução, doses, infusões e ampolas'
+        : '${_record.drugs.length} item(ns) registrados';
     return KeyedSubtree(
       key: _drugsSectionKey,
-      child: PanelCard(
+      child: _buildCompactOperationalCard(
         key: const Key('drugs-card'),
+        tapKey: const Key('drugs-entry'),
         title: '13) Indução',
         titleColor: _techniqueRowColor,
         icon: Icons.medication_outlined,
-        minHeight: 320,
+        minHeight: 92,
+        status: status,
+        summary: summary,
+        onTap: _editDrogasInfusoes,
         isAttention: _hasPendingDrugs,
         isCompleted: _record.drugs.isNotEmpty,
-        child: Column(
-          children: [
-            ...suggestions.map(
-              (suggestion) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _buildMedicationPresetTile(
-                  suggestion: suggestion,
-                  encodedEntry: _findMedicationEntry(_record.drugs, suggestion.name),
-                  accent: _techniqueRowColor,
-                  onToggle: () => _toggleMedicationPreset(
-                    suggestion: suggestion,
-                    adjunct: false,
-                  ),
-                  onEdit: () => _editMedicationPreset(
-                    suggestion: suggestion,
-                    adjunct: false,
-                  ),
-                ),
-              ),
-            ),
-            if (_record.patient.weightKg <= 0)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 10),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Informe o peso do paciente para calcular dose e volume automaticamente.',
-                    style: TextStyle(
-                      color: Color(0xFFF0A11F),
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-            AddButton(
-              label: 'Edição avançada',
-              onTap: _editDrogasInfusoes,
-            ),
-          ],
-        ),
       ),
     );
   }
 
   Widget _buildAdjunctsCard() {
-    final suggestions = _buildMedicationSuggestions(_adjunctPresets);
-    return PanelCard(
+    final status = _record.adjuncts.isEmpty
+        ? 'Nenhum adjuvante registrado'
+        : _record.adjuncts.first.split('|').first;
+    final summary = _record.adjuncts.isEmpty
+        ? 'Toque para registrar adjuvantes e doses'
+        : '${_record.adjuncts.length} item(ns) registrados';
+    return _buildCompactOperationalCard(
       title: '14) Adjuvantes',
       titleColor: _techniqueRowColor,
       icon: Icons.auto_awesome_outlined,
-      minHeight: 260,
+      minHeight: 92,
+      status: status,
+      summary: summary,
+      onTap: _editAdjuvantes,
       isCompleted: _record.adjuncts.isNotEmpty,
-      child: Column(
-        children: [
-          ...suggestions.map(
-            (suggestion) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _buildMedicationPresetTile(
-                suggestion: suggestion,
-                encodedEntry: _findMedicationEntry(_record.adjuncts, suggestion.name),
-                accent: _techniqueRowColor,
-                onToggle: () => _toggleMedicationPreset(
-                  suggestion: suggestion,
-                  adjunct: true,
-                ),
-                onEdit: () => _editMedicationPreset(
-                  suggestion: suggestion,
-                  adjunct: true,
-                ),
-              ),
-            ),
-          ),
-          AddButton(
-            label: 'Edição avançada',
-            onTap: _editAdjuvantes,
-          ),
-        ],
-      ),
     );
   }
 
   Widget _buildOtherMedicationsCard() {
+    final status = _record.otherMedications.isEmpty
+        ? 'Nenhuma medicação complementar registrada'
+        : _record.otherMedications.first.split('|').first;
+    final summary = _record.otherMedications.isEmpty
+        ? 'Toque para registrar medicações complementares'
+        : '${_record.otherMedications.length} item(ns) registrados';
     return KeyedSubtree(
       key: _otherMedicationsSectionKey,
-      child: PanelCard(
+      child: _buildCompactOperationalCard(
         key: const Key('other-medications-card'),
+        tapKey: const Key('other-medications-entry'),
         title: '17) Outras medicações',
         titleColor: _medicationsRowColor,
         icon: Icons.healing_outlined,
-        minHeight: 168,
+        minHeight: 92,
+        status: status,
+        summary: summary,
+        onTap: _editOtherMedications,
         isCompleted: _record.otherMedications.isNotEmpty,
-        child: InkWell(
-          key: const Key('other-medications-entry'),
-          borderRadius: BorderRadius.circular(18),
-          onTap: _editOtherMedications,
-          child: Column(
-            children: [
-              if (_record.otherMedications.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 10),
-                  child: StatusHint(text: 'Nenhuma medicação complementar registrada'),
-                ),
-              ..._record.otherMedications.map(
-                (item) {
-                  final parts = item.split('|');
-                  final name = parts.isNotEmpty ? parts[0] : '';
-                  final doseSummary = _medicationDoseSummary(parts);
-                  final time = parts.length > 2 ? parts[2] : '--:--';
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: DoseRow(
-                      drug: name,
-                      dose: doseSummary,
-                      time: time.isEmpty ? '--:--' : time,
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 4),
-              AddButton(
-                label: 'Adicionar medicação',
-                onTap: _editOtherMedications,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
 
   Widget _buildNeuraxialNeedlesCard() {
+    final status = _record.neuraxialNeedles.isEmpty
+        ? 'Nenhuma agulha neuraxial registrada'
+        : _record.neuraxialNeedles.first;
+    final summary = _record.neuraxialNeedles.isEmpty
+        ? (_usesNeuraxialTechnique
+            ? 'Relacionar agulhas usadas na raqui/peridural'
+            : 'Preencha se houver técnica neuraxial')
+        : '${_record.neuraxialNeedles.length} item(ns) registrados';
     return KeyedSubtree(
       key: _neuraxialNeedlesSectionKey,
-      child: PanelCard(
+      child: _buildCompactOperationalCard(
         title: 'Agulhas raqui / peridural',
         titleColor: _airwayFluidRowColor,
         icon: Icons.vaccines_outlined,
-        minHeight: 168,
+        minHeight: 92,
+        status: status,
+        summary: summary,
+        onTap: _editNeuraxialNeedles,
         isAttention: _usesNeuraxialTechnique && _record.neuraxialNeedles.isEmpty,
         isCompleted: _record.neuraxialNeedles.isNotEmpty,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18),
-          onTap: _editNeuraxialNeedles,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (_record.neuraxialNeedles.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: StatusHint(
-                    text: _usesNeuraxialTechnique
-                        ? 'Relacionar agulhas usadas na raqui/peridural.'
-                        : 'Preencha se houver técnica neuraxial.',
-                  ),
-                ),
-              ..._record.neuraxialNeedles.map(
-                (item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: CheckLine(text: item),
-                ),
-              ),
-              const SizedBox(height: 4),
-              AddButton(
-                label: 'Editar agulhas',
-                onTap: _editNeuraxialNeedles,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
 
   Widget _buildAnesthesiaMaterialsCard() {
+    final status = _record.anesthesiaMaterials.isEmpty
+        ? 'Nenhum material registrado'
+        : _record.anesthesiaMaterials.first;
+    final summary = _record.anesthesiaMaterials.isEmpty
+        ? 'Relacionar materiais, dispositivos, ampolas, soros, sangue e demais consumos'
+        : '${_record.anesthesiaMaterials.length} item(ns) registrados';
     return KeyedSubtree(
       key: _materialsSectionKey,
-      child: PanelCard(
+      child: _buildCompactOperationalCard(
         title: 'Materiais e consumos',
         titleColor: _medicationsRowColor,
         icon: Icons.inventory_2_outlined,
-        minHeight: 168,
+        minHeight: 92,
+        status: status,
+        summary: summary,
+        onTap: _editAnesthesiaMaterials,
         isCompleted: _record.anesthesiaMaterials.isNotEmpty,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18),
-          onTap: _editAnesthesiaMaterials,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (_record.anesthesiaMaterials.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 10),
-                  child: StatusHint(
-                    text:
-                        'Relacionar materiais, dispositivos, ampolas, soros, sangue e demais consumos usados na anestesia.',
-                  ),
-                ),
-              ..._record.anesthesiaMaterials.take(6).map(
-                (item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: CheckLine(text: item),
-                ),
-              ),
-              if (_record.anesthesiaMaterials.length > 6)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Text(
-                    '+ ${_record.anesthesiaMaterials.length - 6} item(ns)',
-                    style: const TextStyle(
-                      color: Color(0xFF5D7288),
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 4),
-              AddButton(
-                label: 'Editar materiais',
-                onTap: _editAnesthesiaMaterials,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -4651,50 +3834,25 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Widget _buildVasoactiveDrugsCard() {
+    final status = _record.vasoactiveDrugs.isEmpty
+        ? 'Nenhuma droga vasoativa registrada'
+        : _record.vasoactiveDrugs.first.split('|').first;
+    final summary = _record.vasoactiveDrugs.isEmpty
+        ? 'Toque para registrar bolus, infusão contínua e ampolas'
+        : '${_record.vasoactiveDrugs.length} item(ns) registrados';
     return KeyedSubtree(
       key: _vasoactiveSectionKey,
-      child: PanelCard(
+      child: _buildCompactOperationalCard(
         key: const Key('vasoactive-card'),
+        tapKey: const Key('vasoactive-entry'),
         title: '18) Drogas vasoativas',
         titleColor: _medicationsRowColor,
         icon: Icons.show_chart_outlined,
-        minHeight: 168,
+        minHeight: 92,
+        status: status,
+        summary: summary,
+        onTap: _editVasoactiveDrugs,
         isCompleted: _record.vasoactiveDrugs.isNotEmpty,
-        child: InkWell(
-          key: const Key('vasoactive-entry'),
-          borderRadius: BorderRadius.circular(18),
-          onTap: _editVasoactiveDrugs,
-          child: Column(
-            children: [
-              if (_record.vasoactiveDrugs.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 10),
-                  child: StatusHint(text: 'Nenhuma droga vasoativa registrada'),
-                ),
-              ..._record.vasoactiveDrugs.map(
-                (item) {
-                  final parts = item.split('|');
-                  final name = parts.isNotEmpty ? parts[0] : '';
-                  final doseSummary = _medicationDoseSummary(parts);
-                  final time = parts.length > 2 ? parts[2] : '--:--';
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: DoseRow(
-                      drug: name,
-                      dose: doseSummary,
-                      time: time.isEmpty ? '--:--' : time,
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 4),
-              AddButton(
-                label: 'Adicionar vasoativa',
-                onTap: _editVasoactiveDrugs,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
