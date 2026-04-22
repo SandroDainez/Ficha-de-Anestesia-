@@ -3887,16 +3887,19 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     VoidCallback? onTap,
     bool isCompleted = false,
   }) {
-    return PanelCard(
-      key: key,
-      title: title,
-      titleColor: _surgeryRowColor,
-      icon: icon,
-      isCompleted: isCompleted,
-      child: InkWell(
-        key: tapKey,
-        borderRadius: BorderRadius.circular(10),
-        onTap: onTap ?? (section == null ? null : () => _editSurgerySection(section)),
+    final resolvedOnTap =
+        onTap ?? (section == null ? null : () => _editSurgerySection(section));
+    return InkWell(
+      key: tapKey,
+      borderRadius: BorderRadius.circular(14),
+      onTap: resolvedOnTap,
+      child: PanelCard(
+        key: key,
+        title: title,
+        titleColor: _surgeryRowColor,
+        icon: icon,
+        isCompleted: isCompleted,
+        collapsible: false,
         child: SizedBox(
           width: double.infinity,
           child: Text(

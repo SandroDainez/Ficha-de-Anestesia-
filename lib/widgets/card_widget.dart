@@ -148,7 +148,7 @@ class _PanelCardState extends State<PanelCard> {
               ),
             ),
           ),
-          if (_isExpanded)
+          if (!widget.collapsible || _isExpanded)
             if (widget.fillChild)
               Expanded(
                 child: Padding(
