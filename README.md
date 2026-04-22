@@ -113,7 +113,7 @@ git push -u origin main
 
 O projeto esta funcional localmente e hoje usa analise "IA" simulada por heuristicas em codigo. Nao ha integracao real com backend, LLM ou servico clinico externo.
 
-## Persistência online com Supabase
+## Persistência online com Supabase e controle de acesso
 
 1. Configure as variáveis de ambiente com:
 
@@ -122,11 +122,23 @@ O projeto esta funcional localmente e hoje usa analise "IA" simulada por heurist
      --dart-define=SUPABASE_ANON_KEY=sb_publishable_m_6gsKJexTpua5tKSWUOxA_I2TuuccE
    ```
 
-   No Vercel, defina as mesmas chaves (Settings → Environment Variables). O app detecta essas variáveis e passa a armazenar/listar casos diretamente no Supabase.
+   No Vercel, defina as mesmas chaves (Settings → Environment Variables). O app detecta essas variáveis e habilita o modo compartilhado com login.
 
-2. Crie a tabela e as políticas com esse SQL:
+2. Crie a tabela de usuários do app, a tabela de casos e as políticas com esse SQL:
 
    ```sql
+   create table public.app_users (
+     id uuid primary key references auth.users(id) on delete cascade,
+     email text not null unique,
+     full_name text not null default '',
+     role text not null default 'clinician' check (role in ('admin', 'clinician')),
+     status text not null default 'pending' check (status in ('pending', 'active', 'blocked')),
+     approved_at timestamptz,
+     blocked_at timestamptz,
+     created_at timestamptz not null default now(),
+     updated_at timestamptz not null default now()
+   );
+
    create table public.anesthesia_cases (
      id uuid primary key default gen_random_uuid(),
      created_at timestamptz not null default now(),
@@ -136,19 +148,145 @@ O projeto esta funcional localmente e hoje usa analise "IA" simulada por heurist
      status text not null,
      record jsonb not null
    );
+
+   create or replace function public.is_admin_user()
+   returns boolean
+   language sql
+   stable
+   as $$
+     select exists (
+       select 1
+       from public.app_users
+       where id = auth.uid()
+         and role = 'admin'
+         and status = 'active'
+     );
+   $$;
+
+   create or replace function public.touch_updated_at()
+   returns trigger
+   language plpgsql
+   as $$
+   begin
+     new.updated_at = now();
+     return new;
+   end;
+   $$;
+
+   create trigger touch_app_users_updated_at
+   before update on public.app_users
+   for each row execute function public.touch_updated_at();
+
+   create trigger touch_anesthesia_cases_updated_at
+   before update on public.anesthesia_cases
+   for each row execute function public.touch_updated_at();
+
+   alter table public.app_users enable row level security;
    alter table public.anesthesia_cases enable row level security;
-   create policy "allow anon select" on public.anesthesia_cases for select using (true);
-   create policy "allow anon insert" on public.anesthesia_cases for insert with check (true);
-   create policy "allow anon update" on public.anesthesia_cases for update using (true) with check (true);
-   create policy "allow anon delete" on public.anesthesia_cases for delete using (true);
+
+   create policy "users can read own profile"
+   on public.app_users
+   for select
+   to authenticated
+   using (id = auth.uid());
+
+   create policy "admins can read all profiles"
+   on public.app_users
+   for select
+   to authenticated
+   using (public.is_admin_user());
+
+   create policy "users can insert own profile"
+   on public.app_users
+   for insert
+   to authenticated
+   with check (id = auth.uid());
+
+   create policy "admins can update profiles"
+   on public.app_users
+   for update
+   to authenticated
+   using (public.is_admin_user())
+   with check (public.is_admin_user());
+
+   create policy "active users can read cases"
+   on public.anesthesia_cases
+   for select
+   to authenticated
+   using (
+     exists (
+       select 1
+       from public.app_users
+       where id = auth.uid()
+         and status = 'active'
+     )
+   );
+
+   create policy "active users can insert cases"
+   on public.anesthesia_cases
+   for insert
+   to authenticated
+   with check (
+     exists (
+       select 1
+       from public.app_users
+       where id = auth.uid()
+         and status = 'active'
+     )
+   );
+
+   create policy "active users can update cases"
+   on public.anesthesia_cases
+   for update
+   to authenticated
+   using (
+     exists (
+       select 1
+       from public.app_users
+       where id = auth.uid()
+         and status = 'active'
+     )
+   )
+   with check (
+     exists (
+       select 1
+       from public.app_users
+       where id = auth.uid()
+         and status = 'active'
+     )
+   );
+
+   create policy "active users can delete cases"
+   on public.anesthesia_cases
+   for delete
+   to authenticated
+   using (
+     exists (
+       select 1
+       from public.app_users
+       where id = auth.uid()
+         and status = 'active'
+     )
+   );
    ```
 
-3. Agora você terá:
-   - casos sincronizados no Supabase e acessíveis de qualquer dispositivo com as mesmas chaves
+3. Crie o primeiro administrador no Supabase Auth com:
+   - email: `sandrodainez@hotmail.com`
+   - senha inicial: `123456` se quiser manter esse padrão inicial
+
+   Observação: a senha **não** fica gravada no código do app. Ela deve ser criada no Supabase Auth para esse email.
+
+4. Agora você terá:
+   - login e cadastro de usuários
+   - cadastro comum com status `pending`, aguardando aprovação do administrador
+   - administrador com acesso para listar usuários, aprovar, bloquear e reativar
+   - casos sincronizados no Supabase para todos os usuários ativos
    - fallback para Hive local quando as chaves não estiverem definidas
    - exportação de PDF e também JSON (botão novo no rodapé e na lista de casos) para baixar/enviar por email ou WhatsApp
 
-4. Se precisar de tarefas administrativas (migrations, webhooks etc.) use a `service_role` em scripts separados — jamais exponha essa chave no Flutter/web.
+5. Redefinição de senha por administrador e convite por email/WhatsApp ficam para a próxima etapa. Para redefinir senha de forma segura será necessário usar backend próprio, Edge Function ou script administrativo com `service_role` fora do Flutter/web.
+
+6. Se precisar de tarefas administrativas (migrations, webhooks etc.) use a `service_role` em scripts separados — jamais exponha essa chave no Flutter/web.
 
 ## Pendências conhecidas
 

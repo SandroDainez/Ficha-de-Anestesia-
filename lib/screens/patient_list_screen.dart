@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 
+import '../models/app_user_profile.dart';
 import '../models/anesthesia_case.dart';
 import '../models/anesthesia_record.dart';
 import '../models/patient.dart';
@@ -11,8 +12,24 @@ import '../widgets/json_export_dialog.dart';
 import 'anesthesia_screen.dart';
 import 'pre_anesthetic_screen.dart';
 
+bool caseMatchesPatientSearch(AnesthesiaCase item, String query) {
+  final normalizedQuery = query.trim().toLowerCase();
+  if (normalizedQuery.isEmpty) return true;
+  final name = item.record.patient.name.trim().toLowerCase();
+  return name.contains(normalizedQuery);
+}
+
 class PatientListScreen extends StatefulWidget {
-  const PatientListScreen({super.key});
+  const PatientListScreen({
+    super.key,
+    this.currentProfile,
+    this.onOpenAdmin,
+    this.onSignOut,
+  });
+
+  final AppUserProfile? currentProfile;
+  final Future<void> Function()? onOpenAdmin;
+  final Future<void> Function()? onSignOut;
 
   @override
   State<PatientListScreen> createState() => _PatientListScreenState();
@@ -21,13 +38,21 @@ class PatientListScreen extends StatefulWidget {
 class _PatientListScreenState extends State<PatientListScreen> {
   final RecordStorageService _storageService = RecordStorageService();
   final ReportExportService _reportExportService = const ReportExportService();
+  final TextEditingController _searchController = TextEditingController();
 
   List<AnesthesiaCase> _cases = const [];
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     _reloadCases();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   String _nowLabel() {
@@ -50,7 +75,8 @@ class _PatientListScreenState extends State<PatientListScreen> {
 
   Future<void> _openAnesthesiaRecord({AnesthesiaCase? caseFile}) async {
     final now = DateTime.now().toIso8601String();
-    final targetCase = caseFile ??
+    final targetCase =
+        caseFile ??
         AnesthesiaCase(
           id: _storageService.createCaseId(),
           createdAtIso: now,
@@ -161,13 +187,14 @@ class _PatientListScreenState extends State<PatientListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final preAnestheticCases = _cases
+    final filteredCases = _cases.where(_matchesSearch).toList();
+    final preAnestheticCases = filteredCases
         .where((item) => item.status == AnesthesiaCaseStatus.preAnesthetic)
         .toList();
-    final inProgressCases = _cases
+    final inProgressCases = filteredCases
         .where((item) => item.status == AnesthesiaCaseStatus.inProgress)
         .toList();
-    final finalizedCases = _cases
+    final finalizedCases = filteredCases
         .where((item) => item.status == AnesthesiaCaseStatus.finalized)
         .toList();
 
@@ -177,6 +204,36 @@ class _PatientListScreenState extends State<PatientListScreen> {
           'Casos de Anestesia',
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
+        actions: [
+          if (widget.currentProfile != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Center(
+                child: Text(
+                  widget.currentProfile!.fullName.trim().isEmpty
+                      ? widget.currentProfile!.email
+                      : widget.currentProfile!.fullName,
+                  style: const TextStyle(
+                    color: Color(0xFF5F7288),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          if (widget.currentProfile?.isAdmin == true &&
+              widget.onOpenAdmin != null)
+            IconButton(
+              tooltip: 'Administração de usuários',
+              onPressed: () => widget.onOpenAdmin!(),
+              icon: const Icon(Icons.admin_panel_settings_outlined),
+            ),
+          if (widget.onSignOut != null)
+            IconButton(
+              tooltip: 'Sair',
+              onPressed: () => widget.onSignOut!(),
+              icon: const Icon(Icons.logout_outlined),
+            ),
+        ],
       ),
       body: Center(
         child: ConstrainedBox(
@@ -188,7 +245,11 @@ class _PatientListScreenState extends State<PatientListScreen> {
               children: [
                 _buildCreatePanel(),
                 const SizedBox(height: 20),
+                _buildSearchPanel(),
+                const SizedBox(height: 20),
                 if (_cases.isEmpty) _buildEmptyState(),
+                if (_cases.isNotEmpty && filteredCases.isEmpty)
+                  _buildNoSearchResultsState(),
                 if (preAnestheticCases.isNotEmpty)
                   _CaseSection(
                     title: 'Pré-anestésicos salvos',
@@ -231,7 +292,8 @@ class _PatientListScreenState extends State<PatientListScreen> {
                 if (finalizedCases.isNotEmpty)
                   _CaseSection(
                     title: 'Casos finalizados',
-                    subtitle: 'Arquivo local de fichas completas já finalizadas',
+                    subtitle:
+                        'Arquivo local de fichas completas já finalizadas',
                     children: finalizedCases
                         .map(
                           (item) => _CaseTile(
@@ -288,7 +350,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
           ),
           const SizedBox(height: 10),
           const Text(
-            'Você pode salvar o pré-anestésico para abrir depois ou iniciar a ficha anestésica diretamente.',
+            'Você pode salvar o pré-anestésico para abrir depois, localizar o paciente pelo nome e seguir com a ficha anestésica e a RPA.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Color(0xFF5F7288),
@@ -361,6 +423,105 @@ class _PatientListScreenState extends State<PatientListScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildSearchPanel() {
+    final supabaseOnline = SupabaseService.instance.isConfigured;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFDCE6F2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Localizar paciente',
+            style: TextStyle(
+              color: Color(0xFF17324D),
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            supabaseOnline
+                ? 'Os pré-anestésicos e fichas salvos ficam visíveis para todos os usuários deste app conectados ao mesmo Supabase.'
+                : 'Sem Supabase configurado, os casos aparecem apenas neste dispositivo.',
+            style: TextStyle(
+              color: supabaseOnline
+                  ? const Color(0xFF169653)
+                  : const Color(0xFFB07A1E),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            key: const Key('patient-search-field'),
+            controller: _searchController,
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value.trim().toLowerCase();
+              });
+            },
+            decoration: InputDecoration(
+              labelText: 'Buscar por nome do paciente',
+              hintText: 'Ex: Jose da Silva',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _searchQuery.isEmpty
+                  ? null
+                  : IconButton(
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() {
+                          _searchQuery = '';
+                        });
+                      },
+                      icon: const Icon(Icons.close),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoSearchResultsState() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFDCE6F2)),
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Nenhum paciente encontrado',
+            style: TextStyle(
+              color: Color(0xFF17324D),
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Ajuste o nome pesquisado para localizar um pré-anestésico ou ficha já salva.',
+            style: TextStyle(
+              color: Color(0xFF5F7288),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _matchesSearch(AnesthesiaCase item) {
+    return caseMatchesPatientSearch(item, _searchQuery);
   }
 }
 
@@ -464,8 +625,10 @@ class _CaseTile extends StatelessWidget {
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: statusColor.withAlpha(26),
                   borderRadius: BorderRadius.circular(999),
@@ -503,13 +666,19 @@ class _CaseTile extends StatelessWidget {
               Icon(
                 supabaseOnline ? Icons.cloud_done : Icons.cloud_off,
                 size: 16,
-                color: supabaseOnline ? const Color(0xFF169653) : const Color(0xFFB07A1E),
+                color: supabaseOnline
+                    ? const Color(0xFF169653)
+                    : const Color(0xFFB07A1E),
               ),
               const SizedBox(width: 6),
               Text(
-                supabaseOnline ? 'Sincronizado no Supabase' : 'Sem conexão Supabase',
+                supabaseOnline
+                    ? 'Sincronizado no Supabase'
+                    : 'Sem conexão Supabase',
                 style: TextStyle(
-                  color: supabaseOnline ? const Color(0xFF169653) : const Color(0xFFB07A1E),
+                  color: supabaseOnline
+                      ? const Color(0xFF169653)
+                      : const Color(0xFFB07A1E),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -527,8 +696,8 @@ class _CaseTile extends StatelessWidget {
                   caseFile.status == AnesthesiaCaseStatus.preAnesthetic
                       ? 'Abrir ficha anestésica'
                       : caseFile.status == AnesthesiaCaseStatus.finalized
-                          ? 'Visualizar ficha'
-                          : 'Continuar ficha',
+                      ? 'Visualizar ficha'
+                      : 'Continuar ficha',
                 ),
               ),
               OutlinedButton.icon(

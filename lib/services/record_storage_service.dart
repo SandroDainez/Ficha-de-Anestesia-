@@ -45,7 +45,7 @@ class RecordStorageService {
 
   Future<List<AnesthesiaCase>> loadCases() async {
     Box<dynamic>? box;
-    final cases = <AnesthesiaCase>[];
+    final localCases = <AnesthesiaCase>[];
 
     if (!kIsWeb) {
       try {
@@ -55,7 +55,7 @@ class RecordStorageService {
         if (rawCases is List) {
           for (final item in rawCases) {
             if (item is Map) {
-              cases.add(
+              localCases.add(
                 AnesthesiaCase.fromJson(Map<dynamic, dynamic>.from(item)),
               );
             }
@@ -66,14 +66,17 @@ class RecordStorageService {
       }
     }
 
-    if (cases.isNotEmpty) {
-      cases.sort((a, b) => b.updatedAtIso.compareTo(a.updatedAtIso));
-      return cases;
+    var remoteCases = const <AnesthesiaCase>[];
+    if (await _ensureRemote()) {
+      remoteCases = await _loadCasesRemote();
     }
 
-    if (await _ensureRemote()) {
-      final remoteCases = await _loadCasesRemote();
-      if (remoteCases.isNotEmpty) return remoteCases;
+    final mergedCases = mergeStoredCases(
+      localCases: localCases,
+      remoteCases: remoteCases,
+    );
+    if (mergedCases.isNotEmpty) {
+      return mergedCases;
     }
 
     if (kIsWeb || box == null) return const [];
@@ -271,6 +274,41 @@ class RecordStorageService {
       ),
     );
   }
+}
+
+List<AnesthesiaCase> mergeStoredCases({
+  required List<AnesthesiaCase> localCases,
+  required List<AnesthesiaCase> remoteCases,
+}) {
+  final mergedById = <String, AnesthesiaCase>{};
+
+  void upsert(AnesthesiaCase item) {
+    final key = item.id.trim();
+    if (key.isEmpty) return;
+    final current = mergedById[key];
+    if (current == null) {
+      mergedById[key] = item;
+      return;
+    }
+
+    final currentUpdatedAt = DateTime.tryParse(current.updatedAtIso);
+    final nextUpdatedAt = DateTime.tryParse(item.updatedAtIso);
+    if (nextUpdatedAt == null) return;
+    if (currentUpdatedAt == null || nextUpdatedAt.isAfter(currentUpdatedAt)) {
+      mergedById[key] = item;
+    }
+  }
+
+  for (final item in localCases) {
+    upsert(item);
+  }
+  for (final item in remoteCases) {
+    upsert(item);
+  }
+
+  final merged = mergedById.values.toList();
+  merged.sort((a, b) => b.updatedAtIso.compareTo(a.updatedAtIso));
+  return merged;
 }
 
 extension _IterableExtensions<T> on Iterable<T> {

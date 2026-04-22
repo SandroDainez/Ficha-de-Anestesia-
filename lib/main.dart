@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'screens/patient_list_screen.dart';
+import 'screens/app_root_screen.dart';
 
 void main() {
   runApp(const AnestesiaApp());
@@ -47,7 +47,7 @@ class AnestesiaApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const PatientListScreen(),
+      home: const AppRootScreen(),
     );
   }
 }
