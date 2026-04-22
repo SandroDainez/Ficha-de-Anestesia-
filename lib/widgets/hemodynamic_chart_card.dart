@@ -462,7 +462,10 @@ class _HemodynamicParameterSidebar extends StatelessWidget {
             Center(
               child: OutlinedButton.icon(
                 key: const Key('hemo-toggle-mode-button'),
-                onPressed: hasPoints ? onToggleRemoveMode : null,
+                onPressed:
+                    hasPoints || inlineHemodynamicRemoveMode
+                        ? onToggleRemoveMode
+                        : null,
                 icon: Icon(
                   inlineHemodynamicRemoveMode
                       ? Icons.edit_location_alt
