@@ -18,12 +18,18 @@ class RecordValidationService {
       missing.add('Técnica anestésica');
     }
 
-    if (record.drugs.isEmpty) {
-      missing.add('Drogas e infusões');
+    if (record.anesthesiaTechniqueDetails.trim().isEmpty) {
+      missing.add('Descrição da técnica anestésica');
     }
 
-    if (record.events.isEmpty) {
-      missing.add('Eventos intraoperatórios');
+    final technique = record.anesthesiaTechnique.toLowerCase();
+    if ((technique.contains('raqui') || technique.contains('peridural')) &&
+        record.neuraxialNeedles.isEmpty) {
+      missing.add('Agulhas neuraxiais');
+    }
+
+    if (record.drugs.isEmpty) {
+      missing.add('Drogas e infusões');
     }
 
     if (!record.fluidBalance.isComplete) {

@@ -323,7 +323,7 @@ class _AirwayDialogState extends State<AirwayDialog> {
       AirwayEditSection.cormack => 'Cormack-Lehane',
       AirwayEditSection.device => 'Dispositivo e tubo',
       AirwayEditSection.technique => 'Técnica de intubação',
-      AirwayEditSection.observation => 'Observações',
+      AirwayEditSection.observation => 'Materiais de apoio',
     };
   }
 }

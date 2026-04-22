@@ -44,12 +44,14 @@ class AiRecordAnalysisService {
       recommendations.add('Checar coerência entre técnica, manutenção e drogas administradas.');
     }
 
-    if (record.drugs.isNotEmpty && record.events.isEmpty) {
-      findings.add('Há medicações registradas sem eventos intraoperatórios documentados.');
+    if (record.drugs.isNotEmpty &&
+        record.anesthesiaTechniqueDetails.trim().isEmpty) {
+      findings.add('Há medicações registradas sem descrição da técnica anestésica.');
     }
 
-    if (record.events.isNotEmpty && record.drugs.isEmpty) {
-      findings.add('Há eventos intraoperatórios sem drogas/infusões registradas.');
+    if (record.anesthesiaTechniqueDetails.trim().isNotEmpty &&
+        record.drugs.isEmpty) {
+      findings.add('Há técnica anestésica descrita sem drogas/infusões registradas.');
     }
 
     if (!hasPreAnestheticData) {

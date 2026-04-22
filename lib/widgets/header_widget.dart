@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../models/patient.dart';
+import '../models/pre_anesthetic_assessment.dart';
 import 'ui_tokens.dart';
 
 class TopBarWidget extends StatelessWidget {
   const TopBarWidget({
     super.key,
     required this.onPreAnestheticTap,
+    required this.onRecoveryTap,
     required this.caseStage,
     required this.recordStatus,
     required this.highlightMessage,
@@ -17,6 +19,7 @@ class TopBarWidget extends StatelessWidget {
   });
 
   final VoidCallback onPreAnestheticTap;
+  final VoidCallback onRecoveryTap;
   final String caseStage;
   final String recordStatus;
   final String highlightMessage;
@@ -129,6 +132,22 @@ class TopBarWidget extends StatelessWidget {
                 icon: const Icon(Icons.description_outlined, size: 16),
                 label: const Text('Abrir pré-anestésico'),
               ),
+              FilledButton.icon(
+                onPressed: onRecoveryTap,
+                style: FilledButton.styleFrom(
+                  backgroundColor: UiColors.success,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(UiRadius.md),
+                  ),
+                ),
+                icon: const Icon(Icons.local_hospital_outlined, size: 16),
+                label: const Text('Abrir RPA'),
+              ),
             ],
           ),
         ],
@@ -212,6 +231,7 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
     super.key,
     required this.patient,
     required this.mallampati,
+    required this.preAnestheticAssessment,
     this.onNameTap,
     this.onAgeTap,
     this.onWeightTap,
@@ -231,6 +251,7 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
 
   final Patient patient;
   final String mallampati;
+  final PreAnestheticAssessment preAnestheticAssessment;
   final VoidCallback? onNameTap;
   final VoidCallback? onAgeTap;
   final VoidCallback? onWeightTap;
@@ -261,6 +282,12 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
     final isPediatric = patient.population == PatientPopulation.pediatric;
     final isNeonatal = patient.population == PatientPopulation.neonatal;
     final populationLabel = patient.population.label;
+    final functionalCapacityLabel =
+        _functionalCapacityValue(preAnestheticAssessment);
+    final difficultAirwayLabel = _airwayRiskValue(preAnestheticAssessment);
+    final difficultVentilationLabel =
+        _ventilationRiskValue(preAnestheticAssessment);
+    final fastingLabel = _fastingValue(preAnestheticAssessment, patient.population);
 
     return Container(
       width: double.infinity,
@@ -366,7 +393,6 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
           const SizedBox(height: UiSpace.md),
           LayoutBuilder(
             builder: (context, constraints) {
-              final compact = constraints.maxWidth >= 1100;
               final chips = [
                 ClinicalChip(
                   label: 'Perfil',
@@ -378,7 +404,7 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
                   label: 'ASA',
                   value:
                       patient.asa.trim().isEmpty ? 'Não definido' : patient.asa,
-                  color: UiColors.success,
+                  color: _asaColor(patient.asa),
                   onTap: onAsaTap,
                 ),
                 ClinicalChip(
@@ -392,6 +418,26 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
                           ? UiColors.danger
                           : UiColors.warning,
                   onTap: onInformedConsentTap,
+                ),
+                ClinicalChip(
+                  label: 'METS / funcional',
+                  value: functionalCapacityLabel,
+                  color: _functionalCapacityColor(preAnestheticAssessment),
+                ),
+                ClinicalChip(
+                  label: 'Via aérea difícil',
+                  value: difficultAirwayLabel,
+                  color: _airwayRiskColor(preAnestheticAssessment),
+                ),
+                ClinicalChip(
+                  label: 'Ventilação',
+                  value: difficultVentilationLabel,
+                  color: _ventilationRiskColor(preAnestheticAssessment),
+                ),
+                ClinicalChip(
+                  label: 'Jejum',
+                  value: fastingLabel,
+                  color: _fastingColor(preAnestheticAssessment, patient.population),
                 ),
                 if (patient.population == PatientPopulation.adult)
                   ClinicalChip(
@@ -468,28 +514,140 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
                   ),
               ];
 
-              if (!compact) {
-                return Wrap(
-                  spacing: UiSpace.xs,
-                  runSpacing: UiSpace.xs,
-                  children: chips,
-                );
-              }
-
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (var i = 0; i < chips.length; i++) ...[
-                    Expanded(child: chips[i]),
-                    if (i != chips.length - 1) const SizedBox(width: UiSpace.xs),
-                  ],
-                ],
+              return Wrap(
+                spacing: UiSpace.xs,
+                runSpacing: UiSpace.xs,
+                children: chips
+                    .map(
+                      (chip) => ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          minWidth: 150,
+                          maxWidth: 230,
+                        ),
+                        child: chip,
+                      ),
+                    )
+                    .toList(),
               );
             },
           ),
         ],
       ),
     );
+  }
+
+  static Color _asaColor(String asa) {
+    final normalized = asa.trim().toUpperCase();
+    if (normalized == 'IV' || normalized == 'V' || normalized == 'VI') {
+      return UiColors.danger;
+    }
+    if (normalized == 'III') return UiColors.warning;
+    if (normalized.isEmpty) return UiColors.warning;
+    return UiColors.success;
+  }
+
+  static String _functionalCapacityValue(PreAnestheticAssessment assessment) {
+    final value = assessment.mets.trim();
+    return value.isEmpty ? 'Não informado' : value;
+  }
+
+  static Color _functionalCapacityColor(PreAnestheticAssessment assessment) {
+    final value = assessment.mets.trim().toLowerCase();
+    if (value.isEmpty) return UiColors.warning;
+    if (value.contains('1 met') ||
+        value.contains('2-3 mets') ||
+        value.contains('limitação importante') ||
+        value.contains('apneia/bradicardia') ||
+        value.contains('suporte ventilatório')) {
+      return UiColors.danger;
+    }
+    if (value.contains('limitação leve') || value.contains('oxigênio recente')) {
+      return UiColors.warning;
+    }
+    return UiColors.success;
+  }
+
+  static String _airwayRiskValue(PreAnestheticAssessment assessment) {
+    final predictors = assessment.difficultAirwayPredictors;
+    final other = assessment.otherDifficultAirwayPredictors.trim();
+    if (predictors.isEmpty && other.isEmpty) return 'Sem alerta';
+
+    final segments = <String>[
+      if (predictors.isNotEmpty) predictors.take(2).join(', '),
+      if (predictors.length > 2) '+${predictors.length - 2} itens',
+      if (other.isNotEmpty) other,
+    ];
+    return segments.join(' • ');
+  }
+
+  static Color _airwayRiskColor(PreAnestheticAssessment assessment) {
+    final hasRisk = assessment.difficultAirwayPredictors.isNotEmpty ||
+        assessment.otherDifficultAirwayPredictors.trim().isNotEmpty;
+    return hasRisk ? UiColors.danger : UiColors.success;
+  }
+
+  static String _ventilationRiskValue(PreAnestheticAssessment assessment) {
+    final predictors = assessment.difficultVentilationPredictors;
+    final other = assessment.otherDifficultVentilationPredictors.trim();
+    if (predictors.isEmpty && other.isEmpty) return 'Sem alerta';
+
+    final segments = <String>[
+      if (predictors.isNotEmpty) predictors.take(2).join(', '),
+      if (predictors.length > 2) '+${predictors.length - 2} itens',
+      if (other.isNotEmpty) other,
+    ];
+    return segments.join(' • ');
+  }
+
+  static Color _ventilationRiskColor(PreAnestheticAssessment assessment) {
+    final hasRisk = assessment.difficultVentilationPredictors.isNotEmpty ||
+        assessment.otherDifficultVentilationPredictors.trim().isNotEmpty;
+    return hasRisk ? UiColors.danger : UiColors.success;
+  }
+
+  static String _fastingValue(
+    PreAnestheticAssessment assessment,
+    PatientPopulation population,
+  ) {
+    final solids = assessment.fastingSolids.trim();
+    final liquids = assessment.fastingLiquids.trim();
+    final breastMilk = assessment.fastingBreastMilk.trim();
+    final notes = assessment.fastingNotes.trim();
+    final segments = <String>[
+      if (solids.isNotEmpty)
+        population == PatientPopulation.adult
+            ? 'Sólidos $solids'
+            : 'Fórmula/refeição $solids',
+      if (breastMilk.isNotEmpty) 'Leite materno $breastMilk',
+      if (liquids.isNotEmpty) 'Líquidos $liquids',
+      if (notes.isNotEmpty) notes,
+    ];
+    return segments.isEmpty ? 'Não informado' : segments.join(' • ');
+  }
+
+  static Color _fastingColor(
+    PreAnestheticAssessment assessment,
+    PatientPopulation population,
+  ) {
+    final solids = assessment.fastingSolids.trim().toLowerCase();
+    final liquids = assessment.fastingLiquids.trim().toLowerCase();
+    final breastMilk = assessment.fastingBreastMilk.trim().toLowerCase();
+    final notes = assessment.fastingNotes.trim().toLowerCase();
+    final highRisk = solids.startsWith('<') ||
+        liquids.startsWith('<') ||
+        breastMilk.startsWith('<') ||
+        notes.contains('inadequado') ||
+        notes.contains('não adequado') ||
+        notes.contains('nao adequado');
+
+    if (highRisk) return UiColors.danger;
+    if (solids.isEmpty &&
+        liquids.isEmpty &&
+        (population == PatientPopulation.adult || breastMilk.isEmpty) &&
+        notes.isEmpty) {
+      return UiColors.warning;
+    }
+    return UiColors.success;
   }
 }
 

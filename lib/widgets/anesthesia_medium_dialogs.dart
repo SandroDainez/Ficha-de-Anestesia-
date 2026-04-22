@@ -5,9 +5,11 @@ import '../models/patient.dart';
 class TechniqueDialogResult {
   const TechniqueDialogResult({
     required this.technique,
+    required this.details,
   });
 
   final String technique;
+  final String details;
 }
 
 class MonitoringDialog extends StatefulWidget {
@@ -236,10 +238,12 @@ class TechniqueDialog extends StatefulWidget {
   const TechniqueDialog({
     super.key,
     required this.initialTechnique,
+    required this.initialDetails,
     required this.patient,
   });
 
   final String initialTechnique;
+  final String initialDetails;
   final Patient patient;
 
   @override
@@ -273,6 +277,8 @@ class _TechniqueDialogState extends State<TechniqueDialog> {
   ];
   late Set<String> _selectedTechniques;
   late final TextEditingController _otherTechniqueController;
+  late final TextEditingController _detailsController;
+  bool _detailsEditedManually = false;
 
   List<String> get _techniqueOptions {
     switch (widget.patient.population) {
@@ -301,12 +307,78 @@ class _TechniqueDialogState extends State<TechniqueDialog> {
           .where((item) => !_techniqueOptions.contains(item))
           .join('\n'),
     );
+    _detailsController = TextEditingController(
+      text: widget.initialDetails.trim().isEmpty
+          ? _buildSuggestedDetails()
+          : widget.initialDetails,
+    );
+    _detailsController.addListener(() {
+      _detailsEditedManually = true;
+    });
   }
 
   @override
   void dispose() {
     _otherTechniqueController.dispose();
+    _detailsController.dispose();
     super.dispose();
+  }
+
+  List<String> get _allSelectedTechniques => [
+        ..._selectedTechniques,
+        ..._otherTechniqueController.text
+            .split('\n')
+            .map((item) => item.trim())
+            .where((item) => item.isNotEmpty),
+      ];
+
+  String _buildSuggestedDetails() {
+    final selected = _allSelectedTechniques.map((item) => item.toLowerCase()).toList();
+    final lines = <String>[];
+
+    if (selected.any((item) => item.contains('raqui'))) {
+      lines.add(
+        'Raquianestesia planejada com punção, confirmação do bloqueio, instalação sensitivo-motora e acompanhamento da regressão, mantendo vigilância hemodinâmica e conforto durante o procedimento.',
+      );
+    }
+    if (selected.any((item) => item.contains('peridural'))) {
+      lines.add(
+        'Peridural com identificação do espaço, dose teste quando indicada, administração fracionada e avaliação seriada do nível analgésico/anestésico e da estabilidade clínica.',
+      );
+    }
+    if (selected.any(
+      (item) => item.contains('bloqueio') || item.contains('regional'),
+    )) {
+      lines.add(
+        'Bloqueio regional com confirmação do território anestesiado, latência adequada e monitorização da eficácia analgésica, associado a sedação titulada conforme a necessidade clínica.',
+      );
+    }
+    if (selected.any((item) => item.contains('sedação') || item.contains('sedacao'))) {
+      lines.add(
+        'Sedação titulada ao estímulo cirúrgico, ventilação espontânea e conforto do paciente, com ajuste progressivo das doses e vigilância respiratória contínua.',
+      );
+    }
+    if (selected.any((item) => item.contains('geral') || item.contains('tiva'))) {
+      lines.add(
+        'Anestesia geral conduzida com indução, manutenção e recuperação planejadas conforme o contexto do caso, com controle de via aérea, analgesia, hipnose e monitorização contínua.',
+      );
+    }
+    if (lines.isEmpty) {
+      return switch (widget.patient.population) {
+        PatientPopulation.adult =>
+          'Descrever de forma breve a técnica anestésica escolhida, as etapas principais, o tipo de monitorização e como será feita a condução intraoperatória.',
+        PatientPopulation.pediatric =>
+          'Descrever a técnica anestésica em linguagem objetiva, incluindo condução da sedação/anestesia, monitorização e cuidados específicos do paciente pediátrico.',
+        PatientPopulation.neonatal =>
+          'Descrever a técnica anestésica, a estratégia ventilatória, a monitorização e os cuidados específicos para o neonato durante o procedimento.',
+      };
+    }
+    return lines.join('\n\n');
+  }
+
+  void _refreshSuggestedDetails() {
+    if (_detailsEditedManually || widget.initialDetails.trim().isNotEmpty) return;
+    _detailsController.text = _buildSuggestedDetails();
   }
 
   @override
@@ -336,6 +408,7 @@ class _TechniqueDialogState extends State<TechniqueDialog> {
                               } else {
                                 _selectedTechniques.remove(item);
                               }
+                              _refreshSuggestedDetails();
                             });
                           },
                           selectedColor: const Color(0xFF8A5DD3).withAlpha(28),
@@ -360,9 +433,26 @@ class _TechniqueDialogState extends State<TechniqueDialog> {
                 key: const Key('technique-other-technique-field'),
                 controller: _otherTechniqueController,
                 maxLines: 2,
+                onChanged: (_) {
+                  setState(() {
+                    _refreshSuggestedDetails();
+                  });
+                },
                 decoration: const InputDecoration(
                   labelText: 'Outras técnicas',
                   hintText: 'Uma técnica por linha',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                key: const Key('technique-details-field'),
+                controller: _detailsController,
+                minLines: 5,
+                maxLines: 9,
+                decoration: const InputDecoration(
+                  labelText: 'Descrição breve da técnica',
+                  hintText:
+                      'Ex: fases da raqui, estratégia da peridural, bloqueios, sedação associada e condução da anestesia geral conforme o contexto.',
                 ),
               ),
             ],
@@ -378,13 +468,8 @@ class _TechniqueDialogState extends State<TechniqueDialog> {
           key: const Key('technique-save-button'),
           onPressed: () => Navigator.of(context).pop(
             TechniqueDialogResult(
-              technique: [
-                ..._selectedTechniques,
-                ..._otherTechniqueController.text
-                    .split('\n')
-                    .map((item) => item.trim())
-                    .where((item) => item.isNotEmpty),
-              ].join('\n'),
+              technique: _allSelectedTechniques.join('\n'),
+              details: _detailsController.text.trim(),
             ),
           ),
           child: const Text('Salvar'),

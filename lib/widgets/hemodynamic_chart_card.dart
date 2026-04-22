@@ -71,6 +71,8 @@ class HemodynamicChartCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final showEmptyOverlay = !hasAnesthesiaStartMarker;
     final chartHeight = dominant ? 680.0 : 540.0;
+    final displayMaxTime = _displayMaxTime();
+    final minChartWidth = _minChartWidth(displayMaxTime);
     final instructionText = inlineHemodynamicRemoveMode
         ? 'Modo correção ativo. Toque em um ponto do gráfico para apagar.'
         : (hasAnesthesiaStartMarker
@@ -165,37 +167,6 @@ class HemodynamicChartCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    _ControlGroup(
-                      title: 'Modo',
-                      child: Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          _ModePill(
-                            label: inlineHemodynamicRemoveMode
-                                ? 'Correção'
-                                : 'Registro',
-                            activeColor: inlineHemodynamicRemoveMode
-                                ? const Color(0xFFCC3D3D)
-                                : const Color(0xFF2B76D2),
-                          ),
-                          OutlinedButton.icon(
-                            key: const Key('hemo-toggle-mode-button'),
-                            onPressed: points.isEmpty ? null : onToggleRemoveMode,
-                            icon: Icon(
-                              inlineHemodynamicRemoveMode
-                                  ? Icons.edit_location_alt
-                                  : Icons.delete_outline,
-                            ),
-                            label: Text(
-                              inlineHemodynamicRemoveMode
-                                  ? 'Voltar para registro'
-                                  : 'Ativar correção',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -211,7 +182,7 @@ class HemodynamicChartCard extends StatelessWidget {
                           : null,
                       icon: const Icon(Icons.add_chart_outlined),
                       label: Text(
-                        'Lançar ${inlineHemodynamicType == 'SpO2' ? 'SpO₂' : inlineHemodynamicType}',
+                        'Lançar ${inlineHemodynamicType == 'SpO2' ? 'Sat' : inlineHemodynamicType}',
                       ),
                     ),
                     if (!inlineHemodynamicRemoveMode)
@@ -308,6 +279,7 @@ class HemodynamicChartCard extends StatelessWidget {
                         points: points,
                         markers: markers,
                         selectedType: inlineHemodynamicType,
+                        displayMaxTime: displayMaxTime,
                         onPointTap: onPointTap,
                         onChartTap: onChartTap,
                         onPointMoved: onPointMoved,
@@ -332,7 +304,10 @@ class HemodynamicChartCard extends StatelessWidget {
                   _HemodynamicParameterSidebar(
                     chartHeight: chartHeight,
                     inlineHemodynamicType: inlineHemodynamicType,
+                    inlineHemodynamicRemoveMode: inlineHemodynamicRemoveMode,
+                    hasPoints: points.isNotEmpty,
                     onSelectType: onSelectType,
+                    onToggleRemoveMode: onToggleRemoveMode,
                   ),
                   Expanded(child: chartStack),
                 ],
@@ -342,12 +317,20 @@ class HemodynamicChartCard extends StatelessWidget {
                 return SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(minWidth: 520),
+                    constraints: BoxConstraints(minWidth: minChartWidth),
                     child: row,
                   ),
                 );
               }
-              return row;
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minWidth: minChartWidth > viewWidth ? minChartWidth : viewWidth,
+                  ),
+                  child: row,
+                ),
+              );
             },
           ),
           const SizedBox(height: 12),
@@ -418,18 +401,44 @@ class HemodynamicChartCard extends StatelessWidget {
     final seconds = totalSeconds % 60;
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
+
+  double _displayMaxTime() {
+    final pointMax = points.isEmpty
+        ? 0.0
+        : points.map((item) => item.time).reduce((a, b) => a > b ? a : b);
+    final markerMax = markers.isEmpty
+        ? 0.0
+        : markers.map((item) => item.time).reduce((a, b) => a > b ? a : b);
+    final rawMax = [pointMax, markerMax, currentInlineTime].reduce(
+      (a, b) => a > b ? a : b,
+    );
+    if (rawMax <= 180) return 180;
+    return (rawMax / 15).ceil() * 15.0;
+  }
+
+  double _minChartWidth(double maxTime) {
+    final blocks = (maxTime / 15).ceil();
+    final chartWidth = blocks * 42.0;
+    return chartWidth + 152.0;
+  }
 }
 
 class _HemodynamicParameterSidebar extends StatelessWidget {
   const _HemodynamicParameterSidebar({
     required this.chartHeight,
     required this.inlineHemodynamicType,
+    required this.inlineHemodynamicRemoveMode,
+    required this.hasPoints,
     required this.onSelectType,
+    required this.onToggleRemoveMode,
   });
 
   final double chartHeight;
   final String inlineHemodynamicType;
+  final bool inlineHemodynamicRemoveMode;
+  final bool hasPoints;
   final ValueChanged<String> onSelectType;
+  final VoidCallback onToggleRemoveMode;
 
   @override
   Widget build(BuildContext context) {
@@ -447,6 +456,44 @@ class _HemodynamicParameterSidebar extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Center(
+              child: _ModePill(
+                label: inlineHemodynamicRemoveMode ? 'Correção' : 'Registro',
+                activeColor: inlineHemodynamicRemoveMode
+                    ? const Color(0xFFCC3D3D)
+                    : const Color(0xFF2B76D2),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Center(
+              child: OutlinedButton.icon(
+                key: const Key('hemo-toggle-mode-button'),
+                onPressed: hasPoints ? onToggleRemoveMode : null,
+                icon: Icon(
+                  inlineHemodynamicRemoveMode
+                      ? Icons.edit_location_alt
+                      : Icons.delete_outline,
+                  size: 18,
+                ),
+                label: Text(
+                  inlineHemodynamicRemoveMode
+                      ? 'Voltar para registro'
+                      : 'Ativar correção',
+                  textAlign: TextAlign.center,
+                ),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 10,
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
             const Text(
               'Parâmetro',
               textAlign: TextAlign.center,
@@ -463,7 +510,7 @@ class _HemodynamicParameterSidebar extends StatelessWidget {
                 child: Center(
                   child: ChoiceChip(
                     label: Text(
-                      type == 'SpO2' ? 'SpO₂' : type,
+                      type == 'SpO2' ? 'Sat' : type,
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,

@@ -471,6 +471,7 @@ class HemodynamicChart extends StatefulWidget {
     required this.points,
     required this.markers,
     required this.selectedType,
+    this.displayMaxTime,
     this.onPointTap,
     this.onChartTap,
     this.onPointMoved,
@@ -480,6 +481,7 @@ class HemodynamicChart extends StatefulWidget {
   final List<HemodynamicPoint> points;
   final List<HemodynamicMarker> markers;
   final String selectedType;
+  final double? displayMaxTime;
   final ValueChanged<HemodynamicPoint>? onPointTap;
   final ValueChanged<double>? onChartTap;
   final HemodynamicPointDragCallback? onPointMoved;
@@ -508,6 +510,7 @@ class _HemodynamicChartState extends State<HemodynamicChart> {
           points: widget.points,
           markers: widget.markers,
           size: chartSize,
+          displayMaxTime: widget.displayMaxTime,
         );
 
         // Listener garante toque no gráfico (onTapUp com Pan competia e falhava).
@@ -624,11 +627,13 @@ class HemodynamicChartLayout {
     required this.points,
     required this.markers,
     required this.size,
+    this.displayMaxTime,
   });
 
   final List<HemodynamicPoint> points;
   final List<HemodynamicMarker> markers;
   final Size size;
+  final double? displayMaxTime;
 
   static const double leftPadding = 34;
   static const double rightPadding = 12;
@@ -644,7 +649,10 @@ class HemodynamicChartLayout {
     final double markerMax = markers.isEmpty
         ? 0
         : markers.map((item) => item.time).reduce((a, b) => a > b ? a : b);
-    final maxValue = pointMax > markerMax ? pointMax : markerMax;
+    final baseMax = pointMax > markerMax ? pointMax : markerMax;
+    final maxValue = displayMaxTime != null && displayMaxTime! > baseMax
+        ? displayMaxTime!
+        : baseMax;
     if (maxValue <= 180) return 180.0;
     final blocksOf15 = (maxValue / 15).ceil();
     return blocksOf15 * 15.0;
@@ -789,17 +797,6 @@ class _ChartPainter extends CustomPainter {
     );
     axisText.layout();
     axisText.paint(canvas, const Offset(38, 16));
-
-    axisText.text = const TextSpan(
-      text: 'PA / FC / PAM / PAI',
-      style: TextStyle(
-        color: Color(0xFF5D7288),
-        fontSize: 11,
-        fontWeight: FontWeight.w800,
-      ),
-    );
-    axisText.layout();
-    axisText.paint(canvas, Offset(38, layout.hemoTop - 18));
 
     for (double minute = 0; minute <= layout.maxTime; minute += 5) {
       final x = layout.xForTime(minute);
@@ -956,7 +953,7 @@ class _ChartPainter extends CustomPainter {
         case 'PAM':
           final text = TextPainter(
             text: TextSpan(
-              text: 'm',
+              text: 'M',
               style: TextStyle(
                 color: color,
                 fontSize: 18,
@@ -971,10 +968,10 @@ class _ChartPainter extends CustomPainter {
         case 'SpO2':
           final text = TextPainter(
             text: TextSpan(
-              text: 'S',
+              text: 'Sat',
               style: TextStyle(
                 color: color,
-                fontSize: 18,
+                fontSize: 12,
                 fontWeight: FontWeight.w900,
                 height: 1,
               ),

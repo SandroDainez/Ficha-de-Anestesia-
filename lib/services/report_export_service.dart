@@ -124,6 +124,7 @@ class ReportExportService {
               _field('Observações', _orDash(record.airway.observation)),
               _field('Acessos venosos', _joinList(record.venousAccesses)),
               _field('Acessos arteriais', _joinList(record.arterialAccesses)),
+              _field('Agulhas neuraxiais', _joinList(record.neuraxialNeedles)),
               _field('Monitorização', _joinList(record.monitoringItems)),
             ],
           ),
@@ -131,10 +132,19 @@ class ReportExportService {
             'Técnica e medicações',
             [
               _field('Técnica anestésica', _orDash(record.anesthesiaTechnique)),
+              _field(
+                'Descrição da técnica',
+                _orDash(record.anesthesiaTechniqueDetails),
+              ),
               _field('Indução / drogas', _joinList(record.drugs)),
               _field('Adjuvantes', _joinList(record.adjuncts)),
+              _field(
+                'Sedação associada',
+                _joinList(record.sedationMedications),
+              ),
               _field('Outras medicações', _joinList(record.otherMedications)),
               _field('Drogas vasoativas', _joinList(record.vasoactiveDrugs)),
+              _field('Materiais e consumos', _joinList(record.anesthesiaMaterials)),
             ],
           ),
           _section(
@@ -158,12 +168,80 @@ class ReportExportService {
           _section(
             'Eventos e hemodinâmica',
             [
-              _field('Eventos intraoperatórios', _joinList(record.events)),
               _field('Marcadores hemodinâmicos', _joinHemodynamicMarkers(record)),
             ],
           ),
+          if (record.hemodynamicPoints.isNotEmpty || record.hemodynamicMarkers.isNotEmpty)
+            _hemodynamicChart(record),
           if (record.hemodynamicPoints.isNotEmpty)
             _hemodynamicTable(record),
+          _section(
+            'Recuperação pós-anestésica / pós-cirúrgica',
+            [
+              _field(
+                'Horário de admissão',
+                _orDash(record.postAnesthesiaRecovery.admissionTime),
+              ),
+              _field(
+                'Critérios de admissão',
+                _joinList(record.postAnesthesiaRecovery.admissionCriteria),
+              ),
+              _field(
+                'Monitorização',
+                _joinList(record.postAnesthesiaRecovery.monitoringItems),
+              ),
+              _field(
+                'Dor',
+                _orDash(record.postAnesthesiaRecovery.painScore),
+              ),
+              _field(
+                'Náusea / vômito',
+                _orDash(record.postAnesthesiaRecovery.nauseaScore),
+              ),
+              _field(
+                'Sedação',
+                _orDash(record.postAnesthesiaRecovery.sedationScale),
+              ),
+              _field(
+                'Temperatura',
+                _orDash(record.postAnesthesiaRecovery.temperature),
+              ),
+              _field(
+                'Aldrete',
+                record.postAnesthesiaRecovery.aldreteTotal == 0
+                    ? '--'
+                    : '${record.postAnesthesiaRecovery.aldreteTotal}/10',
+              ),
+              _field(
+                'Complicações na recuperação',
+                _joinList(record.postAnesthesiaRecovery.complications),
+              ),
+              _field(
+                'Intervenções',
+                _joinList(record.postAnesthesiaRecovery.interventions),
+              ),
+              _field(
+                'Critérios de alta',
+                _joinList(record.postAnesthesiaRecovery.dischargeCriteria),
+              ),
+              _field(
+                'Horário de alta',
+                _orDash(record.postAnesthesiaRecovery.dischargeTime),
+              ),
+              _field(
+                'Destino após recuperação',
+                _orDash(record.postAnesthesiaRecovery.destinationAfterRecovery),
+              ),
+              _field(
+                'Admissão / handoff',
+                _orDash(record.postAnesthesiaRecovery.admissionNotes),
+              ),
+              _field(
+                'Condições de alta / orientações',
+                _orDash(record.postAnesthesiaRecovery.dischargeNotes),
+              ),
+            ],
+          ),
           _section(
             'Responsável',
             [
@@ -246,6 +324,8 @@ class ReportExportService {
         'chegada_ao_centro_cirurgico_e_anotacoes': _orDash(record.operationalNotes),
         'porte_cirurgico': _orDash(record.surgicalSize),
         'tecnica_anestesica': _orDash(record.anesthesiaTechnique),
+        'descricao_da_tecnica_anestesica':
+            _orDash(record.anesthesiaTechniqueDetails),
         'antibioticoprofilaxia': record.prophylacticAntibiotics.isEmpty ? 'Não registrada' : record.prophylacticAntibiotics.join(' | '),
         'jejum_informado': _orDash(record.fastingHours),
         'via_aerea': {
@@ -258,13 +338,20 @@ class ReportExportService {
         'acessos_e_monitorizacao': {
           'acessos_venosos': record.venousAccesses.isEmpty ? 'Nenhum registrado' : record.venousAccesses.join(', '),
           'acessos_arteriais': record.arterialAccesses.isEmpty ? 'Nenhum registrado' : record.arterialAccesses.join(', '),
+          'agulhas_neuraxiais': record.neuraxialNeedles.isEmpty ? 'Nenhuma registrada' : record.neuraxialNeedles.join(', '),
           'monitorizacao': record.monitoringItems.isEmpty ? 'Nenhuma registrada' : record.monitoringItems.join(', '),
         },
         'medicacoes_intraoperatorias': {
           'inducao': record.drugs.isEmpty ? 'Não registrada' : record.drugs.join(' | '),
           'adjuvantes': record.adjuncts.isEmpty ? 'Não registrados' : record.adjuncts.join(' | '),
+          'sedacao_associada': record.sedationMedications.isEmpty
+              ? 'Não registrada'
+              : record.sedationMedications.join(' | '),
           'outras_medicacoes': record.otherMedications.isEmpty ? 'Não registradas' : record.otherMedications.join(' | '),
           'drogas_vasoativas': record.vasoactiveDrugs.isEmpty ? 'Não registradas' : record.vasoactiveDrugs.join(' | '),
+          'materiais_e_consumos': record.anesthesiaMaterials.isEmpty
+              ? 'Não registrados'
+              : record.anesthesiaMaterials.join(' | '),
         },
         'balanco_hidrico': {
           'cristaloides': _volume(record.fluidBalance.crystalloids),
@@ -275,7 +362,42 @@ class ReportExportService {
           'outras_perdas': _volume(record.fluidBalance.otherLosses),
           'balanco_total': record.fluidBalance.formattedBalance,
         },
-        'eventos_intraoperatorios': record.events.isEmpty ? 'Nenhum evento registrado' : record.events,
+        'recuperacao_pos_anestesica': {
+          'horario_de_admissao':
+              _orDash(record.postAnesthesiaRecovery.admissionTime),
+          'criterios_de_admissao': record
+                  .postAnesthesiaRecovery.admissionCriteria.isEmpty
+              ? 'Não registrados'
+              : record.postAnesthesiaRecovery.admissionCriteria.join(', '),
+          'monitorizacao': record.postAnesthesiaRecovery.monitoringItems.isEmpty
+              ? 'Não registrada'
+              : record.postAnesthesiaRecovery.monitoringItems.join(', '),
+          'dor': _orDash(record.postAnesthesiaRecovery.painScore),
+          'nausea_vomito': _orDash(record.postAnesthesiaRecovery.nauseaScore),
+          'sedacao': _orDash(record.postAnesthesiaRecovery.sedationScale),
+          'temperatura': _orDash(record.postAnesthesiaRecovery.temperature),
+          'aldrete_total': record.postAnesthesiaRecovery.aldreteTotal == 0
+              ? '--'
+              : '${record.postAnesthesiaRecovery.aldreteTotal}/10',
+          'complicacoes': record.postAnesthesiaRecovery.complications.isEmpty
+              ? 'Nenhuma registrada'
+              : record.postAnesthesiaRecovery.complications.join(', '),
+          'intervencoes': record.postAnesthesiaRecovery.interventions.isEmpty
+              ? 'Nenhuma registrada'
+              : record.postAnesthesiaRecovery.interventions.join(', '),
+          'criterios_de_alta': record
+                  .postAnesthesiaRecovery.dischargeCriteria.isEmpty
+              ? 'Não registrados'
+              : record.postAnesthesiaRecovery.dischargeCriteria.join(', '),
+          'horario_de_alta':
+              _orDash(record.postAnesthesiaRecovery.dischargeTime),
+          'destino_apos_recuperacao':
+              _orDash(record.postAnesthesiaRecovery.destinationAfterRecovery),
+          'anotacoes_de_admissao':
+              _orDash(record.postAnesthesiaRecovery.admissionNotes),
+          'anotacoes_de_alta':
+              _orDash(record.postAnesthesiaRecovery.dischargeNotes),
+        },
         'time_out': record.timeOutCompleted ? 'Concluído' : 'Pendente',
       },
       'pre_anestesico': {
@@ -543,6 +665,164 @@ class ReportExportService {
     );
   }
 
+  pw.Widget _hemodynamicChart(AnesthesiaRecord record) {
+    return pw.Container(
+      margin: const pw.EdgeInsets.only(bottom: 14),
+      padding: const pw.EdgeInsets.all(12),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: PdfColors.grey300),
+        borderRadius: pw.BorderRadius.circular(10),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            'Gráfico hemodinâmico',
+            style: pw.TextStyle(
+              fontSize: 14,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.blueGrey800,
+            ),
+          ),
+          pw.SizedBox(height: 8),
+          pw.Container(
+            height: 240,
+            width: double.infinity,
+            child: pw.SvgImage(svg: _hemodynamicChartSvg(record)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _hemodynamicChartSvg(AnesthesiaRecord record) {
+    const width = 960.0;
+    const height = 240.0;
+    const left = 52.0;
+    const right = 24.0;
+    const top = 24.0;
+    const bottom = 28.0;
+    const spo2Height = 54.0;
+    const gap = 14.0;
+    final hemoTop = top + spo2Height + gap;
+    final hemoHeight = height - hemoTop - bottom;
+    final chartWidth = width - left - right;
+    final maxTime = _hemodynamicDisplayMaxTime(record);
+
+    double xForTime(double time) => left + (time / maxTime) * chartWidth;
+    double yForSpo2(double value) {
+      final clamped = value.clamp(70, 100);
+      return top + spo2Height - ((clamped - 70) / 30) * spo2Height;
+    }
+
+    double yForHemo(double value) {
+      final clamped = value.clamp(0, 200);
+      return hemoTop + hemoHeight - (clamped / 200) * hemoHeight;
+    }
+
+    String pathFor(List<Map<String, double>> data, double Function(double) yMap) {
+      if (data.isEmpty) return '';
+      final sorted = [...data]..sort((a, b) => a['time']!.compareTo(b['time']!));
+      final buffer = StringBuffer();
+      for (var index = 0; index < sorted.length; index++) {
+        final x = xForTime(sorted[index]['time']!);
+        final y = yMap(sorted[index]['value']!);
+        buffer.write('${index == 0 ? 'M' : 'L'} ${x.toStringAsFixed(1)} ${y.toStringAsFixed(1)} ');
+      }
+      return buffer.toString().trim();
+    }
+
+    final pointsByType = <String, List<Map<String, double>>>{};
+    for (final point in record.hemodynamicPoints) {
+      pointsByType.putIfAbsent(point.type, () => []);
+      pointsByType[point.type]!.add({'time': point.time, 'value': point.value});
+    }
+
+    final pas = pointsByType['PAS'] ?? const [];
+    final pad = pointsByType['PAD'] ?? const [];
+    final pam = <Map<String, double>>[];
+    final usedPad = <int>{};
+    for (final pasPoint in pas) {
+      var bestIndex = -1;
+      var bestDelta = double.infinity;
+      for (var index = 0; index < pad.length; index++) {
+        if (usedPad.contains(index)) continue;
+        final delta = (pad[index]['time']! - pasPoint['time']!).abs();
+        if (delta <= 1 && delta < bestDelta) {
+          bestDelta = delta;
+          bestIndex = index;
+        }
+      }
+      if (bestIndex != -1) {
+        usedPad.add(bestIndex);
+        pam.add({
+          'time': pasPoint['time']!,
+          'value': (pasPoint['value']! + (2 * pad[bestIndex]['value']!)) / 3,
+        });
+      }
+    }
+
+    final grid = StringBuffer();
+    for (var minute = 0.0; minute <= maxTime; minute += 15) {
+      final x = xForTime(minute);
+      grid.writeln(
+        "<line x1='${x.toStringAsFixed(1)}' y1='$top' x2='${x.toStringAsFixed(1)}' y2='${(height - bottom).toStringAsFixed(1)}' stroke='${minute % 60 == 0 ? '#c9d8e8' : '#e6eef7'}' stroke-width='1' />",
+      );
+    }
+    for (var value = 70; value <= 100; value += 10) {
+      final y = yForSpo2(value.toDouble());
+      grid.writeln(
+        "<line x1='$left' y1='${y.toStringAsFixed(1)}' x2='${(width - right).toStringAsFixed(1)}' y2='${y.toStringAsFixed(1)}' stroke='#e7eef6' stroke-width='1' />",
+      );
+    }
+    for (var value = 0; value <= 200; value += 20) {
+      final y = yForHemo(value.toDouble());
+      grid.writeln(
+        "<line x1='$left' y1='${y.toStringAsFixed(1)}' x2='${(width - right).toStringAsFixed(1)}' y2='${y.toStringAsFixed(1)}' stroke='#e7eef6' stroke-width='1' />",
+      );
+    }
+
+    final markers = StringBuffer();
+    for (final marker in record.hemodynamicMarkers) {
+      final x = xForTime(marker.time);
+      final color = marker.label == 'Início da anestesia' ? '#2b76d2' : '#169653';
+      markers.writeln(
+        "<line x1='${x.toStringAsFixed(1)}' y1='$top' x2='${x.toStringAsFixed(1)}' y2='${(height - bottom).toStringAsFixed(1)}' stroke='$color' stroke-width='1.2' />",
+      );
+    }
+
+    String axisLabels() {
+      final buffer = StringBuffer();
+      for (var minute = 0.0; minute <= maxTime; minute += 60) {
+        final x = xForTime(minute);
+        final hour = (minute / 60).floor().toString().padLeft(2, '0');
+        buffer.writeln(
+          "<text x='${x.toStringAsFixed(1)}' y='${(height - 8).toStringAsFixed(1)}' font-size='10' fill='#7a8ea4'>${hour}h</text>",
+        );
+      }
+      buffer.writeln("<text x='38' y='18' font-size='11' font-weight='700' fill='#16a96b'>Sat</text>");
+      buffer.writeln("<text x='38' y='${(hemoTop - 8).toStringAsFixed(1)}' font-size='11' font-weight='700' fill='#5d7288'>PA / FC / PAM / PAI</text>");
+      return buffer.toString();
+    }
+
+    return """
+<svg xmlns='http://www.w3.org/2000/svg' width='$width' height='$height' viewBox='0 0 $width $height'>
+  <rect x='0' y='0' width='$width' height='$height' fill='white'/>
+  ${grid.toString()}
+  <line x1='$left' y1='$top' x2='$left' y2='${(height - bottom).toStringAsFixed(1)}' stroke='#8ea5bf' stroke-width='1.5' />
+  <line x1='$left' y1='${(top + spo2Height + 7).toStringAsFixed(1)}' x2='${(width - right).toStringAsFixed(1)}' y2='${(top + spo2Height + 7).toStringAsFixed(1)}' stroke='#c8d6e5' stroke-width='1.2' />
+  ${markers.toString()}
+  <path d='${pathFor(pas, yForHemo)}' fill='none' stroke='#365fd5' stroke-width='2.5'/>
+  <path d='${pathFor(pad, yForHemo)}' fill='none' stroke='#6b8df2' stroke-width='2.5'/>
+  <path d='${pathFor(pam, yForHemo)}' fill='none' stroke='#2747b8' stroke-width='2.5'/>
+  <path d='${pathFor(pointsByType['FC'] ?? const [], yForHemo)}' fill='none' stroke='#ea5455' stroke-width='2.5'/>
+  <path d='${pathFor(pointsByType['SpO2'] ?? const [], yForSpo2)}' fill='none' stroke='#16a96b' stroke-width='2.5'/>
+  <path d='${pathFor(pointsByType['PAI'] ?? const [], yForHemo)}' fill='none' stroke='#5b6b7a' stroke-width='2.5'/>
+  ${axisLabels()}
+</svg>
+""";
+  }
+
   static String _joinList(List<String> items) {
     final cleaned = items.map((item) => item.trim()).where((item) => item.isNotEmpty).toList();
     if (cleaned.isEmpty) return '--';
@@ -579,5 +859,21 @@ class ReportExportService {
     return record.hemodynamicMarkers
         .map((item) => '${item.label} (${item.recordedAtIso})')
         .join(', ');
+  }
+
+  static double _hemodynamicDisplayMaxTime(AnesthesiaRecord record) {
+    final pointMax = record.hemodynamicPoints.isEmpty
+        ? 0.0
+        : record.hemodynamicPoints
+            .map((item) => item.time)
+            .reduce((a, b) => a > b ? a : b);
+    final markerMax = record.hemodynamicMarkers.isEmpty
+        ? 0.0
+        : record.hemodynamicMarkers
+            .map((item) => item.time)
+            .reduce((a, b) => a > b ? a : b);
+    final maxValue = pointMax > markerMax ? pointMax : markerMax;
+    if (maxValue <= 180) return 180;
+    return (maxValue / 15).ceil() * 15.0;
   }
 }

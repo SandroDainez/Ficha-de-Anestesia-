@@ -10,18 +10,19 @@ import '../models/airway.dart';
 import '../models/fluid_balance.dart';
 import '../models/hemodynamic_point.dart';
 import '../models/patient.dart';
+import '../models/post_anesthesia_recovery.dart';
 import '../services/ai_record_analysis_service.dart';
 import '../services/hemodynamic_record_service.dart';
 import '../services/record_validation_service.dart';
 import '../services/record_storage_service.dart';
 import '../services/report_export_service.dart';
+import 'post_anesthesia_recovery_screen.dart';
 import 'pre_anesthetic_screen.dart';
 import '../widgets/anesthesia_basic_dialogs.dart';
 import '../widgets/anesthesia_footer_widget.dart';
 import '../widgets/anesthesia_medium_dialogs.dart';
 import '../widgets/airway_dialog.dart';
 import '../widgets/card_widget.dart';
-import '../widgets/event_list_widget.dart';
 import '../widgets/header_widget.dart';
 import '../widgets/intraoperative_entry_dialogs.dart';
 import '../widgets/hemodynamic_chart_card.dart';
@@ -38,6 +39,103 @@ class _FluidSupportRecommendation {
   final String title;
   final List<String> lines;
 }
+
+class _SurgeryAntibioticSuggestionRule {
+  const _SurgeryAntibioticSuggestionRule({
+    required this.matchTerms,
+    required this.title,
+    required this.antibioticName,
+    required this.dose,
+    required this.repeatGuidance,
+    this.additionalNotes = '',
+  });
+
+  final List<String> matchTerms;
+  final String title;
+  final String antibioticName;
+  final String dose;
+  final String repeatGuidance;
+  final String additionalNotes;
+}
+
+class _SelectableMedicationPreset {
+  const _SelectableMedicationPreset({
+    required this.name,
+    required this.label,
+    required this.amountPerKg,
+    required this.unit,
+    required this.concentrationPerMl,
+    required this.concentrationUnit,
+    required this.repeatGuidance,
+  });
+
+  final String name;
+  final String label;
+  final double amountPerKg;
+  final String unit;
+  final double concentrationPerMl;
+  final String concentrationUnit;
+  final String repeatGuidance;
+}
+
+class _MedicationPresetSuggestion {
+  const _MedicationPresetSuggestion({
+    required this.name,
+    required this.number,
+    required this.label,
+    required this.doseText,
+    required this.repeatGuidance,
+  });
+
+  final String name;
+  final int number;
+  final String label;
+  final String doseText;
+  final String repeatGuidance;
+}
+
+class _MaintenancePreset {
+  const _MaintenancePreset({
+    required this.name,
+    required this.category,
+    required this.summary,
+    required this.defaultDetails,
+    this.isInhalational = false,
+    this.defaultVolPercent = 0,
+    this.molecularWeight = 0,
+    this.density = 0,
+  });
+
+  final String name;
+  final String category;
+  final String summary;
+  final String defaultDetails;
+  final bool isInhalational;
+  final double defaultVolPercent;
+  final double molecularWeight;
+  final double density;
+}
+
+const List<String> _timeOutCardOptions = [
+  'Equipe identificada por nome e função',
+  'Paciente, procedimento e sítio confirmados',
+  'Alergias conferidas',
+  'Antibioticoprofilaxia realizada no tempo correto',
+  'Exames e imagens disponíveis',
+  'Risco hemorrágico discutido',
+  'Plano anestésico e via aérea discutidos',
+  'Instrumentais e equipamentos conferidos',
+];
+
+const List<String> _monitoringCardOptions = [
+  'ECG (5 derivações)',
+  'PA não invasiva',
+  'PAI',
+  'SpO₂',
+  'Capnografia',
+  'Temperatura',
+  'BIS',
+];
 
 class _AirwaySupportRecommendation {
   const _AirwaySupportRecommendation({
@@ -92,8 +190,15 @@ _FluidSupportRecommendation _buildFluidSupportRecommendation({
   required Patient patient,
   required double documentedLossesMl,
   required String fastingHoursText,
+  required String surgicalSize,
 }) {
   final fasting = fastingHoursText.trim();
+  final sizeFactor = switch (surgicalSize) {
+    'Pequeno' => 2.0,
+    'Medio' => 4.0,
+    'Grande' => 6.0,
+    _ => 0.0,
+  };
 
   switch (patient.population) {
     case PatientPopulation.adult:
@@ -103,11 +208,14 @@ _FluidSupportRecommendation _buildFluidSupportRecommendation({
       );
       final lower = (referenceWeight * 25) / 24;
       final upper = (referenceWeight * 30) / 24;
+      final intraopRate = referenceWeight * sizeFactor;
 
       return _FluidSupportRecommendation(
         title: 'Apoio clínico adulto',
         lines: [
           'Manutenção: ${lower.toStringAsFixed(0)}-${upper.toStringAsFixed(0)} mL/h',
+          if (intraopRate > 0)
+            'Intraoperatória sugerida: ${intraopRate.toStringAsFixed(0)} mL/h pelo porte $surgicalSize',
           'Manutenção inicial por 25-30 mL/kg/dia; usar peso de referência se obesidade.',
           'Perdas registradas: ${documentedLossesMl.toStringAsFixed(0)} mL',
           if (fasting.isNotEmpty) 'Jejum informado: $fasting h; não repor déficit fixo automaticamente.',
@@ -116,6 +224,7 @@ _FluidSupportRecommendation _buildFluidSupportRecommendation({
 
     case PatientPopulation.pediatric:
       final maintenance = _pediatricMaintenanceRateMlPerHour(patient.weightKg);
+      final intraopRate = patient.weightKg * sizeFactor;
       final glucoseLine = patient.age > 0 && patient.age < 2
           ? 'Em lactentes pequenos, considerar glicose 1-2,5% com monitorização de glicemia.'
           : 'Glicose não é rotineira fora do período neonatal; considerar se risco de hipoglicemia.';
@@ -124,6 +233,8 @@ _FluidSupportRecommendation _buildFluidSupportRecommendation({
         title: 'Apoio clínico pediátrico',
         lines: [
           'Manutenção: ${maintenance.toStringAsFixed(0)} mL/h',
+          if (intraopRate > 0)
+            'Intraoperatória sugerida: ${intraopRate.toStringAsFixed(0)} mL/h pelo porte $surgicalSize',
           'Cálculo basal por Holliday-Segar (4-2-1).',
           'Preferir cristalóide isotônico com sódio 131-154 mmol/L.',
           glucoseLine,
@@ -147,6 +258,8 @@ _FluidSupportRecommendation _buildFluidSupportRecommendation({
           'Manutenção: ${range.$1.toStringAsFixed(0)}-${range.$2.toStringAsFixed(0)} mL/h'
         else
           'Sem taxa automática fixa no sistema.',
+        if (sizeFactor > 0 && (patient.weightKg > 0 || patient.birthWeightKg > 0))
+          'Intraoperatória sugerida: ${((patient.weightKg > 0 ? patient.weightKg : patient.birthWeightKg) * (sizeFactor + 2)).toStringAsFixed(0)} mL/h pelo porte $surgicalSize',
         if (isTerm && patient.postnatalAgeDays > 0)
           'Neonato termo, ${patient.postnatalAgeDays} dia(s) de vida.'
         else if (patient.gestationalAgeWeeks <= 0)
@@ -161,27 +274,6 @@ _FluidSupportRecommendation _buildFluidSupportRecommendation({
         title: 'Apoio clínico neonatal',
         lines: lines,
       );
-  }
-}
-
-String _fastingSummaryForProfile({
-  required Patient patient,
-  required String fastingText,
-}) {
-  final value = fastingText.trim();
-  if (value.isEmpty) {
-    return 'Toque para informar o tempo de jejum';
-  }
-
-  switch (patient.population) {
-    case PatientPopulation.adult:
-      return value.contains('>8')
-          ? 'Jejum prolongado: reavaliar volemia clinicamente'
-          : 'Líquidos claros até 2 h e refeição leve 6 h';
-    case PatientPopulation.pediatric:
-      return 'Referência pediátrica: claros 2 h, leite materno 4 h, fórmula 6 h';
-    case PatientPopulation.neonatal:
-      return 'Referência neonatal: claros 2 h, leite materno 4 h, fórmula 6 h';
   }
 }
 
@@ -357,6 +449,291 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     'Cefuroxima': Duration(hours: 4),
     'Clindamicina': Duration(hours: 6),
   };
+  static const List<_SelectableMedicationPreset> _inductionPresets = [
+    _SelectableMedicationPreset(
+      name: 'Propofol',
+      label: 'Hipnótico',
+      amountPerKg: 2,
+      unit: 'mg',
+      concentrationPerMl: 10,
+      concentrationUnit: 'mg/mL',
+      repeatGuidance: 'Titular em bolus adicionais de 20-50 mg conforme resposta clínica.',
+    ),
+    _SelectableMedicationPreset(
+      name: 'Etomidato',
+      label: 'Hipnótico',
+      amountPerKg: 0.3,
+      unit: 'mg',
+      concentrationPerMl: 2,
+      concentrationUnit: 'mg/mL',
+      repeatGuidance: 'Reaplicar apenas se necessário, em bolus fracionados pequenos.',
+    ),
+    _SelectableMedicationPreset(
+      name: 'Cetamina',
+      label: 'Hipnótico/analgésico',
+      amountPerKg: 1,
+      unit: 'mg',
+      concentrationPerMl: 50,
+      concentrationUnit: 'mg/mL',
+      repeatGuidance: 'Reforço de 0,25-0,5 mg/kg conforme plano anestésico.',
+    ),
+    _SelectableMedicationPreset(
+      name: 'Fentanil',
+      label: 'Opioide',
+      amountPerKg: 3,
+      unit: 'mcg',
+      concentrationPerMl: 50,
+      concentrationUnit: 'mcg/mL',
+      repeatGuidance: 'Repiques usuais de 25-50 mcg conforme estímulo cirúrgico.',
+    ),
+    _SelectableMedicationPreset(
+      name: 'Alfentanil',
+      label: 'Opioide',
+      amountPerKg: 15,
+      unit: 'mcg',
+      concentrationPerMl: 500,
+      concentrationUnit: 'mcg/mL',
+      repeatGuidance: 'Reforços titulados conforme laringoscopia e estímulo inicial.',
+    ),
+    _SelectableMedicationPreset(
+      name: 'Sufentanil',
+      label: 'Opioide',
+      amountPerKg: 0.3,
+      unit: 'mcg',
+      concentrationPerMl: 50,
+      concentrationUnit: 'mcg/mL',
+      repeatGuidance: 'Geralmente sem repique imediato; titular conforme contexto.',
+    ),
+    _SelectableMedicationPreset(
+      name: 'Rocurônio',
+      label: 'Bloqueador neuromuscular',
+      amountPerKg: 0.6,
+      unit: 'mg',
+      concentrationPerMl: 10,
+      concentrationUnit: 'mg/mL',
+      repeatGuidance: 'Repiques usuais de 0,1-0,2 mg/kg guiados por TOF.',
+    ),
+    _SelectableMedicationPreset(
+      name: 'Cisatracúrio',
+      label: 'Bloqueador neuromuscular',
+      amountPerKg: 0.15,
+      unit: 'mg',
+      concentrationPerMl: 2,
+      concentrationUnit: 'mg/mL',
+      repeatGuidance: 'Repiques de 0,03 mg/kg conforme monitorização neuromuscular.',
+    ),
+    _SelectableMedicationPreset(
+      name: 'Atracúrio',
+      label: 'Bloqueador neuromuscular',
+      amountPerKg: 0.5,
+      unit: 'mg',
+      concentrationPerMl: 10,
+      concentrationUnit: 'mg/mL',
+      repeatGuidance: 'Repiques de 0,1-0,2 mg/kg conforme TOF.',
+    ),
+    _SelectableMedicationPreset(
+      name: 'Succinilcolina',
+      label: 'Bloqueador neuromuscular',
+      amountPerKg: 1,
+      unit: 'mg',
+      concentrationPerMl: 20,
+      concentrationUnit: 'mg/mL',
+      repeatGuidance: 'Geralmente dose única; reavaliar antes de repetir.',
+    ),
+  ];
+  static const List<_SelectableMedicationPreset> _adjunctPresets = [
+    _SelectableMedicationPreset(
+      name: 'Sulfato de Mg',
+      label: 'Adjuvante',
+      amountPerKg: 40,
+      unit: 'mg',
+      concentrationPerMl: 100,
+      concentrationUnit: 'mg/mL',
+      repeatGuidance: 'Usar em infusão lenta; reavaliar necessidade de complementação.',
+    ),
+    _SelectableMedicationPreset(
+      name: 'Cetamina',
+      label: 'Adjuvante',
+      amountPerKg: 0.3,
+      unit: 'mg',
+      concentrationPerMl: 50,
+      concentrationUnit: 'mg/mL',
+      repeatGuidance: 'Reforços de 0,1-0,2 mg/kg se necessário.',
+    ),
+    _SelectableMedicationPreset(
+      name: 'Clonidina',
+      label: 'Adjuvante',
+      amountPerKg: 1.5,
+      unit: 'mcg',
+      concentrationPerMl: 150,
+      concentrationUnit: 'mcg/mL',
+      repeatGuidance: 'Usar com cautela em dose única; evitar repiques rotineiros.',
+    ),
+    _SelectableMedicationPreset(
+      name: 'Metadona',
+      label: 'Adjuvante',
+      amountPerKg: 0.15,
+      unit: 'mg',
+      concentrationPerMl: 10,
+      concentrationUnit: 'mg/mL',
+      repeatGuidance: 'Em geral dose única; reavaliar conforme duração e analgesia.',
+    ),
+    _SelectableMedicationPreset(
+      name: 'Dexmedetomidina (Precedex)',
+      label: 'Adjuvante',
+      amountPerKg: 0.5,
+      unit: 'mcg',
+      concentrationPerMl: 4,
+      concentrationUnit: 'mcg/mL',
+      repeatGuidance: 'Considerar manutenção em infusão conforme contexto.',
+    ),
+    _SelectableMedicationPreset(
+      name: 'Lidocaína',
+      label: 'Adjuvante',
+      amountPerKg: 1.5,
+      unit: 'mg',
+      concentrationPerMl: 20,
+      concentrationUnit: 'mg/mL',
+      repeatGuidance: 'Pode seguir com infusão se planejado; evitar toxicidade cumulativa.',
+    ),
+  ];
+  static const List<_MaintenancePreset> _maintenancePresets = [
+    _MaintenancePreset(
+      name: 'Propofol em BIC',
+      category: 'Anestésicos EV contínuo',
+      summary: 'Infusão venosa contínua',
+      defaultDetails: '75-150 mcg/kg/min',
+    ),
+    _MaintenancePreset(
+      name: 'Remifentanil em BIC',
+      category: 'Opioides',
+      summary: 'Infusão venosa contínua',
+      defaultDetails: '0,05-0,2 mcg/kg/min',
+    ),
+    _MaintenancePreset(
+      name: 'Fentanil em repiques',
+      category: 'Opioides',
+      summary: 'Reforços intraoperatórios',
+      defaultDetails: '25-50 mcg conforme estímulo',
+    ),
+    _MaintenancePreset(
+      name: 'Rocurônio em repiques',
+      category: 'Bloqueadores neuromusculares',
+      summary: 'Reforços guiados por TOF',
+      defaultDetails: '0,1-0,2 mg/kg por repique',
+    ),
+    _MaintenancePreset(
+      name: 'Cisatracúrio em repiques',
+      category: 'Bloqueadores neuromusculares',
+      summary: 'Reforços guiados por TOF',
+      defaultDetails: '0,03 mg/kg por repique',
+    ),
+    _MaintenancePreset(
+      name: 'Sevoflurano',
+      category: 'Anestésicos inalatórios',
+      summary: 'Inalatório',
+      defaultDetails: '2,0 vol%',
+      isInhalational: true,
+      defaultVolPercent: 2.0,
+      molecularWeight: 200.05,
+      density: 1.52,
+    ),
+    _MaintenancePreset(
+      name: 'Isoflurano',
+      category: 'Anestésicos inalatórios',
+      summary: 'Inalatório',
+      defaultDetails: '1,2 vol%',
+      isInhalational: true,
+      defaultVolPercent: 1.2,
+      molecularWeight: 184.5,
+      density: 1.50,
+    ),
+    _MaintenancePreset(
+      name: 'Desflurano',
+      category: 'Anestésicos inalatórios',
+      summary: 'Inalatório',
+      defaultDetails: '6,0 vol%',
+      isInhalational: true,
+      defaultVolPercent: 6.0,
+      molecularWeight: 168.0,
+      density: 1.47,
+    ),
+  ];
+  static const List<_SurgeryAntibioticSuggestionRule>
+      _adultSurgeryAntibioticSuggestionRules = [
+    _SurgeryAntibioticSuggestionRule(
+      matchTerms: ['histerectomia', 'colecistectomia', 'apendicectomia'],
+      title: 'Ginecológica / abdominal limpa-contaminada',
+      antibioticName: 'Cefazolina',
+      dose: '2 g IV',
+      repeatGuidance: 'Redose em 4 h se cirurgia prolongada ou perda sanguínea importante.',
+      additionalNotes: 'Indicação habitual para profilaxia de procedimentos ginecológicos e abdominais sem alergia beta-lactâmica.',
+    ),
+    _SurgeryAntibioticSuggestionRule(
+      matchTerms: ['bariátrica', 'sleeve', 'bypass'],
+      title: 'Bariátrica',
+      antibioticName: 'Cefazolina',
+      dose: '2 g IV (3 g se peso >= 120 kg)',
+      repeatGuidance: 'Redose em 4 h ou antes se grande perda sanguínea.',
+      additionalNotes: 'Ajustar para 3 g em obesidade importante quando aplicável.',
+    ),
+    _SurgeryAntibioticSuggestionRule(
+      matchTerms: ['herniorrafia', 'hernia', 'inguinal', 'umbilical', 'incisional'],
+      title: 'Parede abdominal / hernioplastia',
+      antibioticName: 'Cefazolina',
+      dose: '2 g IV',
+      repeatGuidance: 'Redose em 4 h se tela, duração prolongada ou sangramento.',
+      additionalNotes: 'Considerar profilaxia sobretudo quando houver implante de tela.',
+    ),
+    _SurgeryAntibioticSuggestionRule(
+      matchTerms: ['fratura de fêmur', 'artroplastia', 'joelho', 'quadril', 'ortop'],
+      title: 'Ortopédica',
+      antibioticName: 'Cefazolina',
+      dose: '2 g IV',
+      repeatGuidance: 'Redose em 4 h; considerar cobertura adicional conforme implante e protocolo local.',
+      additionalNotes: 'Em prótese/implante, respeitar tempo de infusão antes da incisão.',
+    ),
+    _SurgeryAntibioticSuggestionRule(
+      matchTerms: ['nefrectomia', 'urol'],
+      title: 'Urológica',
+      antibioticName: 'Cefazolina',
+      dose: '2 g IV',
+      repeatGuidance: 'Redose em 4 h se procedimento prolongado.',
+      additionalNotes: 'Se manipulação de trato urinário contaminado, individualizar conforme urocultura e protocolo local.',
+    ),
+    _SurgeryAntibioticSuggestionRule(
+      matchTerms: ['mastectomia', 'quadrantectomia', 'mama', 'prótese de mama'],
+      title: 'Mama / plástica com implante',
+      antibioticName: 'Cefazolina',
+      dose: '2 g IV',
+      repeatGuidance: 'Redose em 4 h se cirurgia prolongada.',
+      additionalNotes: 'Em cirurgia com implante, manter administração antes da incisão.',
+    ),
+    _SurgeryAntibioticSuggestionRule(
+      matchTerms: ['abdominoplastia', 'lipoaspiração', 'rinoplastia'],
+      title: 'Cirurgia plástica',
+      antibioticName: 'Cefazolina',
+      dose: '2 g IV',
+      repeatGuidance: 'Redose em 4 h se procedimento extenso.',
+      additionalNotes: 'Ajustar conforme associação com implantes ou cirurgia combinada.',
+    ),
+    _SurgeryAntibioticSuggestionRule(
+      matchTerms: ['septoplastia', 'amigdalectomia', 'tireoidectomia'],
+      title: 'Otorrino / cabeça e pescoço',
+      antibioticName: 'Cefazolina',
+      dose: '2 g IV',
+      repeatGuidance: 'Redose em 4 h se duração prolongada.',
+      additionalNotes: 'Em procedimentos selecionados, validar real necessidade de profilaxia pelo protocolo do serviço.',
+    ),
+    _SurgeryAntibioticSuggestionRule(
+      matchTerms: ['cesárea', 'cesarea'],
+      title: 'Cesárea',
+      antibioticName: 'Cefazolina',
+      dose: '2 g IV',
+      repeatGuidance: 'Redose em 4 h se cirurgia prolongada ou hemorragia importante.',
+      additionalNotes: 'Administrar antes da incisão; considerar azitromicina conforme contexto e protocolo local.',
+    ),
+  ];
   static const Map<String, String> _adultOtherMedicationOptions = {
     'Dexametasona': '4-10 mg',
     'Ondansetrona': '4-8 mg',
@@ -383,32 +760,53 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     'Hidrocortisona': '1-2 mg/kg',
     'Paracetamol': '10-15 mg/kg',
   };
+  static const Map<String, String> _adultSedationMedicationOptions = {
+    'Midazolam': '1-2 mg',
+    'Fentanil': '25-50 mcg',
+    'Propofol': '20-50 mg em bolus / titular',
+    'Dexmedetomidina': '0,2-0,7 mcg/kg/h',
+    'Cetamina': '10-25 mg',
+    'Remifentanil': '0,025-0,1 mcg/kg/min',
+  };
+  static const Map<String, String> _pediatricSedationMedicationOptions = {
+    'Midazolam': '0,03-0,05 mg/kg',
+    'Fentanil': '0,5-1 mcg/kg',
+    'Propofol': '0,5-1 mg/kg em bolus / titular',
+    'Dexmedetomidina': '0,2-0,7 mcg/kg/h',
+    'Cetamina': '0,25-0,5 mg/kg',
+  };
+  static const Map<String, String> _neonatalSedationMedicationOptions = {
+    'Fentanil': '0,5-1 mcg/kg',
+    'Dexmedetomidina': '0,1-0,5 mcg/kg/h',
+    'Cetamina': '0,25-0,5 mg/kg',
+    'Midazolam': 'individualizar conforme contexto',
+  };
   static const Map<String, String> _adultVasoactiveDrugOptions = {
-    'Etilefrina': '2 mg',
-    'Metaraminol': '0,5-2 mg',
-    'Efedrina': '5-10 mg',
-    'Noradrenalina': '0,02-0,2 mcg/kg/min',
-    'Fenilefrina': '50-100 mcg',
-    'Adrenalina': '5-20 mcg',
-    'Dobutamina': '2-10 mcg/kg/min',
-    'Dopamina': '3-10 mcg/kg/min',
-    'Vasopressina': '0,5-2 U',
+    'Etilefrina': 'Bolus 1-2 mg IV; repetir conforme resposta',
+    'Metaraminol': 'Bolus 0,5-2 mg IV; considerar diluição',
+    'Efedrina': 'Bolus 5-10 mg IV; repetir conforme resposta',
+    'Noradrenalina': 'EV contínua 0,02-0,2 mcg/kg/min; preferir bomba',
+    'Fenilefrina': 'Bolus 50-100 mcg IV ou EV contínua 0,1-1 mcg/kg/min',
+    'Adrenalina': 'Bolus 5-20 mcg IV ou EV contínua 0,02-0,1 mcg/kg/min',
+    'Dobutamina': 'EV contínua 2-10 mcg/kg/min',
+    'Dopamina': 'EV contínua 3-10 mcg/kg/min',
+    'Vasopressina': 'Bolus 0,5-2 U ou EV contínua 0,01-0,04 U/min',
   };
   static const Map<String, String> _pediatricVasoactiveDrugOptions = {
-    'Efedrina': '0,1-0,2 mg/kg',
-    'Fenilefrina': '1-2 mcg/kg',
-    'Adrenalina': '0,5-1 mcg/kg',
-    'Noradrenalina': '0,02-0,2 mcg/kg/min',
-    'Dobutamina': '2-10 mcg/kg/min',
-    'Dopamina': '3-10 mcg/kg/min',
-    'Vasopressina': '0,0003-0,0007 U/kg/min',
+    'Efedrina': 'Bolus 0,1-0,2 mg/kg',
+    'Fenilefrina': 'Bolus 1-2 mcg/kg ou EV contínua 0,1-1 mcg/kg/min',
+    'Adrenalina': 'Bolus 0,5-1 mcg/kg ou EV contínua 0,02-0,1 mcg/kg/min',
+    'Noradrenalina': 'EV contínua 0,02-0,2 mcg/kg/min',
+    'Dobutamina': 'EV contínua 2-10 mcg/kg/min',
+    'Dopamina': 'EV contínua 3-10 mcg/kg/min',
+    'Vasopressina': 'EV contínua 0,0003-0,0007 U/kg/min',
   };
   static const Map<String, String> _neonatalVasoactiveDrugOptions = {
-    'Adrenalina': '0,05-0,3 mcg/kg/min',
-    'Noradrenalina': '0,02-0,2 mcg/kg/min',
-    'Dobutamina': '2-10 mcg/kg/min',
-    'Dopamina': '3-10 mcg/kg/min',
-    'Vasopressina': '0,0002-0,0007 U/kg/min',
+    'Adrenalina': 'EV contínua 0,05-0,3 mcg/kg/min',
+    'Noradrenalina': 'EV contínua 0,02-0,2 mcg/kg/min',
+    'Dobutamina': 'EV contínua 2-10 mcg/kg/min',
+    'Dopamina': 'EV contínua 3-10 mcg/kg/min',
+    'Vasopressina': 'EV contínua 0,0002-0,0007 U/kg/min',
   };
 
   final AiRecordAnalysisService _analysisService =
@@ -435,6 +833,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   final GlobalKey _airwaySectionKey = GlobalKey();
   final GlobalKey _techniqueSectionKey = GlobalKey();
   final GlobalKey _drugsSectionKey = GlobalKey();
+  final GlobalKey _neuraxialNeedlesSectionKey = GlobalKey();
+  final GlobalKey _materialsSectionKey = GlobalKey();
   final GlobalKey _otherMedicationsSectionKey = GlobalKey();
   final GlobalKey _vasoactiveSectionKey = GlobalKey();
   final GlobalKey _eventsSectionKey = GlobalKey();
@@ -487,6 +887,17 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     }
   }
 
+  Map<String, String> get _profileSedationMedicationOptions {
+    switch (_record.patient.population) {
+      case PatientPopulation.adult:
+        return _adultSedationMedicationOptions;
+      case PatientPopulation.pediatric:
+        return _pediatricSedationMedicationOptions;
+      case PatientPopulation.neonatal:
+        return _neonatalSedationMedicationOptions;
+    }
+  }
+
   Map<String, String> get _profileVasoactiveDrugOptions {
     switch (_record.patient.population) {
       case PatientPopulation.adult:
@@ -496,6 +907,37 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       case PatientPopulation.neonatal:
         return _neonatalVasoactiveDrugOptions;
     }
+  }
+
+  List<MedicationCatalogSuggestion> get _surgeryBasedAntibioticSuggestions {
+    if (_record.patient.population != PatientPopulation.adult) return const [];
+    final surgeries = _lineItems(_record.surgeryDescription);
+    final suggestions = <MedicationCatalogSuggestion>[];
+    final seenTitles = <String>{};
+
+    for (final surgery in surgeries) {
+      final normalized = surgery.toLowerCase();
+      for (final rule in _adultSurgeryAntibioticSuggestionRules) {
+        if (rule.matchTerms.any(normalized.contains)) {
+          final suggestion = MedicationCatalogSuggestion(
+            title: surgery,
+            subtitle: rule.title,
+            medicationName: rule.antibioticName,
+            dose: rule.dose,
+            repeatGuidance: rule.repeatGuidance,
+            additionalNotes: rule.additionalNotes,
+          );
+          final key =
+              '${suggestion.title}|${suggestion.medicationName}|${suggestion.dose}';
+          if (seenTitles.add(key)) {
+            suggestions.add(suggestion);
+          }
+          break;
+        }
+      }
+    }
+
+    return suggestions;
   }
 
   String _valueOrPlaceholder(
@@ -510,6 +952,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     final initialDose = parts.length > 1 ? parts[1].trim() : '';
     final repeats = parts.length > 3 ? parts[3].trim() : '';
     final infusion = parts.length > 4 ? parts[4].trim() : '';
+    final ampoules = parts.length > 5 ? parts[5].trim() : '';
 
     if (initialDose.isNotEmpty) {
       segments.add('Inicial: $initialDose');
@@ -519,6 +962,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     }
     if (infusion.isNotEmpty) {
       segments.add('IC: $infusion');
+    }
+    if (ampoules.isNotEmpty) {
+      segments.add('Ampolas: $ampoules');
     }
 
     if (segments.isEmpty) {
@@ -609,21 +1055,334 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         .join(', ');
   }
 
+  String _displayLineEntries(
+    String value, {
+    String empty = 'Toque para preencher',
+  }) {
+    final items = _lineItems(value);
+    if (items.isEmpty) return empty;
+    return items.join(', ');
+  }
+
+  String _displayListEntries(
+    List<String> items, {
+    String empty = 'Toque para preencher',
+  }) {
+    final normalized = items
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+    if (normalized.isEmpty) return empty;
+    return normalized.join(', ');
+  }
+
+  String? _findMedicationEntry(List<String> items, String name) {
+    for (final item in items) {
+      final parts = item.split('|');
+      if (parts.isNotEmpty && parts.first.trim() == name) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  String? _findMaintenanceEntry(String name) {
+    for (final item in _lineItems(_record.maintenanceAgents)) {
+      if (item.split('|').first.trim() == name) return item;
+    }
+    return null;
+  }
+
+  List<String> _upsertMaintenanceEntry(String encodedEntry) {
+    final name = encodedEntry.split('|').first.trim();
+    final items = _lineItems(_record.maintenanceAgents);
+    final updated = <String>[];
+    var replaced = false;
+    for (final item in items) {
+      if (item.split('|').first.trim() == name) {
+        updated.add(encodedEntry);
+        replaced = true;
+      } else {
+        updated.add(item);
+      }
+    }
+    if (!replaced) updated.add(encodedEntry);
+    return updated;
+  }
+
+  List<String> _removeMaintenanceEntry(String name) {
+    return _lineItems(_record.maintenanceAgents)
+        .where((item) => item.split('|').first.trim() != name)
+        .toList();
+  }
+
+  List<String> _upsertMedicationEntry(List<String> items, String encodedEntry) {
+    final parts = encodedEntry.split('|');
+    final name = parts.isEmpty ? '' : parts.first.trim();
+    if (name.isEmpty) return items;
+    final updated = <String>[];
+    var replaced = false;
+    for (final item in items) {
+      final currentName = item.split('|').first.trim();
+      if (currentName == name) {
+        updated.add(encodedEntry);
+        replaced = true;
+      } else {
+        updated.add(item);
+      }
+    }
+    if (!replaced) updated.add(encodedEntry);
+    return updated;
+  }
+
+  List<String> _removeMedicationEntry(List<String> items, String name) {
+    return items
+        .where((item) => item.split('|').first.trim() != name)
+        .toList();
+  }
+
+  String _formatMedicationDoseText(_SelectableMedicationPreset preset) {
+    final weight = _record.patient.weightKg;
+    if (weight <= 0) {
+      return '${preset.amountPerKg} ${preset.unit}/kg';
+    }
+    final dose = preset.amountPerKg * weight;
+    final ml = dose / preset.concentrationPerMl;
+    final doseText = preset.unit == 'mg'
+        ? '${dose.toStringAsFixed(dose >= 10 ? 0 : 1)} mg'
+        : '${dose.toStringAsFixed(dose >= 10 ? 0 : 1)} mcg';
+    final volumeText = '${ml.toStringAsFixed(ml >= 10 ? 0 : 1)} mL';
+    return '$doseText ($volumeText a ${preset.concentrationPerMl.toStringAsFixed(preset.concentrationPerMl.truncateToDouble() == preset.concentrationPerMl ? 0 : 1)} ${preset.concentrationUnit})';
+  }
+
+  List<_MedicationPresetSuggestion> _buildMedicationSuggestions(
+    List<_SelectableMedicationPreset> presets,
+  ) {
+    return presets
+        .asMap()
+        .entries
+        .map(
+          (entry) => _MedicationPresetSuggestion(
+            name: entry.value.name,
+            number: entry.key + 1,
+            label: entry.value.label,
+            doseText: _formatMedicationDoseText(entry.value),
+            repeatGuidance: entry.value.repeatGuidance,
+          ),
+        )
+        .toList();
+  }
+
+  String _inferSurgicalSizeFromDescription() {
+    final text = _record.surgeryDescription.toLowerCase();
+    if (text.trim().isEmpty) return _record.surgicalSize;
+
+    const largeTerms = [
+      'bariátrica',
+      'bypass',
+      'sleeve',
+      'nefrectomia',
+      'histerectomia',
+      'artroplastia',
+      'fratura de fêmur',
+      'mastectomia',
+      'abdominoplastia',
+    ];
+    const mediumTerms = [
+      'colecistectomia',
+      'herniorrafia',
+      'apendicectomia',
+      'cesárea',
+      'septoplastia',
+      'tireoidectomia',
+      'quadrantectomia',
+      'prótese de mama',
+      'rinoplastia',
+    ];
+
+    if (largeTerms.any(text.contains)) return 'Grande';
+    if (mediumTerms.any(text.contains)) return 'Medio';
+    return 'Pequeno';
+  }
+
+  double _estimateInhalationalMlPerHour(_MaintenancePreset preset) {
+    if (!preset.isInhalational || preset.density <= 0 || preset.molecularWeight <= 0) {
+      return 0;
+    }
+    const freshGasFlowLPerMin = 2.0;
+    final volumePercent = preset.defaultVolPercent;
+    return (3 * freshGasFlowLPerMin * volumePercent * preset.molecularWeight) /
+        (2412 * preset.density);
+  }
+
+  String _maintenancePresetDetails(_MaintenancePreset preset) {
+    if (!preset.isInhalational) return preset.defaultDetails;
+    final mlPerHour = _estimateInhalationalMlPerHour(preset);
+    return '${preset.defaultDetails} • ~${mlPerHour.toStringAsFixed(1)} mL/h (estimado com FGF 2 L/min)';
+  }
+
+  Future<void> _toggleMaintenancePreset(_MaintenancePreset preset) async {
+    final existing = _findMaintenanceEntry(preset.name);
+    final updated = existing == null
+        ? _upsertMaintenanceEntry(
+            '${preset.name}|${preset.category}|${_maintenancePresetDetails(preset)}',
+          )
+        : _removeMaintenanceEntry(preset.name);
+    setState(() {
+      _record = _record.copyWith(maintenanceAgents: updated.join('\n'));
+    });
+    await _persistRecord();
+  }
+
+  Future<void> _editMaintenancePreset(_MaintenancePreset preset) async {
+    final existing = _findMaintenanceEntry(preset.name);
+    final parts = existing?.split('|') ?? const <String>[];
+    final result = await showDialog<MedicationEntryEditResult>(
+      context: context,
+      builder: (_) => MedicationEntryEditDialog(
+        title: preset.name,
+        name: preset.name,
+        initialDose: parts.length > 2 && parts[2].trim().isNotEmpty
+            ? parts[2].trim()
+            : _maintenancePresetDetails(preset),
+        initialTime: '',
+        initialRepeats: parts.length > 1 && parts[1].trim().isNotEmpty
+            ? parts[1].trim()
+            : preset.category,
+        initialInfusion: preset.summary,
+      ),
+    );
+    if (result == null) return;
+    final updated = result.remove
+        ? _removeMaintenanceEntry(preset.name)
+        : _upsertMaintenanceEntry(
+            '${preset.name}|${result.encodedEntry.split('|').length > 3 ? result.encodedEntry.split('|')[3].trim() : preset.category}|${result.encodedEntry.split('|').length > 1 ? result.encodedEntry.split('|')[1].trim() : _maintenancePresetDetails(preset)}',
+          );
+    setState(() {
+      _record = _record.copyWith(maintenanceAgents: updated.join('\n'));
+    });
+    await _persistRecord();
+  }
+
+  Future<void> _toggleMonitoringCardItem(String item) async {
+    setState(() {
+      if (_monitoringItems.contains(item)) {
+        _monitoringItems.remove(item);
+      } else {
+        _monitoringItems.add(item);
+      }
+      _record = _record.copyWith(monitoringItems: _monitoringItems);
+    });
+    await _persistRecord();
+  }
+
+  Future<void> _toggleTimeOutCardItem(String item) async {
+    setState(() {
+      final next = List<String>.from(_record.timeOutChecklist);
+      if (next.contains(item)) {
+        next.remove(item);
+      } else {
+        next.add(item);
+      }
+      _record = _record.copyWith(
+        timeOutChecklist: next,
+        timeOutCompleted: next.length == _timeOutCardOptions.length,
+      );
+    });
+    await _persistRecord();
+  }
+
+  Future<void> _finalizeTimeOutCard() async {
+    setState(() {
+      _record = _record.copyWith(
+        timeOutChecklist: List<String>.from(_timeOutCardOptions),
+        timeOutCompleted: true,
+      );
+    });
+    await _persistRecord();
+  }
+
+  Future<void> _toggleMedicationPreset({
+    required _MedicationPresetSuggestion suggestion,
+    required bool adjunct,
+  }) async {
+    final source = adjunct ? _record.adjuncts : _record.drugs;
+    final existing = _findMedicationEntry(source, suggestion.name);
+    final updated = existing == null
+        ? _upsertMedicationEntry(
+            source,
+            '${suggestion.name}|${suggestion.doseText}||${suggestion.repeatGuidance}|',
+          )
+        : _removeMedicationEntry(source, suggestion.name);
+
+    setState(() {
+      _record = adjunct
+          ? _record.copyWith(adjuncts: updated)
+          : _record.copyWith(drugs: updated);
+    });
+    await _persistRecord();
+  }
+
+  Future<void> _editMedicationPreset({
+    required _MedicationPresetSuggestion suggestion,
+    required bool adjunct,
+  }) async {
+    final source = adjunct ? _record.adjuncts : _record.drugs;
+    final existing = _findMedicationEntry(source, suggestion.name);
+    final parts = existing?.split('|') ?? const <String>[];
+    final result = await showDialog<MedicationEntryEditResult>(
+      context: context,
+      builder: (_) => MedicationEntryEditDialog(
+        title: suggestion.name,
+        name: suggestion.name,
+        initialDose: parts.length > 1 && parts[1].trim().isNotEmpty
+            ? parts[1].trim()
+            : suggestion.doseText,
+        initialTime: parts.length > 2 ? parts[2].trim() : '',
+        initialRepeats: parts.length > 3 && parts[3].trim().isNotEmpty
+            ? parts[3].trim()
+            : suggestion.repeatGuidance,
+        initialInfusion: parts.length > 4 ? parts[4].trim() : '',
+      ),
+    );
+
+    if (result == null) return;
+
+    final updated = result.remove
+        ? _removeMedicationEntry(source, suggestion.name)
+        : _upsertMedicationEntry(source, result.encodedEntry);
+
+    setState(() {
+      _record = adjunct
+          ? _record.copyWith(adjuncts: updated)
+          : _record.copyWith(drugs: updated);
+    });
+    await _persistRecord();
+  }
+
   double get _documentedLossesMl {
-    double parse(String value) =>
-        double.tryParse(value.trim().replaceAll(',', '.')) ?? 0;
-    return parse(_record.fluidBalance.diuresis) +
-        parse(_record.fluidBalance.bleeding) +
-        parse(_record.fluidBalance.otherLosses) +
+    return _parseFluidField(_record.fluidBalance.diuresis) +
+        _parseFluidField(_record.fluidBalance.bleeding) +
+        _sumFluidEntries(_record.fluidBalance.bloodLossEntries) +
+        _parseFluidField(_record.fluidBalance.otherLosses) +
+        _sumFluidEntries(_record.fluidBalance.otherLossEntries) +
         _record.fluidBalance.estimatedSpongeLoss;
   }
 
   double get _documentedInputsMl {
-    double parse(String value) =>
-        double.tryParse(value.trim().replaceAll(',', '.')) ?? 0;
-    return parse(_record.fluidBalance.crystalloids) +
-        parse(_record.fluidBalance.colloids) +
-        parse(_record.fluidBalance.blood);
+    return _parseFluidField(_record.fluidBalance.crystalloids) +
+        _parseFluidField(_record.fluidBalance.colloids) +
+        _parseFluidField(_record.fluidBalance.blood);
+  }
+
+  double _parseFluidField(String value) =>
+      double.tryParse(value.trim().replaceAll(',', '.')) ?? 0;
+
+  double _sumFluidEntries(List<String> entries) {
+    return entries.fold<double>(0, (total, item) {
+      final parts = item.split('|');
+      return total + (parts.isNotEmpty ? _parseFluidField(parts.last) : 0);
+    });
   }
 
   DateTime? _parseClockTimeToday(String value) {
@@ -820,14 +1579,19 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   bool get _hasPendingAirway => _missingRequiredFields.contains('Via aérea');
   bool get _hasPendingTechnique =>
       _missingRequiredFields.contains('Técnica anestésica');
+  bool get _hasPendingTechniqueDetails =>
+      _missingRequiredFields.contains('Descrição da técnica anestésica');
   bool get _hasPendingDrugs =>
       _missingRequiredFields.contains('Drogas e infusões');
-  bool get _hasPendingEvents =>
-      _missingRequiredFields.contains('Eventos intraoperatórios');
   bool get _hasPendingFluidBalance =>
       _missingRequiredFields.contains('Balanço hídrico');
   bool get _hasPendingTimeOut =>
       _record.timeOutChecklist.isEmpty || !_record.timeOutCompleted;
+
+  bool get _usesNeuraxialTechnique {
+    final text = _record.anesthesiaTechnique.toLowerCase();
+    return text.contains('raqui') || text.contains('peridural');
+  }
 
   String get _caseStageLabel {
     if (!_hasAnesthesiaStartMarker) return 'Aguardando início';
@@ -1215,6 +1979,21 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     await _persistRecord();
   }
 
+  Future<void> _openPostAnesthesiaRecoveryScreen() async {
+    final result = await Navigator.of(context).push<PostAnesthesiaRecovery>(
+      MaterialPageRoute<PostAnesthesiaRecovery>(
+        builder: (_) => PostAnesthesiaRecoveryScreen(record: _record),
+      ),
+    );
+
+    if (result == null) return;
+
+    setState(() {
+      _record = _record.copyWith(postAnesthesiaRecovery: result);
+    });
+    await _persistRecord();
+  }
+
   Future<void> _editPreAnestheticDate() async {
     final result = await showDialog<String>(
       context: context,
@@ -1554,11 +2333,13 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Future<void> _editReposicaoVolemica() async {
+    final inferredSurgicalSize = _inferSurgicalSizeFromDescription();
     final result = await showDialog<FluidBalanceDialogResult>(
       context: context,
       builder: (_) => FluidBalanceDialog(
         initialFluidBalance: _record.fluidBalance,
         initialSurgicalSize: _record.surgicalSize,
+        suggestedSurgicalSize: inferredSurgicalSize,
         initialFastingHours: _displayFastingHours,
         patientWeightKg: _record.patient.weightKg,
         patientHeightMeters: _record.patient.heightMeters,
@@ -1578,29 +2359,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         surgicalSize: result.surgicalSize,
         fastingHours: result.fastingHours,
       );
-    });
-    await _persistRecord();
-  }
-
-  Future<void> _editFastingHours() async {
-    final result = await showDialog<String>(
-      context: context,
-      builder: (_) => SingleFieldDialog(
-        title: 'Jejum',
-        label: 'Tempo de jejum (h)',
-        initialValue: _displayFastingHours,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        inputFormatters: [
-          FilteringTextInputFormatter.allow(RegExp(r'[0-9,.><hH -]')),
-        ],
-        hintText: 'Ex: 8, >8h, 6',
-      ),
-    );
-
-    if (result == null) return;
-
-    setState(() {
-      _record = _record.copyWith(fastingHours: result.trim());
     });
     await _persistRecord();
   }
@@ -1629,6 +2387,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       context: context,
       builder: (_) => TechniqueDialog(
         initialTechnique: _record.anesthesiaTechnique,
+        initialDetails: _record.anesthesiaTechniqueDetails,
         patient: _record.patient,
       ),
     );
@@ -1638,6 +2397,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     setState(() {
       _record = _record.copyWith(
         anesthesiaTechnique: result.technique,
+        anesthesiaTechniqueDetails: result.details,
         preAnestheticAssessment: _record.preAnestheticAssessment.copyWith(
           anestheticPlan: result.technique,
         ),
@@ -1672,6 +2432,42 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     setState(() {
       _arterialAccesses = result;
       _record = _record.copyWith(arterialAccesses: result);
+    });
+    await _persistRecord();
+  }
+
+  Future<void> _editNeuraxialNeedles() async {
+    final result = await showDialog<List<String>>(
+      context: context,
+      builder: (_) => ListFieldDialog(
+        title: 'Agulhas para raqui / peridural',
+        label: 'Agulhas neuraxiais',
+        initialItems: _record.neuraxialNeedles,
+        hintText:
+            'Ex: Quincke 25G; Whitacre 27G; Tuohy 18G; cateter peridural 20G',
+      ),
+    );
+    if (result == null) return;
+    setState(() {
+      _record = _record.copyWith(neuraxialNeedles: result);
+    });
+    await _persistRecord();
+  }
+
+  Future<void> _editAnesthesiaMaterials() async {
+    final result = await showDialog<List<String>>(
+      context: context,
+      builder: (_) => ListFieldDialog(
+        title: 'Materiais e consumos da anestesia',
+        label: 'Materiais / medicações / quantidades',
+        initialItems: _record.anesthesiaMaterials,
+        hintText:
+            'Ex: TOT 7,0 1 un; AVP 20G 2 un; PAI radial 1 kit; SF 0,9% 3 frascos; Propofol 5 ampolas',
+      ),
+    );
+    if (result == null) return;
+    setState(() {
+      _record = _record.copyWith(anesthesiaMaterials: result);
     });
     await _persistRecord();
   }
@@ -1724,14 +2520,18 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     await _addInlineHemodynamicPoint(value);
   }
 
-  Future<void> _editEventos() async {
+  Future<void> _editSedationMedications() async {
     final result = await showDialog<List<String>>(
       context: context,
-      builder: (_) => EventsDialog(initialItems: _record.events),
+      builder: (_) => CatalogMedicationDialog(
+        title: 'Editar Sedação associada',
+        catalogItems: _profileSedationMedicationOptions,
+        initialItems: _record.sedationMedications,
+      ),
     );
     if (result == null) return;
     setState(() {
-      _record = _record.copyWith(events: result);
+      _record = _record.copyWith(sedationMedications: result);
     });
     await _persistRecord();
   }
@@ -1798,6 +2598,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         title: 'Editar Antibiótico profilaxia',
         catalogItems: _profileProphylacticAntibioticOptions,
         initialItems: _record.prophylacticAntibiotics,
+        suggestions: _surgeryBasedAntibioticSuggestions,
       ),
     );
     if (result == null) return;
@@ -1955,6 +2756,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                   children: [
                     TopBarWidget(
                       onPreAnestheticTap: _showPreAnestheticDialog,
+                      onRecoveryTap: _openPostAnesthesiaRecoveryScreen,
                       caseStage: _caseStageLabel,
                       recordStatus: _recordStatusLabel,
                       highlightMessage: _topHighlightMessage,
@@ -1967,6 +2769,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                     AnesthesiaHeaderWidget(
                       key: _patientSummaryKey,
                       patient: _record.patient,
+                      preAnestheticAssessment: _record.preAnestheticAssessment,
                       mallampati:
                           _usesMallampatiInCase &&
                                   _record.preAnestheticAssessment.airway.mallampati.trim().isNotEmpty
@@ -2176,7 +2979,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             tapKey: const Key('surgery-surgeon-entry'),
             title: '3) Cirurgião',
             icon: Icons.person_outline,
-            value: _multilineSummary(_record.surgeonName),
+            value: _displayLineEntries(_record.surgeonName),
             section: SurgeryInfoSection.surgeon,
             isCompleted: _record.surgeonName.trim().isNotEmpty,
           ),
@@ -2188,9 +2991,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             tapKey: const Key('surgery-assistants-entry'),
             title: '4) Auxiliares',
             icon: Icons.groups_outlined,
-            value: _record.assistantNames.isEmpty
-                ? 'Toque para preencher'
-                : _record.assistantNames.join(', '),
+            value: _displayListEntries(_record.assistantNames),
             section: SurgeryInfoSection.assistants,
             isCompleted: _record.assistantNames.isNotEmpty,
           ),
@@ -2215,9 +3016,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         ),
         const SizedBox(height: 12),
         _buildEqualWidthTripletRow(
-          first: _buildFastingCard(),
-          second: _buildAntibioticProphylaxisCard(),
-          third: _buildVenousAccessCard(),
+          first: _buildAntibioticProphylaxisCard(),
+          second: _buildVenousAccessCard(),
+          third: _buildArterialAccessCard(),
         ),
         const SizedBox(height: 12),
         _buildEqualWidthTripletRow(
@@ -2229,23 +3030,23 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         _buildEqualWidthTripletRow(
           first: _buildDrugsCard(),
           second: _buildAdjunctsCard(),
-          third: _buildAirwayCard(),
+          third: _buildNeuraxialNeedlesCard(),
         ),
         const SizedBox(height: 12),
         _buildEqualWidthTripletRow(
-          first: _buildMaintenanceCard(),
-          second: _buildOtherMedicationsCard(),
+          first: _buildAirwayCard(),
+          second: _buildMaintenanceCard(),
           third: _buildVasoactiveDrugsCard(),
         ),
         const SizedBox(height: 12),
         _buildEqualWidthTripletRow(
-          first: _buildVolumeReplacementCard(),
-          second: _buildFluidBalanceCard(),
-          third: const SizedBox.shrink(),
+          first: _buildOtherMedicationsCard(),
+          second: _buildAnesthesiaMaterialsCard(),
+          third: _buildVolumeReplacementCard(),
         ),
         const SizedBox(height: 12),
         _buildEqualWidthTripletRow(
-          first: _buildArterialAccessCard(),
+          first: _buildFluidBalanceCard(),
           second: _buildSurgerySummaryCard(
             key: const Key('surgery-destination-card'),
             tapKey: const Key('surgery-destination-entry'),
@@ -2255,7 +3056,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             section: SurgeryInfoSection.destination,
             isCompleted: _record.patientDestination.trim().isNotEmpty,
           ),
-          third: const SizedBox.shrink(),
+          third: _buildUsageSummaryCard(),
         ),
         const SizedBox(height: 14),
         _buildSectionHeader(
@@ -2410,7 +3211,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           tapKey: const Key('surgery-surgeon-entry'),
           title: '3) Cirurgião',
           icon: Icons.person_outline,
-          value: _multilineSummary(_record.surgeonName),
+          value: _displayLineEntries(_record.surgeonName),
           section: SurgeryInfoSection.surgeon,
           isCompleted: _record.surgeonName.trim().isNotEmpty,
         ),
@@ -2420,9 +3221,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           tapKey: const Key('surgery-assistants-entry'),
           title: '4) Auxiliares',
           icon: Icons.groups_outlined,
-          value: _record.assistantNames.isEmpty
-              ? 'Toque para preencher'
-              : _record.assistantNames.join(', '),
+          value: _displayListEntries(_record.assistantNames),
           section: SurgeryInfoSection.assistants,
           isCompleted: _record.assistantNames.isNotEmpty,
         ),
@@ -2447,11 +3246,11 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           isCompleted: _record.operationalNotes.trim().isNotEmpty,
         ),
         const SizedBox(height: 12),
-        _buildFastingCard(),
-        const SizedBox(height: 12),
         _buildAntibioticProphylaxisCard(),
         const SizedBox(height: 12),
         _buildVenousAccessCard(),
+        const SizedBox(height: 12),
+        _buildArterialAccessCard(),
         const SizedBox(height: 12),
         _buildMonitoringCard(),
         const SizedBox(height: 12),
@@ -2463,19 +3262,21 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         const SizedBox(height: 12),
         _buildAdjunctsCard(),
         const SizedBox(height: 12),
+        _buildNeuraxialNeedlesCard(),
+        const SizedBox(height: 12),
         _buildAirwayCard(),
         const SizedBox(height: 12),
         _buildMaintenanceCard(),
         const SizedBox(height: 12),
         _buildOtherMedicationsCard(),
         const SizedBox(height: 12),
+        _buildAnesthesiaMaterialsCard(),
+        const SizedBox(height: 12),
         _buildVasoactiveDrugsCard(),
         const SizedBox(height: 12),
         _buildVolumeReplacementCard(),
         const SizedBox(height: 12),
         _buildFluidBalanceCard(),
-        const SizedBox(height: 12),
-        _buildArterialAccessCard(),
         const SizedBox(height: 12),
         _buildSurgerySummaryCard(
           key: const Key('surgery-destination-card'),
@@ -2636,7 +3437,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                 const SizedBox(height: 10),
                 _buildAirwayInfoCard(
                   key: const Key('airway-observation-entry'),
-                  label: 'Observações',
+                  label: 'Materiais de apoio',
                   value: _valueOrPlaceholder(_record.airway.observation),
                   onTap: () =>
                       _editViaAereaSection(AirwayEditSection.observation),
@@ -2701,25 +3502,69 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     final missingRecommended = recommended
         .where((item) => !_monitoringItems.contains(item))
         .toList();
-    final status = _monitoringItems.isEmpty
-        ? 'Nenhum item de monitorização'
-        : _monitoringItems.join(', ');
-    final summary = _monitoringItems.isEmpty
-        ? 'Toque para definir'
-        : missingRecommended.isEmpty
-            ? '${_monitoringItems.length} item(ns) ativos'
-            : 'Sugeridos ausentes: ${missingRecommended.join(', ')}';
-    return _buildCompactOperationalCard(
+    final customItems = _monitoringItems
+        .where((item) => !_monitoringCardOptions.contains(item))
+        .toList();
+    return PanelCard(
       key: const Key('monitoring-card'),
-      tapKey: const Key('monitoring-entry'),
       title: '10) Monitorização',
       titleColor: _accessRowColor,
       icon: Icons.monitor_heart_outlined,
-      minHeight: 92,
-      status: status,
-      summary: summary,
-      onTap: _editMonitorizacao,
+      minHeight: 212,
       isCompleted: _monitoringItems.isNotEmpty,
+      child: Column(
+        children: [
+          ..._monitoringCardOptions.asMap().entries.map(
+            (entry) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _buildNumberedToggleTile(
+                number: entry.key + 1,
+                label: entry.value,
+                selected: _monitoringItems.contains(entry.value),
+                accent: _accessRowColor,
+                hint: recommended.contains(entry.value)
+                    ? 'Monitorização recomendada'
+                    : 'Opcional conforme contexto',
+                onTap: () => _toggleMonitoringCardItem(entry.value),
+              ),
+            ),
+          ),
+          if (customItems.isNotEmpty)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  'Outros: ${customItems.join(', ')}',
+                  style: const TextStyle(
+                    color: Color(0xFF5D7288),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  missingRecommended.isEmpty
+                      ? '${_monitoringItems.length} item(ns) ativos'
+                      : 'Sugeridos ausentes: ${missingRecommended.join(', ')}',
+                  style: const TextStyle(
+                    color: Color(0xFF5D7288),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton(
+                onPressed: _editMonitorizacao,
+                child: const Text('Outros'),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -2728,7 +3573,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       children: [
         _buildSectionHeader(
           title: 'Registro Intraoperatório',
-          subtitle: 'Eventos cronológicos do caso',
+          subtitle: 'Técnica anestésica detalhada e condução do caso',
           accent: const Color(0xFF4A5568),
         ),
         const SizedBox(height: 10),
@@ -3036,24 +3881,320 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     );
   }
 
+  Widget _buildNumberedToggleTile({
+    required int number,
+    required String label,
+    required bool selected,
+    required Color accent,
+    required String hint,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: selected ? accent.withAlpha(20) : const Color(0xFFF8FAFE),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: selected ? accent : const Color(0xFFDCE7F3),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: selected ? accent : Colors.white,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: accent.withAlpha(120)),
+                ),
+                child: Text(
+                  '$number',
+                  style: TextStyle(
+                    color: selected ? Colors.white : accent,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        color: Color(0xFF17324D),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      hint,
+                      style: const TextStyle(
+                        color: Color(0xFF5D7288),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                selected
+                    ? Icons.check_circle_rounded
+                    : Icons.radio_button_unchecked_rounded,
+                color: selected ? accent : const Color(0xFF9DB0C5),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMedicationPresetTile({
+    required _MedicationPresetSuggestion suggestion,
+    required String? encodedEntry,
+    required Color accent,
+    required VoidCallback onToggle,
+    required VoidCallback onEdit,
+  }) {
+    final parts = encodedEntry?.split('|') ?? const <String>[];
+    final selected = encodedEntry != null;
+    final currentDose = parts.length > 1 && parts[1].trim().isNotEmpty
+        ? parts[1].trim()
+        : suggestion.doseText;
+    final currentTime = parts.length > 2 ? parts[2].trim() : '';
+    final currentRepeat = parts.length > 3 && parts[3].trim().isNotEmpty
+        ? parts[3].trim()
+        : suggestion.repeatGuidance;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: selected ? accent.withAlpha(16) : const Color(0xFFF8FAFE),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: selected ? accent : const Color(0xFFDCE7F3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: selected ? accent : Colors.white,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: accent.withAlpha(120)),
+                ),
+                child: Text(
+                  '${suggestion.number}',
+                  style: TextStyle(
+                    color: selected ? Colors.white : accent,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '${suggestion.name} • ${suggestion.label}',
+                  style: const TextStyle(
+                    color: Color(0xFF17324D),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            selected ? 'Registrado: $currentDose' : 'Sugestão: ${suggestion.doseText}',
+            style: const TextStyle(
+              color: Color(0xFF17324D),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            currentRepeat,
+            style: const TextStyle(
+              color: Color(0xFF5D7288),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (currentTime.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Horário: $currentTime',
+              style: const TextStyle(
+                color: Color(0xFF5D7288),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              FilledButton.icon(
+                onPressed: onToggle,
+                icon: Icon(
+                  selected ? Icons.check_circle_rounded : Icons.add_task_rounded,
+                ),
+                label: Text(selected ? 'Confirmado' : 'Confirmar'),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit_outlined),
+                label: const Text('Editar'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMaintenancePresetTile(_MaintenancePreset preset) {
+    final encodedEntry = _findMaintenanceEntry(preset.name);
+    final selected = encodedEntry != null;
+    final parts = encodedEntry?.split('|') ?? const <String>[];
+    final detail = parts.length > 2 && parts[2].trim().isNotEmpty
+        ? parts[2].trim()
+        : _maintenancePresetDetails(preset);
+    final category = parts.length > 1 && parts[1].trim().isNotEmpty
+        ? parts[1].trim()
+        : preset.category;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: selected
+            ? _medicationsRowColor.withAlpha(16)
+            : const Color(0xFFF8FAFE),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: selected
+              ? _medicationsRowColor
+              : const Color(0xFFDCE7F3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            preset.name,
+            style: const TextStyle(
+              color: Color(0xFF17324D),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            category,
+            style: const TextStyle(
+              color: Color(0xFF5D7288),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            detail,
+            style: const TextStyle(
+              color: Color(0xFF17324D),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              FilledButton.icon(
+                onPressed: () => _toggleMaintenancePreset(preset),
+                icon: Icon(
+                  selected ? Icons.check_circle_rounded : Icons.add_task_rounded,
+                ),
+                label: Text(selected ? 'Confirmado' : 'Confirmar'),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: () => _editMaintenancePreset(preset),
+                icon: const Icon(Icons.edit_outlined),
+                label: const Text('Editar'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTimeOutCard() {
     final completed = _record.timeOutCompleted;
-    final summary = _record.timeOutChecklist.isEmpty
-        ? 'Toque para preencher'
-        : '${_record.timeOutChecklist.length} itens confirmados';
-    return _buildCompactOperationalCard(
+    return PanelCard(
       key: const Key('surgery-timeout-card'),
       title: '11) Time-out',
       titleColor: _timeoutRowColor,
       icon: Icons.alarm_on_outlined,
       isAttention: _hasPendingTimeOut,
-      tapKey: const Key('surgery-timeout-entry'),
-      status: completed ? 'Time-out finalizado' : 'Time-out pendente',
-      statusColor:
-          completed ? const Color(0xFF169653) : const Color(0xFFF59E0B),
-      summary: summary,
-      onTap: () => _editSurgerySection(SurgeryInfoSection.timeOut),
+      minHeight: 240,
+      trailing: completed
+          ? null
+          : AddButton(
+              label: 'Finalizar',
+              onTap: _record.timeOutChecklist.length == _timeOutCardOptions.length
+                  ? _finalizeTimeOutCard
+                  : null,
+            ),
       isCompleted: completed,
+      child: Column(
+        children: [
+          ..._timeOutCardOptions.asMap().entries.map(
+            (entry) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _buildNumberedToggleTile(
+                number: entry.key + 1,
+                label: entry.value,
+                selected: _record.timeOutChecklist.contains(entry.value),
+                accent: _timeoutRowColor,
+                hint: _record.timeOutChecklist.contains(entry.value)
+                    ? 'Confirmado'
+                    : 'Toque para confirmar',
+                onTap: () => _toggleTimeOutCardItem(entry.value),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              completed
+                  ? 'Time-out finalizado'
+                  : '${_record.timeOutChecklist.length}/${_timeOutCardOptions.length} itens confirmados',
+              style: TextStyle(
+                color: completed
+                    ? const Color(0xFF169653)
+                    : const Color(0xFFF59E0B),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -3070,14 +4211,21 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     final summary = redoseAlerts.isNotEmpty
         ? redoseAlerts.first.detail
         : antibiotics.isEmpty
-            ? 'Toque para registrar dose e horário'
+            ? _surgeryBasedAntibioticSuggestions.isEmpty
+                ? 'Toque para registrar dose e horário'
+                : 'Há sugestão automática pela cirurgia selecionada'
             : () {
                 final first = antibiotics.first.split('|');
                 final dose = _medicationDoseSummary(first);
+                final repeat = first.length > 3 ? first[3].trim() : '';
                 final time = first.length > 2 && first[2].trim().isNotEmpty
                     ? first[2].trim()
                     : '--:--';
-                return '$dose • $time';
+                final segments = <String>['$dose • $time'];
+                if (repeat.isNotEmpty) {
+                  segments.add(repeat);
+                }
+                return segments.join(' • ');
               }();
     return _buildCompactOperationalCard(
       key: const Key('antibiotic-entry-card'),
@@ -3099,49 +4247,70 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     );
   }
 
-  Widget _buildFastingCard() {
-    final fasting = _displayFastingHours;
-
-    return _buildCompactOperationalCard(
-      title: '7) Jejum',
-      titleColor: _timeoutRowColor,
-      icon: Icons.schedule_outlined,
-      minHeight: 92,
-      status: fasting.isEmpty ? 'Jejum não informado' : '$fasting h',
-      summary: _fastingSummaryForProfile(
-        patient: _record.patient,
-        fastingText: fasting,
-      ),
-      onTap: _editFastingHours,
-      isCompleted: fasting.isNotEmpty,
-    );
-  }
-
   Widget _buildEventsCard() {
     return PanelCard(
       key: const Key('events-card'),
-      title: 'Eventos',
-      titleColor: const Color(0xFF4A5568),
-      icon: Icons.event_note_outlined,
+      title: 'Técnica anestésica',
+      titleColor: _techniqueRowColor,
+      icon: Icons.description_outlined,
       fillChild: true,
-      isAttention: _hasPendingEvents,
-      isCompleted: _record.events.isNotEmpty,
-      trailing: AddButton(label: 'Adicionar evento', onTap: _editEventos),
+      isAttention: _hasPendingTechnique || _hasPendingTechniqueDetails,
+      isCompleted: _record.anesthesiaTechnique.trim().isNotEmpty &&
+          _record.anesthesiaTechniqueDetails.trim().isNotEmpty,
+      trailing: AddButton(label: 'Editar técnica', onTap: _editTecnicaAnestesica),
       child: InkWell(
         key: const Key('events-entry'),
         borderRadius: BorderRadius.circular(18),
-        onTap: _editEventos,
-        child: _record.events.isEmpty
-            ? const Center(
-                child: SizedBox(
-                  width: 280,
-                  child: StatusHint(
-                    text: 'Nenhum evento registrado ainda',
-                    icon: Icons.event_busy_outlined,
+        onTap: _editTecnicaAnestesica,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              LabeledSurface(
+                label: 'Técnicas selecionadas',
+                child: _record.anesthesiaTechnique.trim().isEmpty
+                    ? const Text(
+                        'Toque para selecionar a técnica.',
+                        style: TextStyle(
+                          color: Color(0xFF7A8EA5),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      )
+                    : Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _record.anesthesiaTechnique
+                            .split('\n')
+                            .where((item) => item.trim().isNotEmpty)
+                            .map(
+                              (item) => SoftTag(
+                                text: item,
+                                color: const Color(0xFFF1EAFE),
+                                textColor: _techniqueRowColor,
+                              ),
+                            )
+                            .toList(),
+                      ),
+              ),
+              const SizedBox(height: 12),
+              LabeledSurface(
+                label: 'Descrição breve',
+                child: Text(
+                  _record.anesthesiaTechniqueDetails.trim().isEmpty
+                      ? 'Toque para descrever fases da técnica, bloqueios, peridural, raqui, anestesia geral e sedação conforme o contexto do prontuário.'
+                      : _record.anesthesiaTechniqueDetails.trim(),
+                  style: TextStyle(
+                    color: _record.anesthesiaTechniqueDetails.trim().isEmpty
+                        ? const Color(0xFF7A8EA5)
+                        : const Color(0xFF17324D),
+                    fontWeight: FontWeight.w600,
+                    height: 1.45,
                   ),
                 ),
-              )
-            : EventListWidget(events: _record.events),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -3150,143 +4319,143 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return KeyedSubtree(
       key: _techniqueSectionKey,
       child: PanelCard(
-      key: const Key('technique-card'),
-      title: '12) Técnica anestésica',
-      titleColor: _techniqueRowColor,
-      icon: Icons.local_hospital_outlined,
-      minHeight: 168,
-      isAttention: _hasPendingTechnique,
-      isCompleted: _record.anesthesiaTechnique.trim().isNotEmpty,
-      child: InkWell(
-        key: const Key('technique-entry'),
-        borderRadius: BorderRadius.circular(18),
-        onTap: _editTecnicaAnestesica,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            LabeledSurface(
-              label: 'Técnicas selecionadas',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: _record.anesthesiaTechnique.trim().isEmpty
-                    ? const [
-                        Text(
-                          'Toque para preencher',
-                          style: TextStyle(
-                            color: Color(0xFF7A8EA5),
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ]
-                    : _record.anesthesiaTechnique
-                        .split('\n')
-                        .where((item) => item.trim().isNotEmpty)
-                        .map(
-                          (item) => Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
-                            child: CheckLine(text: item),
-                          ),
-                        )
-                        .toList(),
+        key: const Key('technique-card'),
+        title: '12) Sedação associada',
+        titleColor: _techniqueRowColor,
+        icon: Icons.air_outlined,
+        minHeight: 168,
+        isCompleted: _record.sedationMedications.isNotEmpty,
+        child: InkWell(
+          key: const Key('technique-entry'),
+          borderRadius: BorderRadius.circular(18),
+          onTap: _editSedationMedications,
+          child: Column(
+            children: [
+              if (_record.sedationMedications.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 10),
+                  child: StatusHint(
+                    text:
+                        'Registrar medicações de sedação para anestesia local, bloqueios, raqui e técnicas associadas.',
+                  ),
+                ),
+              ..._record.sedationMedications.map(
+                (item) {
+                  final parts = item.split('|');
+                  final name = parts.isNotEmpty ? parts[0] : '';
+                  final doseSummary = _medicationDoseSummary(parts);
+                  final time = parts.length > 2 ? parts[2] : '--:--';
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: DoseRow(
+                      drug: name,
+                      dose: doseSummary,
+                      time: time.isEmpty ? '--:--' : time,
+                    ),
+                  );
+                },
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              AddButton(
+                label: 'Adicionar sedação',
+                onTap: _editSedationMedications,
+              ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
 
   Widget _buildDrugsCard() {
+    final suggestions = _buildMedicationSuggestions(_inductionPresets);
     return KeyedSubtree(
       key: _drugsSectionKey,
       child: PanelCard(
-      key: const Key('drugs-card'),
-      title: '13) Indução',
-      titleColor: _techniqueRowColor,
-      icon: Icons.medication_outlined,
-      minHeight: 168,
-      isAttention: _hasPendingDrugs,
-      isCompleted: _record.drugs.isNotEmpty,
-      child: InkWell(
-        key: const Key('drugs-entry'),
-        borderRadius: BorderRadius.circular(18),
-        onTap: _editDrogasInfusoes,
+        key: const Key('drugs-card'),
+        title: '13) Indução',
+        titleColor: _techniqueRowColor,
+        icon: Icons.medication_outlined,
+        minHeight: 320,
+        isAttention: _hasPendingDrugs,
+        isCompleted: _record.drugs.isNotEmpty,
         child: Column(
           children: [
-            if (_record.drugs.isEmpty)
+            ...suggestions.map(
+              (suggestion) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _buildMedicationPresetTile(
+                  suggestion: suggestion,
+                  encodedEntry: _findMedicationEntry(_record.drugs, suggestion.name),
+                  accent: _techniqueRowColor,
+                  onToggle: () => _toggleMedicationPreset(
+                    suggestion: suggestion,
+                    adjunct: false,
+                  ),
+                  onEdit: () => _editMedicationPreset(
+                    suggestion: suggestion,
+                    adjunct: false,
+                  ),
+                ),
+              ),
+            ),
+            if (_record.patient.weightKg <= 0)
               const Padding(
                 padding: EdgeInsets.only(bottom: 10),
-                child: StatusHint(text: 'Nenhuma droga de indução registrada'),
-              ),
-            ..._record.drugs.map(
-              (drug) {
-                final parts = drug.split('|');
-                final name = parts.isEmpty ? drug : parts.first;
-                final doseSummary = _medicationDoseSummary(parts);
-                final time = parts.length > 2 ? parts[2] : '--:--';
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: DoseRow(
-                    drug: name,
-                    dose: doseSummary,
-                    time: time.isEmpty ? '--:--' : time,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Informe o peso do paciente para calcular dose e volume automaticamente.',
+                    style: TextStyle(
+                      color: Color(0xFFF0A11F),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                );
-              },
-            ),
-            const SizedBox(height: 4),
+                ),
+              ),
             AddButton(
-              label: 'Adicionar droga',
+              label: 'Edição avançada',
               onTap: _editDrogasInfusoes,
             ),
           ],
         ),
       ),
-      ),
     );
   }
 
   Widget _buildAdjunctsCard() {
+    final suggestions = _buildMedicationSuggestions(_adjunctPresets);
     return PanelCard(
       title: '14) Adjuvantes',
       titleColor: _techniqueRowColor,
       icon: Icons.auto_awesome_outlined,
-      minHeight: 168,
+      minHeight: 260,
       isCompleted: _record.adjuncts.isNotEmpty,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: _editAdjuvantes,
-        child: Column(
-          children: [
-            if (_record.adjuncts.isEmpty)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 10),
-                child: StatusHint(text: 'Nenhum adjuvante registrado'),
+      child: Column(
+        children: [
+          ...suggestions.map(
+            (suggestion) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _buildMedicationPresetTile(
+                suggestion: suggestion,
+                encodedEntry: _findMedicationEntry(_record.adjuncts, suggestion.name),
+                accent: _techniqueRowColor,
+                onToggle: () => _toggleMedicationPreset(
+                  suggestion: suggestion,
+                  adjunct: true,
+                ),
+                onEdit: () => _editMedicationPreset(
+                  suggestion: suggestion,
+                  adjunct: true,
+                ),
               ),
-            ..._record.adjuncts.map(
-              (item) {
-                final parts = item.split('|');
-                final name = parts.isNotEmpty ? parts[0] : '';
-                final doseSummary = _medicationDoseSummary(parts);
-                final time = parts.length > 2 ? parts[2] : '--:--';
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: DoseRow(
-                    drug: name,
-                    dose: doseSummary,
-                    time: time.isEmpty ? '--:--' : time,
-                  ),
-                );
-              },
             ),
-            const SizedBox(height: 4),
-            AddButton(
-              label: 'Adicionar adjuvante',
-              onTap: _editAdjuvantes,
-            ),
-          ],
-        ),
+          ),
+          AddButton(
+            label: 'Edição avançada',
+            onTap: _editAdjuvantes,
+          ),
+        ],
       ),
     );
   }
@@ -3336,6 +4505,147 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildNeuraxialNeedlesCard() {
+    return KeyedSubtree(
+      key: _neuraxialNeedlesSectionKey,
+      child: PanelCard(
+        title: 'Agulhas raqui / peridural',
+        titleColor: _airwayFluidRowColor,
+        icon: Icons.vaccines_outlined,
+        minHeight: 168,
+        isAttention: _usesNeuraxialTechnique && _record.neuraxialNeedles.isEmpty,
+        isCompleted: _record.neuraxialNeedles.isNotEmpty,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: _editNeuraxialNeedles,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_record.neuraxialNeedles.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: StatusHint(
+                    text: _usesNeuraxialTechnique
+                        ? 'Relacionar agulhas usadas na raqui/peridural.'
+                        : 'Preencha se houver técnica neuraxial.',
+                  ),
+                ),
+              ..._record.neuraxialNeedles.map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: CheckLine(text: item),
+                ),
+              ),
+              const SizedBox(height: 4),
+              AddButton(
+                label: 'Editar agulhas',
+                onTap: _editNeuraxialNeedles,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnesthesiaMaterialsCard() {
+    return KeyedSubtree(
+      key: _materialsSectionKey,
+      child: PanelCard(
+        title: 'Materiais e consumos',
+        titleColor: _medicationsRowColor,
+        icon: Icons.inventory_2_outlined,
+        minHeight: 168,
+        isCompleted: _record.anesthesiaMaterials.isNotEmpty,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: _editAnesthesiaMaterials,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_record.anesthesiaMaterials.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 10),
+                  child: StatusHint(
+                    text:
+                        'Relacionar materiais, dispositivos, ampolas, soros, sangue e demais consumos usados na anestesia.',
+                  ),
+                ),
+              ..._record.anesthesiaMaterials.take(6).map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: CheckLine(text: item),
+                ),
+              ),
+              if (_record.anesthesiaMaterials.length > 6)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text(
+                    '+ ${_record.anesthesiaMaterials.length - 6} item(ns)',
+                    style: const TextStyle(
+                      color: Color(0xFF5D7288),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 4),
+              AddButton(
+                label: 'Editar materiais',
+                onTap: _editAnesthesiaMaterials,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUsageSummaryCard() {
+    final summary = <String>[
+      if (_record.drugs.isNotEmpty) 'Indução: ${_record.drugs.length} item(ns)',
+      if (_record.adjuncts.isNotEmpty)
+        'Adjuvantes: ${_record.adjuncts.length} item(ns)',
+      if (_record.sedationMedications.isNotEmpty)
+        'Sedação: ${_record.sedationMedications.length} item(ns)',
+      if (_record.vasoactiveDrugs.isNotEmpty)
+        'Vasoativas: ${_record.vasoactiveDrugs.length} item(ns)',
+      if (_record.venousAccesses.isNotEmpty)
+        'Acesso venoso: ${_record.venousAccesses.length} item(ns)',
+      if (_record.arterialAccesses.isNotEmpty)
+        'Acesso arterial: ${_record.arterialAccesses.length} item(ns)',
+      if (_record.neuraxialNeedles.isNotEmpty)
+        'Agulhas neuraxiais: ${_record.neuraxialNeedles.length} item(ns)',
+      if (_record.anesthesiaMaterials.isNotEmpty)
+        'Materiais livres: ${_record.anesthesiaMaterials.length} item(ns)',
+    ];
+
+    return PanelCard(
+      title: 'Resumo de uso',
+      titleColor: _medicationsRowColor,
+      icon: Icons.summarize_outlined,
+      minHeight: 168,
+      isCompleted: summary.isNotEmpty,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: summary.isEmpty
+            ? const [
+                StatusHint(
+                  text:
+                      'O resumo é preenchido automaticamente conforme drogas, acessos, agulhas e materiais forem registrados.',
+                ),
+              ]
+            : summary
+                .map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: CheckLine(text: item),
+                  ),
+                )
+                .toList(),
       ),
     );
   }
@@ -3428,9 +4738,10 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             const Divider(height: 18),
             KeyValueLine(
               label: 'Sangramento',
-              value: _record.fluidBalance.bleeding.trim().isEmpty
+              value: (_record.fluidBalance.bleeding.trim().isEmpty &&
+                      _record.fluidBalance.bloodLossEntries.isEmpty)
                   ? '--'
-                  : '${_record.fluidBalance.bleeding} mL',
+                  : '${(_parseFluidField(_record.fluidBalance.bleeding) + _sumFluidEntries(_record.fluidBalance.bloodLossEntries)).toStringAsFixed(0)} mL',
             ),
             const Divider(height: 18),
             KeyValueLine(
@@ -3442,9 +4753,10 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             const Divider(height: 18),
             KeyValueLine(
               label: 'Outras perdas',
-              value: _record.fluidBalance.otherLosses.trim().isEmpty
+              value: (_record.fluidBalance.otherLosses.trim().isEmpty &&
+                      _record.fluidBalance.otherLossEntries.isEmpty)
                   ? '--'
-                  : '${_record.fluidBalance.otherLosses} mL',
+                  : '${(_parseFluidField(_record.fluidBalance.otherLosses) + _sumFluidEntries(_record.fluidBalance.otherLossEntries)).toStringAsFixed(0)} mL',
             ),
             const SizedBox(height: 12),
             Container(
@@ -3478,10 +4790,13 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       patient: _record.patient,
       documentedLossesMl: _documentedLossesMl,
       fastingHoursText: _displayFastingHours,
+      surgicalSize: _record.surgicalSize.trim().isEmpty
+          ? _inferSurgicalSizeFromDescription()
+          : _record.surgicalSize,
     );
 
     return PanelCard(
-      title: '19) Reposição volêmica / sangue',
+      title: '19) Reposição volêmica, sangue e derivados',
       titleColor: _airwayFluidRowColor,
       icon: Icons.bloodtype_outlined,
       minHeight: 286,
@@ -3528,10 +4843,19 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             ),
             const SizedBox(height: 12),
             KeyValueLine(
+              label: 'Porte cirúrgico',
+              value: _record.surgicalSize.trim().isEmpty
+                  ? _inferSurgicalSizeFromDescription()
+                  : _record.surgicalSize,
+            ),
+            const Divider(height: 18),
+            KeyValueLine(
               label: 'Sangue / hemoderivados',
-              value: _record.fluidBalance.blood.trim().isEmpty
-                  ? '--'
-                  : '${_record.fluidBalance.blood} mL',
+              value: _record.fluidBalance.bloodEntries.isEmpty
+                  ? (_record.fluidBalance.blood.trim().isEmpty
+                      ? '--'
+                      : '${_record.fluidBalance.blood} mL')
+                  : '${_record.fluidBalance.bloodEntries.length} item(ns) • ${_record.fluidBalance.blood} mL',
             ),
             const Divider(height: 18),
             KeyValueLine(
@@ -3554,44 +4878,64 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Widget _buildMaintenanceCard() {
+    final categories = [
+      'Anestésicos EV contínuo',
+      'Anestésicos inalatórios',
+      'Opioides',
+      'Bloqueadores neuromusculares',
+    ];
     return PanelCard(
       key: const Key('maintenance-card'),
       title: '16) Manutenção da anestesia',
       titleColor: _medicationsRowColor,
       icon: Icons.tune_outlined,
-      minHeight: 168,
+      minHeight: 320,
       isCompleted: _record.maintenanceAgents.trim().isNotEmpty,
-      child: InkWell(
-        key: const Key('maintenance-entry'),
-        borderRadius: BorderRadius.circular(18),
-        onTap: _editMaintenanceAgents,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (_record.maintenanceAgents.trim().isEmpty)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 10),
-                child: StatusHint(
-                  text: 'Nenhum agente de manutenção registrado',
-                ),
-              )
-            else
-              ..._record.maintenanceAgents
-                  .split('\n')
-                  .where((item) => item.trim().isNotEmpty)
-                  .map(
-                    (item) => Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: CheckLine(text: item.trim()),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ...categories.map(
+            (category) {
+              final items = _maintenancePresets
+                  .where((item) => item.category == category)
+                  .toList();
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      category,
+                      style: const TextStyle(
+                        color: Color(0xFF17324D),
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
-            const SizedBox(height: 4),
-            AddButton(
-              label: 'Editar manutenção',
-              onTap: _editMaintenanceAgents,
+                    const SizedBox(height: 8),
+                    ...items.map(
+                      (item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: _buildMaintenancePresetTile(item),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          const Text(
+            'Nos inalatórios, o volume em mL/h é uma estimativa baseada em FGF de 2 L/min.',
+            style: TextStyle(
+              color: Color(0xFF5D7288),
+              fontWeight: FontWeight.w600,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          AddButton(
+            label: 'Edição avançada',
+            onTap: _editMaintenanceAgents,
+          ),
+        ],
       ),
     );
   }
@@ -4323,6 +5667,7 @@ class FluidBalanceDialog extends StatefulWidget {
     super.key,
     required this.initialFluidBalance,
     required this.initialSurgicalSize,
+    required this.suggestedSurgicalSize,
     required this.initialFastingHours,
     required this.patientWeightKg,
     required this.patientHeightMeters,
@@ -4335,6 +5680,7 @@ class FluidBalanceDialog extends StatefulWidget {
 
   final FluidBalance initialFluidBalance;
   final String initialSurgicalSize;
+  final String suggestedSurgicalSize;
   final String initialFastingHours;
   final double patientWeightKg;
   final double patientHeightMeters;
@@ -4368,7 +5714,12 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
     _CrystalloidOption('Albumina 5%', 100),
     _CrystalloidOption('Albumina 5%', 250),
     _CrystalloidOption('Albumina 20%', 100),
-    _CrystalloidOption('Gelatina', 500),
+  ];
+  static const List<_BloodComponentOption> _bloodComponentOptions = [
+    _BloodComponentOption('Concentrado de hemácias', 'UI', 280),
+    _BloodComponentOption('Plasma fresco congelado', 'UI', 270),
+    _BloodComponentOption('Plaquetas', 'UI', 270),
+    _BloodComponentOption('Crioprecipitado (pool)', 'UI', 175),
   ];
 
   late final TextEditingController _crystalloidsController;
@@ -4378,6 +5729,7 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
   late String _selectedSurgicalSize;
   late List<String> _crystalloidEntries;
   late List<String> _colloidEntries;
+  late List<String> _bloodEntries;
 
   @override
   void initState() {
@@ -4394,10 +5746,16 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
     _fastingHoursController = TextEditingController(
       text: widget.initialFastingHours,
     )..addListener(_onChange);
-    _selectedSurgicalSize = widget.initialSurgicalSize;
+    _selectedSurgicalSize = widget.initialSurgicalSize.trim().isNotEmpty
+        ? widget.initialSurgicalSize
+        : widget.suggestedSurgicalSize;
     _crystalloidEntries =
         List<String>.from(widget.initialFluidBalance.crystalloidEntries);
     _colloidEntries = List<String>.from(widget.initialFluidBalance.colloidEntries);
+    _bloodEntries = List<String>.from(widget.initialFluidBalance.bloodEntries);
+    if (_bloodEntries.isEmpty && widget.initialFluidBalance.blood.trim().isNotEmpty) {
+      _bloodEntries = ['Sangue|${widget.initialFluidBalance.blood}|mL'];
+    }
   }
 
   @override
@@ -4425,6 +5783,58 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
     return double.tryParse(value.replaceAll(',', '.')) ?? 0;
   }
 
+  double _parsedFastingHours() {
+    final raw = _fastingHoursController.text
+        .replaceAll('>', '')
+        .replaceAll('<', '')
+        .replaceAll('h', '')
+        .replaceAll('H', '')
+        .trim();
+    return _parse(raw);
+  }
+
+  double get _referenceWeightKg {
+    return switch (widget.patientPopulation) {
+      PatientPopulation.adult => _adultReferenceWeightKg(
+          actualWeightKg: widget.patientWeightKg,
+          heightMeters: widget.patientHeightMeters,
+        ),
+      PatientPopulation.pediatric => widget.patientWeightKg,
+      PatientPopulation.neonatal => widget.patientWeightKg > 0
+          ? widget.patientWeightKg
+          : widget.patientBirthWeightKg,
+    };
+  }
+
+  double get _maintenanceSuggestedMlPerHour {
+    return switch (widget.patientPopulation) {
+      PatientPopulation.adult => (_referenceWeightKg * 27.5) / 24,
+      PatientPopulation.pediatric => _pediatricMaintenanceRateMlPerHour(
+          widget.patientWeightKg,
+        ),
+      PatientPopulation.neonatal => widget.patientWeightKg > 0
+          ? widget.patientWeightKg * 5
+          : widget.patientBirthWeightKg * 5,
+    };
+  }
+
+  double get _intraoperativeSuggestedMlPerHour {
+    final weight = _referenceWeightKg;
+    final factor = switch (_selectedSurgicalSize) {
+      'Pequeno' => 2.0,
+      'Medio' => 4.0,
+      'Grande' => 6.0,
+      _ => 0.0,
+    };
+    return weight * factor;
+  }
+
+  double get _fastingSuggestedMl {
+    final hours = _parsedFastingHours();
+    if (hours <= 0) return 0;
+    return _maintenanceSuggestedMlPerHour * hours;
+  }
+
   void _addToController(TextEditingController controller, double amount) {
     final current = _parse(controller.text);
     final next = current + amount;
@@ -4445,6 +5855,26 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
     });
   }
 
+  void _addBloodComponentEntry(_BloodComponentOption option) {
+    setState(() {
+      _bloodEntries.add('${option.label}|1 ${option.unitLabel}|${option.averageVolumeMl}');
+      _addToController(_bloodController, option.averageVolumeMl.toDouble());
+    });
+  }
+
+  void _removeBloodEntry(int index) {
+    final parts = _bloodEntries[index].split('|');
+    final volume = parts.length > 2 ? _parse(parts[2]) : 0;
+    setState(() {
+      _bloodEntries.removeAt(index);
+      final current = _parse(_bloodController.text);
+      final next = (current - volume).clamp(0, double.infinity);
+      _bloodController.text = next.toStringAsFixed(
+        next.truncateToDouble() == next ? 0 : 1,
+      );
+    });
+  }
+
   void _removeFluidEntry({
     required List<String> target,
     required TextEditingController controller,
@@ -4459,6 +5889,13 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
       controller.text = next.toStringAsFixed(
         next.truncateToDouble() == next ? 0 : 1,
       );
+    });
+  }
+
+  void _applySuggestedCrystalloid(double amount) {
+    if (amount <= 0) return;
+    setState(() {
+      _addToController(_crystalloidsController, amount);
     });
   }
 
@@ -4484,6 +5921,9 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
       otherLosses: widget.initialFluidBalance.otherLosses,
       crystalloidEntries: _crystalloidEntries,
       colloidEntries: _colloidEntries,
+      bloodEntries: _bloodEntries,
+      bloodLossEntries: widget.initialFluidBalance.bloodLossEntries,
+      otherLossEntries: widget.initialFluidBalance.otherLossEntries,
     );
     final recommendation = _buildFluidSupportRecommendation(
       patient: Patient(
@@ -4503,12 +5943,13 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
       ),
       documentedLossesMl: _documentedLossesMl,
       fastingHoursText: _fastingHoursController.text.trim(),
+      surgicalSize: _selectedSurgicalSize,
     );
 
     return AlertDialog(
       backgroundColor: const Color(0xFFF9FBFE),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-      title: const Text('Editar Reposição volêmica / sangue e derivados'),
+      title: const Text('Editar Reposição volêmica, sangue e derivados'),
       content: SizedBox(
         width: 420,
         child: SingleChildScrollView(
@@ -4539,6 +5980,19 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
                       ),
                     )
                     .toList(),
+              ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  widget.suggestedSurgicalSize.trim().isEmpty
+                      ? 'Sem sugestão automática disponível'
+                      : 'Sugestão automática: ${widget.suggestedSurgicalSize}',
+                  style: const TextStyle(
+                    color: Color(0xFF5D7288),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
               Container(
@@ -4589,15 +6043,51 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
                   FilteringTextInputFormatter.allow(RegExp(r'[0-9,.><hH -]')),
                 ],
                 decoration: const InputDecoration(
-                  labelText: 'Jejum',
+                  labelText: 'Jejum informado',
                   suffixText: 'h',
                 ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _fastingSuggestedMl > 0
+                          ? () => _applySuggestedCrystalloid(_fastingSuggestedMl)
+                          : null,
+                      child: Text(
+                        _fastingSuggestedMl > 0
+                            ? 'Aplicar jejum sugerido (${_fastingSuggestedMl.toStringAsFixed(0)} mL)'
+                            : 'Jejum sem sugestão',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _intraoperativeSuggestedMlPerHour > 0
+                          ? () => _applySuggestedCrystalloid(
+                              _intraoperativeSuggestedMlPerHour,
+                            )
+                          : null,
+                      child: Text(
+                        _intraoperativeSuggestedMlPerHour > 0
+                            ? 'Aplicar intraop sugerida (${_intraoperativeSuggestedMlPerHour.toStringAsFixed(0)} mL)'
+                            : 'Sem intraop sugerida',
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               FluidField(
                 key: const Key('fluid-crystalloids-field'),
                 controller: _crystalloidsController,
-                label: 'Cristaloides',
+                label: 'Reposição volêmica - cristaloides',
               ),
               const SizedBox(height: 8),
               _QuickVolumeChips(
@@ -4696,13 +6186,38 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
               FluidField(
                 key: const Key('fluid-blood-field'),
                 controller: _bloodController,
-                label: 'Sangue',
+                label: 'Sangue e derivados',
               ),
               const SizedBox(height: 8),
-              _QuickVolumeChips(
-                values: _commonVolumes,
-                onSelected: (value) => _bloodController.text = value,
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Adicionar sangue / derivados por unidade',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
               ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _bloodComponentOptions
+                    .map(
+                      (item) => ActionChip(
+                        label: Text('+1 ${item.unitLabel} ${item.label}'),
+                        onPressed: () => _addBloodComponentEntry(item),
+                      ),
+                    )
+                    .toList(),
+              ),
+              if (_bloodEntries.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                _FluidEntryList(
+                  entries: _bloodEntries,
+                  onRemove: _removeBloodEntry,
+                ),
+              ],
               const SizedBox(height: 16),
               Container(
                 width: double.infinity,
@@ -4742,6 +6257,9 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
                   otherLosses: widget.initialFluidBalance.otherLosses,
                   crystalloidEntries: _crystalloidEntries,
                   colloidEntries: _colloidEntries,
+                  bloodEntries: _bloodEntries,
+                  bloodLossEntries: widget.initialFluidBalance.bloodLossEntries,
+                  otherLossEntries: widget.initialFluidBalance.otherLossEntries,
                 ),
                 surgicalSize: _selectedSurgicalSize,
                 fastingHours: _fastingHoursController.text.trim(),
@@ -4807,10 +6325,13 @@ class BalanceOnlyDialog extends StatefulWidget {
 }
 
 class _BalanceOnlyDialogState extends State<BalanceOnlyDialog> {
+  static const List<String> _partialBloodLossVolumes = ['50', '100', '200', '500'];
   late final TextEditingController _diuresisController;
   late final TextEditingController _bleedingController;
   late final TextEditingController _spongeCountController;
   late final TextEditingController _otherLossesController;
+  late List<String> _bloodLossEntries;
+  late List<String> _otherLossEntries;
 
   double _parse(String value) {
     return double.tryParse(value.replaceAll(',', '.')) ?? 0;
@@ -4823,17 +6344,28 @@ class _BalanceOnlyDialogState extends State<BalanceOnlyDialog> {
 
   double get _estimatedSpongeLoss => _parse(_spongeCountController.text) * 100;
 
+  double _sumEntries(List<String> entries) {
+    return entries.fold<double>(0, (total, item) {
+      final parts = item.split('|');
+      return total + (parts.isNotEmpty ? _parse(parts.last) : 0);
+    });
+  }
+
   double get _outputsMl =>
       _parse(_diuresisController.text) +
       _parse(_bleedingController.text) +
+      _sumEntries(_bloodLossEntries) +
       _estimatedSpongeLoss +
-      _parse(_otherLossesController.text);
+      _parse(_otherLossesController.text) +
+      _sumEntries(_otherLossEntries);
 
   FluidBalance get _preview => widget.initialFluidBalance.copyWith(
         diuresis: _diuresisController.text.trim(),
         bleeding: _bleedingController.text.trim(),
         spongeCount: _spongeCountController.text.trim(),
         otherLosses: _otherLossesController.text.trim(),
+        bloodLossEntries: _bloodLossEntries,
+        otherLossEntries: _otherLossEntries,
       );
 
   @override
@@ -4851,10 +6383,33 @@ class _BalanceOnlyDialogState extends State<BalanceOnlyDialog> {
     _otherLossesController =
         TextEditingController(text: widget.initialFluidBalance.otherLosses)
           ..addListener(_onChange);
+    _bloodLossEntries = List<String>.from(widget.initialFluidBalance.bloodLossEntries);
+    _otherLossEntries = List<String>.from(widget.initialFluidBalance.otherLossEntries);
   }
 
   void _onChange() {
     setState(() {});
+  }
+
+  void _addBloodLossEntry(String value) {
+    final amount = _parse(value);
+    if (amount <= 0) return;
+    setState(() {
+      _bloodLossEntries.add('Perda parcial|${amount.toStringAsFixed(0)}');
+    });
+  }
+
+  void _addOtherLossEntry(String label, double amount) {
+    if (amount <= 0) return;
+    setState(() {
+      _otherLossEntries.add('$label|${amount.toStringAsFixed(0)}');
+    });
+  }
+
+  void _removeEntry(List<String> entries, int index) {
+    setState(() {
+      entries.removeAt(index);
+    });
   }
 
   @override
@@ -4949,6 +6504,28 @@ class _BalanceOnlyDialogState extends State<BalanceOnlyDialog> {
                 controller: _bleedingController,
                 label: 'Sangramento',
               ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Adicionar perdas sanguíneas parciais',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              _QuickVolumeChips(
+                values: _partialBloodLossVolumes,
+                onSelected: _addBloodLossEntry,
+              ),
+              if (_bloodLossEntries.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                _FluidEntryList(
+                  entries: _bloodLossEntries,
+                  onRemove: (index) => _removeEntry(_bloodLossEntries, index),
+                ),
+              ],
               const SizedBox(height: 12),
               TextField(
                 key: const Key('fluid-sponge-count-field'),
@@ -4967,6 +6544,30 @@ class _BalanceOnlyDialogState extends State<BalanceOnlyDialog> {
                 controller: _otherLossesController,
                 label: 'Outras perdas',
               ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final item in const [
+                    _LossOption('Perdas insensíveis', 50),
+                    _LossOption('Ventilação mecânica', 50),
+                    _LossOption('Outras perdas', 100),
+                  ])
+                    ActionChip(
+                      label: Text('${item.label} +${item.defaultMl.toStringAsFixed(0)} mL'),
+                      onPressed: () =>
+                          _addOtherLossEntry(item.label, item.defaultMl),
+                    ),
+                ],
+              ),
+              if (_otherLossEntries.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                _FluidEntryList(
+                  entries: _otherLossEntries,
+                  onRemove: (index) => _removeEntry(_otherLossEntries, index),
+                ),
+              ],
               const SizedBox(height: 16),
               Container(
                 width: double.infinity,
@@ -5017,6 +6618,21 @@ class _CrystalloidOption {
 
   final String label;
   final int volumeMl;
+}
+
+class _BloodComponentOption {
+  const _BloodComponentOption(this.label, this.unitLabel, this.averageVolumeMl);
+
+  final String label;
+  final String unitLabel;
+  final int averageVolumeMl;
+}
+
+class _LossOption {
+  const _LossOption(this.label, this.defaultMl);
+
+  final String label;
+  final double defaultMl;
 }
 
 class _QuickVolumeChips extends StatelessWidget {

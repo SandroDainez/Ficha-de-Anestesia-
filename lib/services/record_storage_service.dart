@@ -192,8 +192,12 @@ class RecordStorageService {
         record.surgeonName.trim().isNotEmpty ||
         record.airway.device.trim().isNotEmpty ||
         record.anesthesiaTechnique.trim().isNotEmpty ||
+        record.anesthesiaTechniqueDetails.trim().isNotEmpty ||
         record.drugs.isNotEmpty ||
-        record.events.isNotEmpty ||
+        record.sedationMedications.isNotEmpty ||
+        record.neuraxialNeedles.isNotEmpty ||
+        record.anesthesiaMaterials.isNotEmpty ||
+        record.postAnesthesiaRecovery.hasContent ||
         record.hemodynamicMarkers.isNotEmpty ||
         record.hemodynamicPoints.isNotEmpty;
 

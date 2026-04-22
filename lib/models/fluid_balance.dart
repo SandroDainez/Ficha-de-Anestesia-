@@ -9,6 +9,9 @@ class FluidBalance {
     required this.otherLosses,
     this.crystalloidEntries = const [],
     this.colloidEntries = const [],
+    this.bloodEntries = const [],
+    this.bloodLossEntries = const [],
+    this.otherLossEntries = const [],
   });
 
   const FluidBalance.empty()
@@ -20,7 +23,10 @@ class FluidBalance {
         spongeCount = '',
         otherLosses = '',
         crystalloidEntries = const [],
-        colloidEntries = const [];
+        colloidEntries = const [],
+        bloodEntries = const [],
+        bloodLossEntries = const [],
+        otherLossEntries = const [];
 
   final String crystalloids;
   final String colloids;
@@ -31,6 +37,9 @@ class FluidBalance {
   final String otherLosses;
   final List<String> crystalloidEntries;
   final List<String> colloidEntries;
+  final List<String> bloodEntries;
+  final List<String> bloodLossEntries;
+  final List<String> otherLossEntries;
 
   bool get isComplete =>
       crystalloids.trim().isNotEmpty &&
@@ -69,6 +78,9 @@ class FluidBalance {
     String? otherLosses,
     List<String>? crystalloidEntries,
     List<String>? colloidEntries,
+    List<String>? bloodEntries,
+    List<String>? bloodLossEntries,
+    List<String>? otherLossEntries,
   }) {
     return FluidBalance(
       crystalloids: crystalloids ?? this.crystalloids,
@@ -80,6 +92,9 @@ class FluidBalance {
       otherLosses: otherLosses ?? this.otherLosses,
       crystalloidEntries: crystalloidEntries ?? this.crystalloidEntries,
       colloidEntries: colloidEntries ?? this.colloidEntries,
+      bloodEntries: bloodEntries ?? this.bloodEntries,
+      bloodLossEntries: bloodLossEntries ?? this.bloodLossEntries,
+      otherLossEntries: otherLossEntries ?? this.otherLossEntries,
     );
   }
 
@@ -94,6 +109,9 @@ class FluidBalance {
       'otherLosses': otherLosses,
       'crystalloidEntries': crystalloidEntries,
       'colloidEntries': colloidEntries,
+      'bloodEntries': bloodEntries,
+      'bloodLossEntries': bloodLossEntries,
+      'otherLossEntries': otherLossEntries,
     };
   }
 
@@ -111,6 +129,15 @@ class FluidBalance {
               .map((item) => item.toString())
               .toList(),
       colloidEntries: (json['colloidEntries'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .toList(),
+      bloodEntries: (json['bloodEntries'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .toList(),
+      bloodLossEntries: (json['bloodLossEntries'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .toList(),
+      otherLossEntries: (json['otherLossEntries'] as List<dynamic>? ?? const [])
           .map((item) => item.toString())
           .toList(),
     );

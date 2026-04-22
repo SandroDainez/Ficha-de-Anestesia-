@@ -75,6 +75,38 @@ class SurgeryInfoDialog extends StatefulWidget {
 }
 
 class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
+  static const List<String> _commonProcedureOptions = [
+    'Histerectomia por vídeo',
+    'Histerectomia',
+    'Colecistectomia por vídeo',
+    'Colecistectomia',
+    'Bariátrica sleeve',
+    'Bariátrica bypass',
+    'Nefrectomia direita',
+    'Nefrectomia esquerda',
+    'Herniorrafia umbilical',
+    'Herniorrafia incisional',
+    'Herniorrafia inguinal direita',
+    'Herniorrafia inguinal esquerda',
+    'Herniorrafia inguinal bilateral por vídeo',
+    'Fratura de fêmur direito',
+    'Fratura de fêmur esquerdo',
+    'Apendicectomia por vídeo',
+    'Apendicectomia',
+    'Cesárea',
+    'Mastectomia',
+    'Quadrantectomia',
+    'Prótese de mama',
+    'Abdominoplastia',
+    'Lipoaspiração',
+    'Rinoplastia',
+    'Septoplastia',
+    'Artroscopia de joelho',
+    'Artroplastia total de joelho',
+    'Artroplastia total de quadril',
+    'Tireoidectomia',
+    'Amigdalectomia',
+  ];
   static const List<String> _priorityOptions = [
     'Eletiva',
     'Urgência',
@@ -103,11 +135,12 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
     'Instrumentais e equipamentos conferidos',
   ];
 
-  late final TextEditingController _descriptionController;
+  late final TextEditingController _otherProceduresController;
   late final TextEditingController _surgeonController;
   late final TextEditingController _assistantsController;
   late final TextEditingController _otherDestinationController;
   late final TextEditingController _notesController;
+  late Set<String> _selectedProcedures;
   late String _selectedPriority;
   late String _selectedDestination;
   late Set<String> _selectedChecklist;
@@ -116,12 +149,11 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
 
   List<String> get _destinationOptions {
     return switch (widget.patientPopulation) {
-      PatientPopulation.adult => const ['RPA', 'Enfermaria', 'UTI', 'Alta da recuperação'],
+      PatientPopulation.adult => const ['RPA', 'Enfermaria', 'UTI'],
       PatientPopulation.pediatric => const [
         'RPA pediátrica',
         'Enfermaria pediátrica',
         'UTI pediátrica',
-        'Alta da recuperação',
       ],
       PatientPopulation.neonatal => const [
         'UTI neonatal',
@@ -135,8 +167,16 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
   @override
   void initState() {
     super.initState();
-    _descriptionController = TextEditingController(
-      text: widget.initialDescription,
+    final initialProcedures = _lines(widget.initialDescription);
+    final selectedProcedures = initialProcedures
+        .where(_commonProcedureOptions.contains)
+        .toSet();
+    final otherProcedures = initialProcedures
+        .where((item) => !_commonProcedureOptions.contains(item))
+        .join('\n');
+
+    _otherProceduresController = TextEditingController(
+      text: otherProcedures,
     );
     _surgeonController = TextEditingController(text: widget.initialSurgeon);
     _assistantsController = TextEditingController(
@@ -146,6 +186,7 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
       text: widget.initialOtherDestination,
     );
     _notesController = TextEditingController(text: widget.initialNotes);
+    _selectedProcedures = selectedProcedures;
     _selectedPriority = widget.initialPriority;
     _selectedDestination = widget.initialDestination;
     _selectedChecklist = widget.initialChecklist.toSet();
@@ -155,7 +196,7 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
 
   @override
   void dispose() {
-    _descriptionController.dispose();
+    _otherProceduresController.dispose();
     _surgeonController.dispose();
     _assistantsController.dispose();
     _otherDestinationController.dispose();
@@ -169,6 +210,13 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
         .map((item) => item.trim())
         .where((item) => item.isNotEmpty)
         .toList();
+  }
+
+  List<String> _buildProcedureLines() {
+    return [
+      ..._commonProcedureOptions.where(_selectedProcedures.contains),
+      ..._lines(_otherProceduresController.text),
+    ];
   }
 
   @override
@@ -211,11 +259,48 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (showDescription)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Principais cirurgias',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                ),
+              if (showDescription) const SizedBox(height: 8),
+              if (showDescription)
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: _commonProcedureOptions
+                      .map(
+                        (item) => _ProcedureCard(
+                          label: item,
+                          selected: _selectedProcedures.contains(item),
+                          onTap: () {
+                            setState(() {
+                              if (_selectedProcedures.contains(item)) {
+                                _selectedProcedures.remove(item);
+                              } else {
+                                _selectedProcedures.add(item);
+                              }
+                            });
+                          },
+                        ),
+                      )
+                      .toList(),
+                ),
+              if (showDescription) const SizedBox(height: 14),
+              if (showDescription)
                 TextField(
                   key: const Key('surgery-description-field'),
-                  controller: _descriptionController,
+                  controller: _otherProceduresController,
+                  minLines: 2,
+                  maxLines: 5,
                   decoration: const InputDecoration(
-                    labelText: 'Cirurgia realizada / a realizar',
+                    labelText: 'Outras',
+                    hintText: 'Uma cirurgia / procedimento por linha',
                   ),
                 ),
               if (showDescription &&
@@ -436,7 +521,7 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
           key: const Key('surgery-save-button'),
           onPressed: () => Navigator.of(context).pop(
             SurgeryInfoDialogResult(
-              description: _descriptionController.text.trim(),
+              description: _buildProcedureLines().join('\n'),
               priority: _selectedPriority,
               surgeon: _surgeonController.text.trim(),
               assistants: _lines(_assistantsController.text),
@@ -451,6 +536,63 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
           child: const Text('Salvar'),
         ),
       ],
+    );
+  }
+}
+
+class _ProcedureCard extends StatelessWidget {
+  const _ProcedureCard({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Material(
+      color: selected
+          ? colorScheme.primaryContainer
+          : colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Container(
+          constraints: const BoxConstraints(minWidth: 150, maxWidth: 220),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                selected
+                    ? Icons.check_circle_rounded
+                    : Icons.add_circle_outline_rounded,
+                size: 18,
+                color: selected
+                    ? colorScheme.onPrimaryContainer
+                    : colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: selected
+                            ? colorScheme.onPrimaryContainer
+                            : colorScheme.onSurface,
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'fluid_balance.dart';
 import 'hemodynamic_entry.dart';
 import 'hemodynamic_point.dart';
 import 'patient.dart';
+import 'post_anesthesia_recovery.dart';
 import 'pre_anesthetic_assessment.dart';
 
 class AnesthesiaRecord {
@@ -12,6 +13,7 @@ class AnesthesiaRecord {
     required this.airway,
     required this.fluidBalance,
     required this.anesthesiaTechnique,
+    this.anesthesiaTechniqueDetails = '',
     required this.maintenanceAgents,
     required this.hemodynamicEntries,
     required this.hemodynamicPoints,
@@ -19,13 +21,17 @@ class AnesthesiaRecord {
     required this.events,
     required this.drugs,
     required this.adjuncts,
+    this.sedationMedications = const [],
     required this.otherMedications,
     required this.vasoactiveDrugs,
     required this.prophylacticAntibiotics,
     required this.fastingHours,
     required this.venousAccesses,
     required this.arterialAccesses,
+    this.neuraxialNeedles = const [],
+    this.anesthesiaMaterials = const [],
     required this.monitoringItems,
+    this.postAnesthesiaRecovery = const PostAnesthesiaRecovery.empty(),
     required this.surgicalSize,
     required this.surgeryDescription,
     this.surgeryPriority = '',
@@ -49,6 +55,7 @@ class AnesthesiaRecord {
         airway = const Airway.empty(),
         fluidBalance = const FluidBalance.empty(),
         anesthesiaTechnique = '',
+        anesthesiaTechniqueDetails = '',
         maintenanceAgents = '',
         hemodynamicEntries = const [],
         hemodynamicPoints = const [],
@@ -56,13 +63,17 @@ class AnesthesiaRecord {
         events = const [],
         drugs = const [],
         adjuncts = const [],
+        sedationMedications = const [],
         otherMedications = const [],
         vasoactiveDrugs = const [],
         prophylacticAntibiotics = const [],
         fastingHours = '',
         venousAccesses = const [],
         arterialAccesses = const [],
+        neuraxialNeedles = const [],
+        anesthesiaMaterials = const [],
         monitoringItems = const [],
+        postAnesthesiaRecovery = const PostAnesthesiaRecovery.empty(),
         surgicalSize = '',
         surgeryDescription = '',
         surgeryPriority = '',
@@ -84,6 +95,7 @@ class AnesthesiaRecord {
   final Airway airway;
   final FluidBalance fluidBalance;
   final String anesthesiaTechnique;
+  final String anesthesiaTechniqueDetails;
   final String maintenanceAgents;
   final List<HemodynamicEntry> hemodynamicEntries;
   final List<HemodynamicPoint> hemodynamicPoints;
@@ -91,13 +103,17 @@ class AnesthesiaRecord {
   final List<String> events;
   final List<String> drugs;
   final List<String> adjuncts;
+  final List<String> sedationMedications;
   final List<String> otherMedications;
   final List<String> vasoactiveDrugs;
   final List<String> prophylacticAntibiotics;
   final String fastingHours;
   final List<String> venousAccesses;
   final List<String> arterialAccesses;
+  final List<String> neuraxialNeedles;
+  final List<String> anesthesiaMaterials;
   final List<String> monitoringItems;
+  final PostAnesthesiaRecovery postAnesthesiaRecovery;
   final String surgicalSize;
   final String surgeryDescription;
   final String surgeryPriority;
@@ -120,6 +136,7 @@ class AnesthesiaRecord {
     Airway? airway,
     FluidBalance? fluidBalance,
     String? anesthesiaTechnique,
+    String? anesthesiaTechniqueDetails,
     String? maintenanceAgents,
     List<HemodynamicEntry>? hemodynamicEntries,
     List<HemodynamicPoint>? hemodynamicPoints,
@@ -127,13 +144,17 @@ class AnesthesiaRecord {
     List<String>? events,
     List<String>? drugs,
     List<String>? adjuncts,
+    List<String>? sedationMedications,
     List<String>? otherMedications,
     List<String>? vasoactiveDrugs,
     List<String>? prophylacticAntibiotics,
     String? fastingHours,
     List<String>? venousAccesses,
     List<String>? arterialAccesses,
+    List<String>? neuraxialNeedles,
+    List<String>? anesthesiaMaterials,
     List<String>? monitoringItems,
+    PostAnesthesiaRecovery? postAnesthesiaRecovery,
     String? surgicalSize,
     String? surgeryDescription,
     String? surgeryPriority,
@@ -157,6 +178,8 @@ class AnesthesiaRecord {
       airway: airway ?? this.airway,
       fluidBalance: fluidBalance ?? this.fluidBalance,
       anesthesiaTechnique: anesthesiaTechnique ?? this.anesthesiaTechnique,
+      anesthesiaTechniqueDetails:
+          anesthesiaTechniqueDetails ?? this.anesthesiaTechniqueDetails,
       maintenanceAgents: maintenanceAgents ?? this.maintenanceAgents,
       hemodynamicEntries: hemodynamicEntries ?? this.hemodynamicEntries,
       hemodynamicPoints: hemodynamicPoints ?? this.hemodynamicPoints,
@@ -164,6 +187,7 @@ class AnesthesiaRecord {
       events: events ?? this.events,
       drugs: drugs ?? this.drugs,
       adjuncts: adjuncts ?? this.adjuncts,
+      sedationMedications: sedationMedications ?? this.sedationMedications,
       otherMedications: otherMedications ?? this.otherMedications,
       vasoactiveDrugs: vasoactiveDrugs ?? this.vasoactiveDrugs,
       prophylacticAntibiotics:
@@ -171,7 +195,11 @@ class AnesthesiaRecord {
       fastingHours: fastingHours ?? this.fastingHours,
       venousAccesses: venousAccesses ?? this.venousAccesses,
       arterialAccesses: arterialAccesses ?? this.arterialAccesses,
+      neuraxialNeedles: neuraxialNeedles ?? this.neuraxialNeedles,
+      anesthesiaMaterials: anesthesiaMaterials ?? this.anesthesiaMaterials,
       monitoringItems: monitoringItems ?? this.monitoringItems,
+      postAnesthesiaRecovery:
+          postAnesthesiaRecovery ?? this.postAnesthesiaRecovery,
       surgicalSize: surgicalSize ?? this.surgicalSize,
       surgeryDescription: surgeryDescription ?? this.surgeryDescription,
       surgeryPriority: surgeryPriority ?? this.surgeryPriority,
@@ -201,6 +229,7 @@ class AnesthesiaRecord {
       'airway': airway.toJson(),
       'fluidBalance': fluidBalance.toJson(),
       'anesthesiaTechnique': anesthesiaTechnique,
+      'anesthesiaTechniqueDetails': anesthesiaTechniqueDetails,
       'maintenanceAgents': maintenanceAgents,
       'hemodynamicEntries': hemodynamicEntries.map((item) => item.toJson()).toList(),
       'hemodynamicPoints': hemodynamicPoints.map((item) => item.toJson()).toList(),
@@ -209,13 +238,17 @@ class AnesthesiaRecord {
       'events': events,
       'drugs': drugs,
       'adjuncts': adjuncts,
+      'sedationMedications': sedationMedications,
       'otherMedications': otherMedications,
       'vasoactiveDrugs': vasoactiveDrugs,
       'prophylacticAntibiotics': prophylacticAntibiotics,
       'fastingHours': fastingHours,
       'venousAccesses': venousAccesses,
       'arterialAccesses': arterialAccesses,
+      'neuraxialNeedles': neuraxialNeedles,
+      'anesthesiaMaterials': anesthesiaMaterials,
       'monitoringItems': monitoringItems,
+      'postAnesthesiaRecovery': postAnesthesiaRecovery.toJson(),
       'surgicalSize': surgicalSize,
       'surgeryDescription': surgeryDescription,
       'surgeryPriority': surgeryPriority,
@@ -249,6 +282,8 @@ class AnesthesiaRecord {
         json['fluidBalance'] as Map<dynamic, dynamic>? ?? const {},
       ),
       anesthesiaTechnique: json['anesthesiaTechnique'] as String? ?? '',
+      anesthesiaTechniqueDetails:
+          json['anesthesiaTechniqueDetails'] as String? ?? '',
       maintenanceAgents: json['maintenanceAgents'] as String? ?? '',
       hemodynamicEntries:
           (json['hemodynamicEntries'] as List<dynamic>? ?? const [])
@@ -283,6 +318,10 @@ class AnesthesiaRecord {
       adjuncts: (json['adjuncts'] as List<dynamic>? ?? const [])
           .map((item) => item.toString())
           .toList(),
+      sedationMedications:
+          (json['sedationMedications'] as List<dynamic>? ?? const [])
+              .map((item) => item.toString())
+              .toList(),
       otherMedications:
           (json['otherMedications'] as List<dynamic>? ?? const [])
               .map((item) => item.toString())
@@ -302,9 +341,20 @@ class AnesthesiaRecord {
       arterialAccesses: (json['arterialAccesses'] as List<dynamic>? ?? const [])
           .map((item) => item.toString())
           .toList(),
+      neuraxialNeedles:
+          (json['neuraxialNeedles'] as List<dynamic>? ?? const [])
+              .map((item) => item.toString())
+              .toList(),
+      anesthesiaMaterials:
+          (json['anesthesiaMaterials'] as List<dynamic>? ?? const [])
+              .map((item) => item.toString())
+              .toList(),
       monitoringItems: (json['monitoringItems'] as List<dynamic>? ?? const [])
           .map((item) => item.toString())
           .toList(),
+      postAnesthesiaRecovery: PostAnesthesiaRecovery.fromJson(
+        json['postAnesthesiaRecovery'] as Map<dynamic, dynamic>? ?? const {},
+      ),
       surgicalSize: json['surgicalSize'] as String? ?? '',
       surgeryDescription: json['surgeryDescription'] as String? ?? '',
       surgeryPriority: json['surgeryPriority'] as String? ?? '',
