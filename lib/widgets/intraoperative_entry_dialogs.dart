@@ -34,6 +34,9 @@ class MaintenanceEntryEditResult {
     required this.detail,
     this.freshGasFlowLPerMin,
     this.volumePercent,
+    this.oxygenFlowLPerMin,
+    this.compressedAirFlowLPerMin,
+    this.nitrousOxideFlowLPerMin,
     required this.remove,
   });
 
@@ -41,6 +44,9 @@ class MaintenanceEntryEditResult {
   final String detail;
   final double? freshGasFlowLPerMin;
   final double? volumePercent;
+  final double? oxygenFlowLPerMin;
+  final double? compressedAirFlowLPerMin;
+  final double? nitrousOxideFlowLPerMin;
   final bool remove;
 }
 
@@ -52,6 +58,9 @@ class MaintenanceEntryEditDialog extends StatefulWidget {
     required this.initialDetail,
     this.initialFreshGasFlowLPerMin,
     this.initialVolumePercent,
+    this.initialOxygenFlowLPerMin,
+    this.initialCompressedAirFlowLPerMin,
+    this.initialNitrousOxideFlowLPerMin,
     this.isInhalational = false,
     this.defaultCategory = '',
     this.onInhalationalChanged,
@@ -62,9 +71,17 @@ class MaintenanceEntryEditDialog extends StatefulWidget {
   final String initialDetail;
   final double? initialFreshGasFlowLPerMin;
   final double? initialVolumePercent;
+  final double? initialOxygenFlowLPerMin;
+  final double? initialCompressedAirFlowLPerMin;
+  final double? initialNitrousOxideFlowLPerMin;
   final bool isInhalational;
   final String defaultCategory;
-  final String Function(double volumePercent, double freshGasFlowLPerMin)?
+  final String Function(
+    double volumePercent,
+    double oxygenFlowLPerMin,
+    double compressedAirFlowLPerMin,
+    double nitrousOxideFlowLPerMin,
+  )?
   onInhalationalChanged;
 
   @override
@@ -78,6 +95,9 @@ class _MaintenanceEntryEditDialogState
   late final TextEditingController _detailController;
   late final TextEditingController _fgfController;
   late final TextEditingController _volumeController;
+  late final TextEditingController _oxygenController;
+  late final TextEditingController _compressedAirController;
+  late final TextEditingController _nitrousOxideController;
 
   @override
   void initState() {
@@ -102,22 +122,50 @@ class _MaintenanceEntryEditDialogState
                 .toStringAsFixed(1)
                 .replaceAll('.', ','),
     );
+    _oxygenController = TextEditingController(
+      text: widget.initialOxygenFlowLPerMin == null
+          ? ''
+          : widget.initialOxygenFlowLPerMin!
+                .toStringAsFixed(1)
+                .replaceAll('.', ','),
+    );
+    _compressedAirController = TextEditingController(
+      text: widget.initialCompressedAirFlowLPerMin == null
+          ? ''
+          : widget.initialCompressedAirFlowLPerMin!
+                .toStringAsFixed(1)
+                .replaceAll('.', ','),
+    );
+    _nitrousOxideController = TextEditingController(
+      text: widget.initialNitrousOxideFlowLPerMin == null
+          ? ''
+          : widget.initialNitrousOxideFlowLPerMin!
+                .toStringAsFixed(1)
+                .replaceAll('.', ','),
+    );
     if (widget.isInhalational) {
-      _fgfController.addListener(_refreshInhalationalEstimate);
       _volumeController.addListener(_refreshInhalationalEstimate);
+      _oxygenController.addListener(_refreshInhalationalEstimate);
+      _compressedAirController.addListener(_refreshInhalationalEstimate);
+      _nitrousOxideController.addListener(_refreshInhalationalEstimate);
     }
   }
 
   @override
   void dispose() {
     if (widget.isInhalational) {
-      _fgfController.removeListener(_refreshInhalationalEstimate);
       _volumeController.removeListener(_refreshInhalationalEstimate);
+      _oxygenController.removeListener(_refreshInhalationalEstimate);
+      _compressedAirController.removeListener(_refreshInhalationalEstimate);
+      _nitrousOxideController.removeListener(_refreshInhalationalEstimate);
     }
     _categoryController.dispose();
     _detailController.dispose();
     _fgfController.dispose();
     _volumeController.dispose();
+    _oxygenController.dispose();
+    _compressedAirController.dispose();
+    _nitrousOxideController.dispose();
     super.dispose();
   }
 
@@ -125,18 +173,39 @@ class _MaintenanceEntryEditDialogState
     return double.tryParse(value.trim().replaceAll(',', '.'));
   }
 
+  double _flowOrZero(TextEditingController controller) {
+    return _parseDecimal(controller.text) ?? 0;
+  }
+
   void _refreshInhalationalEstimate() {
     final builder = widget.onInhalationalChanged;
     if (builder == null) return;
     final volumePercent = _parseDecimal(_volumeController.text);
-    final freshGasFlowLPerMin = _parseDecimal(_fgfController.text);
-    if (volumePercent == null || freshGasFlowLPerMin == null) return;
-    final next = builder(volumePercent, freshGasFlowLPerMin);
+    if (volumePercent == null) return;
+    final next = builder(
+      volumePercent,
+      _flowOrZero(_oxygenController),
+      _flowOrZero(_compressedAirController),
+      _flowOrZero(_nitrousOxideController),
+    );
     if (_detailController.text == next) return;
     _detailController.value = TextEditingValue(
       text: next,
       selection: TextSelection.collapsed(offset: next.length),
     );
+    final totalFlow =
+        _flowOrZero(_oxygenController) +
+        _flowOrZero(_compressedAirController) +
+        _flowOrZero(_nitrousOxideController);
+    final totalText = totalFlow <= 0
+        ? ''
+        : totalFlow.toStringAsFixed(1).replaceAll('.', ',');
+    if (_fgfController.text != totalText) {
+      _fgfController.value = TextEditingValue(
+        text: totalText,
+        selection: TextSelection.collapsed(offset: totalText.length),
+      );
+    }
   }
 
   @override
@@ -170,13 +239,47 @@ class _MaintenanceEntryEditDialogState
                 ),
                 const SizedBox(height: 12),
                 TextField(
-                  controller: _fgfController,
+                  controller: _oxygenController,
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
                   decoration: const InputDecoration(
+                    labelText: 'Oxigênio (O₂)',
+                    hintText: 'Ex: 1,0 L/min',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _compressedAirController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Ar comprimido',
+                    hintText: 'Ex: 1,0 L/min',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _nitrousOxideController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Óxido nitroso (N₂O)',
+                    hintText: 'Ex: 0,0 L/min',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _fgfController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  readOnly: true,
+                  decoration: const InputDecoration(
                     labelText: 'Fluxo de gases frescos (FGF)',
-                    hintText: 'Ex: 2,0 L/min',
+                    hintText: 'Soma automática dos gases',
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -190,7 +293,7 @@ class _MaintenanceEntryEditDialogState
                       ? 'Dose / consumo estimado'
                       : 'Dose / estratégia',
                   hintText: widget.isInhalational
-                      ? 'Ex: 2,0 vol% • ~1,3 mL/h (estimado com FGF 2,0 L/min)'
+                      ? 'Ex: 2,0 vol% • O₂ 1,0 + ar 1,0 + N₂O 0,0 = FGF 2,0 L/min • ~4,9 mL/h'
                       : 'Ex: 100-200 mcg/kg/min',
                 ),
               ),
@@ -223,6 +326,15 @@ class _MaintenanceEntryEditDialogState
                   : null,
               volumePercent: widget.isInhalational
                   ? _parseDecimal(_volumeController.text)
+                  : null,
+              oxygenFlowLPerMin: widget.isInhalational
+                  ? _parseDecimal(_oxygenController.text)
+                  : null,
+              compressedAirFlowLPerMin: widget.isInhalational
+                  ? _parseDecimal(_compressedAirController.text)
+                  : null,
+              nitrousOxideFlowLPerMin: widget.isInhalational
+                  ? _parseDecimal(_nitrousOxideController.text)
                   : null,
               remove: false,
             ),

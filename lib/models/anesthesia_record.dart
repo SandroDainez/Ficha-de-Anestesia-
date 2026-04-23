@@ -2,6 +2,7 @@ import 'airway.dart';
 import 'fluid_balance.dart';
 import 'hemodynamic_entry.dart';
 import 'hemodynamic_point.dart';
+import 'mechanical_ventilation_settings.dart';
 import 'patient.dart';
 import 'post_anesthesia_recovery.dart';
 import 'pre_anesthetic_assessment.dart';
@@ -11,6 +12,7 @@ class AnesthesiaRecord {
     required this.patient,
     required this.preAnestheticAssessment,
     required this.airway,
+    this.mechanicalVentilation = const MechanicalVentilationSettings.empty(),
     required this.fluidBalance,
     required this.anesthesiaTechnique,
     this.anesthesiaTechniqueDetails = '',
@@ -50,49 +52,51 @@ class AnesthesiaRecord {
   });
 
   const AnesthesiaRecord.empty()
-      : patient = const Patient.empty(),
-        preAnestheticAssessment = const PreAnestheticAssessment.empty(),
-        airway = const Airway.empty(),
-        fluidBalance = const FluidBalance.empty(),
-        anesthesiaTechnique = '',
-        anesthesiaTechniqueDetails = '',
-        maintenanceAgents = '',
-        hemodynamicEntries = const [],
-        hemodynamicPoints = const [],
-        hemodynamicMarkers = const [],
-        events = const [],
-        drugs = const [],
-        adjuncts = const [],
-        sedationMedications = const [],
-        otherMedications = const [],
-        vasoactiveDrugs = const [],
-        prophylacticAntibiotics = const [],
-        fastingHours = '',
-        venousAccesses = const [],
-        arterialAccesses = const [],
-        neuraxialNeedles = const [],
-        anesthesiaMaterials = const [],
-        monitoringItems = const [],
-        postAnesthesiaRecovery = const PostAnesthesiaRecovery.empty(),
-        surgicalSize = '',
-        surgeryDescription = '',
-        surgeryPriority = '',
-        surgeonName = '',
-        assistantNames = const [],
-        patientDestination = '',
-        otherPatientDestination = '',
-        operationalNotes = '',
-        safeSurgeryChecklist = const [],
-        timeOutChecklist = const [],
-        timeOutCompleted = false,
-        anesthesiologists = const [],
-        anesthesiologistName = '',
-        anesthesiologistCrm = '',
-        anesthesiologistDetails = '';
+    : patient = const Patient.empty(),
+      preAnestheticAssessment = const PreAnestheticAssessment.empty(),
+      airway = const Airway.empty(),
+      mechanicalVentilation = const MechanicalVentilationSettings.empty(),
+      fluidBalance = const FluidBalance.empty(),
+      anesthesiaTechnique = '',
+      anesthesiaTechniqueDetails = '',
+      maintenanceAgents = '',
+      hemodynamicEntries = const [],
+      hemodynamicPoints = const [],
+      hemodynamicMarkers = const [],
+      events = const [],
+      drugs = const [],
+      adjuncts = const [],
+      sedationMedications = const [],
+      otherMedications = const [],
+      vasoactiveDrugs = const [],
+      prophylacticAntibiotics = const [],
+      fastingHours = '',
+      venousAccesses = const [],
+      arterialAccesses = const [],
+      neuraxialNeedles = const [],
+      anesthesiaMaterials = const [],
+      monitoringItems = const [],
+      postAnesthesiaRecovery = const PostAnesthesiaRecovery.empty(),
+      surgicalSize = '',
+      surgeryDescription = '',
+      surgeryPriority = '',
+      surgeonName = '',
+      assistantNames = const [],
+      patientDestination = '',
+      otherPatientDestination = '',
+      operationalNotes = '',
+      safeSurgeryChecklist = const [],
+      timeOutChecklist = const [],
+      timeOutCompleted = false,
+      anesthesiologists = const [],
+      anesthesiologistName = '',
+      anesthesiologistCrm = '',
+      anesthesiologistDetails = '';
 
   final Patient patient;
   final PreAnestheticAssessment preAnestheticAssessment;
   final Airway airway;
+  final MechanicalVentilationSettings mechanicalVentilation;
   final FluidBalance fluidBalance;
   final String anesthesiaTechnique;
   final String anesthesiaTechniqueDetails;
@@ -134,6 +138,7 @@ class AnesthesiaRecord {
     Patient? patient,
     PreAnestheticAssessment? preAnestheticAssessment,
     Airway? airway,
+    MechanicalVentilationSettings? mechanicalVentilation,
     FluidBalance? fluidBalance,
     String? anesthesiaTechnique,
     String? anesthesiaTechniqueDetails,
@@ -176,6 +181,8 @@ class AnesthesiaRecord {
       preAnestheticAssessment:
           preAnestheticAssessment ?? this.preAnestheticAssessment,
       airway: airway ?? this.airway,
+      mechanicalVentilation:
+          mechanicalVentilation ?? this.mechanicalVentilation,
       fluidBalance: fluidBalance ?? this.fluidBalance,
       anesthesiaTechnique: anesthesiaTechnique ?? this.anesthesiaTechnique,
       anesthesiaTechniqueDetails:
@@ -209,13 +216,11 @@ class AnesthesiaRecord {
       otherPatientDestination:
           otherPatientDestination ?? this.otherPatientDestination,
       operationalNotes: operationalNotes ?? this.operationalNotes,
-      safeSurgeryChecklist:
-          safeSurgeryChecklist ?? this.safeSurgeryChecklist,
+      safeSurgeryChecklist: safeSurgeryChecklist ?? this.safeSurgeryChecklist,
       timeOutChecklist: timeOutChecklist ?? this.timeOutChecklist,
       timeOutCompleted: timeOutCompleted ?? this.timeOutCompleted,
       anesthesiologists: anesthesiologists ?? this.anesthesiologists,
-      anesthesiologistName:
-          anesthesiologistName ?? this.anesthesiologistName,
+      anesthesiologistName: anesthesiologistName ?? this.anesthesiologistName,
       anesthesiologistCrm: anesthesiologistCrm ?? this.anesthesiologistCrm,
       anesthesiologistDetails:
           anesthesiologistDetails ?? this.anesthesiologistDetails,
@@ -227,14 +232,20 @@ class AnesthesiaRecord {
       'patient': patient.toJson(),
       'preAnestheticAssessment': preAnestheticAssessment.toJson(),
       'airway': airway.toJson(),
+      'mechanicalVentilation': mechanicalVentilation.toJson(),
       'fluidBalance': fluidBalance.toJson(),
       'anesthesiaTechnique': anesthesiaTechnique,
       'anesthesiaTechniqueDetails': anesthesiaTechniqueDetails,
       'maintenanceAgents': maintenanceAgents,
-      'hemodynamicEntries': hemodynamicEntries.map((item) => item.toJson()).toList(),
-      'hemodynamicPoints': hemodynamicPoints.map((item) => item.toJson()).toList(),
-      'hemodynamicMarkers':
-          hemodynamicMarkers.map((item) => item.toJson()).toList(),
+      'hemodynamicEntries': hemodynamicEntries
+          .map((item) => item.toJson())
+          .toList(),
+      'hemodynamicPoints': hemodynamicPoints
+          .map((item) => item.toJson())
+          .toList(),
+      'hemodynamicMarkers': hemodynamicMarkers
+          .map((item) => item.toJson())
+          .toList(),
       'events': events,
       'drugs': drugs,
       'adjuncts': adjuncts,
@@ -277,6 +288,9 @@ class AnesthesiaRecord {
       ),
       airway: Airway.fromJson(
         json['airway'] as Map<dynamic, dynamic>? ?? const {},
+      ),
+      mechanicalVentilation: MechanicalVentilationSettings.fromJson(
+        json['mechanicalVentilation'] as Map<dynamic, dynamic>? ?? const {},
       ),
       fluidBalance: FluidBalance.fromJson(
         json['fluidBalance'] as Map<dynamic, dynamic>? ?? const {},
@@ -322,14 +336,12 @@ class AnesthesiaRecord {
           (json['sedationMedications'] as List<dynamic>? ?? const [])
               .map((item) => item.toString())
               .toList(),
-      otherMedications:
-          (json['otherMedications'] as List<dynamic>? ?? const [])
-              .map((item) => item.toString())
-              .toList(),
-      vasoactiveDrugs:
-          (json['vasoactiveDrugs'] as List<dynamic>? ?? const [])
-              .map((item) => item.toString())
-              .toList(),
+      otherMedications: (json['otherMedications'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .toList(),
+      vasoactiveDrugs: (json['vasoactiveDrugs'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .toList(),
       prophylacticAntibiotics:
           (json['prophylacticAntibiotics'] as List<dynamic>? ?? const [])
               .map((item) => item.toString())
@@ -341,10 +353,9 @@ class AnesthesiaRecord {
       arterialAccesses: (json['arterialAccesses'] as List<dynamic>? ?? const [])
           .map((item) => item.toString())
           .toList(),
-      neuraxialNeedles:
-          (json['neuraxialNeedles'] as List<dynamic>? ?? const [])
-              .map((item) => item.toString())
-              .toList(),
+      neuraxialNeedles: (json['neuraxialNeedles'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .toList(),
       anesthesiaMaterials:
           (json['anesthesiaMaterials'] as List<dynamic>? ?? const [])
               .map((item) => item.toString())
@@ -373,10 +384,17 @@ class AnesthesiaRecord {
           .map((item) => item.toString())
           .toList(),
       timeOutCompleted: json['timeOutCompleted'] as bool? ?? false,
-      anesthesiologists: ((json['anesthesiologists'] as List<dynamic>?) ??
-                  (((json['anesthesiologistName'] as String? ?? '').trim().isEmpty &&
-                          (json['anesthesiologistCrm'] as String? ?? '').trim().isEmpty &&
-                          (json['anesthesiologistDetails'] as String? ?? '').trim().isEmpty)
+      anesthesiologists:
+          ((json['anesthesiologists'] as List<dynamic>?) ??
+                  (((json['anesthesiologistName'] as String? ?? '')
+                              .trim()
+                              .isEmpty &&
+                          (json['anesthesiologistCrm'] as String? ?? '')
+                              .trim()
+                              .isEmpty &&
+                          (json['anesthesiologistDetails'] as String? ?? '')
+                              .trim()
+                              .isEmpty)
                       ? const <dynamic>[]
                       : [
                           '${json['anesthesiologistName'] as String? ?? ''}|'
@@ -388,8 +406,7 @@ class AnesthesiaRecord {
               .toList(),
       anesthesiologistName: json['anesthesiologistName'] as String? ?? '',
       anesthesiologistCrm: json['anesthesiologistCrm'] as String? ?? '',
-      anesthesiologistDetails:
-          json['anesthesiologistDetails'] as String? ?? '',
+      anesthesiologistDetails: json['anesthesiologistDetails'] as String? ?? '',
     );
   }
 }

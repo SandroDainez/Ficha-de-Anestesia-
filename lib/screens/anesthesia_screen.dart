@@ -9,6 +9,7 @@ import '../models/anesthesia_record.dart';
 import '../models/airway.dart';
 import '../models/fluid_balance.dart';
 import '../models/hemodynamic_point.dart';
+import '../models/mechanical_ventilation_settings.dart';
 import '../models/patient.dart';
 import '../models/post_anesthesia_recovery.dart';
 import '../models/pre_anesthetic_assessment.dart';
@@ -144,6 +145,151 @@ class _LossEntry {
   final String material;
   final String quantity;
   final String reason;
+}
+
+class _OxygenTherapyEntry {
+  const _OxygenTherapyEntry({
+    required this.device,
+    required this.flowLPerMin,
+    required this.minutes,
+  });
+
+  final String device;
+  final double flowLPerMin;
+  final int minutes;
+
+  double get totalLiters => flowLPerMin * minutes;
+}
+
+class _TechniqueProfile {
+  const _TechniqueProfile({
+    required this.isEmpty,
+    required this.hasGeneral,
+    required this.hasTiva,
+    required this.hasInhalationalGeneral,
+    required this.hasGeneralIntravenous,
+    required this.hasSedation,
+    required this.hasNeuraxial,
+    required this.hasRegional,
+  });
+
+  final bool isEmpty;
+  final bool hasGeneral;
+  final bool hasTiva;
+  final bool hasInhalationalGeneral;
+  final bool hasGeneralIntravenous;
+  final bool hasSedation;
+  final bool hasNeuraxial;
+  final bool hasRegional;
+
+  bool get hasPureRegionalOrNeuraxialFlow =>
+      (hasNeuraxial || hasRegional) && !hasGeneral;
+}
+
+class _VentilationSuggestion {
+  const _VentilationSuggestion({required this.reason, required this.settings});
+
+  final String reason;
+  final MechanicalVentilationSettings settings;
+}
+
+bool _isEncodedLossEntry(String entry) => entry.startsWith('__LOSS__|');
+
+_LossEntry? _decodeEncodedLossEntry(String entry) {
+  if (!_isEncodedLossEntry(entry)) return null;
+  final parts = entry.split('|');
+  if (parts.length < 4) return null;
+  return _LossEntry(
+    material: parts[1].trim(),
+    quantity: parts[2].trim(),
+    reason: parts.sublist(3).join(' | ').trim(),
+  );
+}
+
+String _encodeLossEntry({
+  required String material,
+  required String quantity,
+  required String reason,
+}) {
+  return '__LOSS__|$material|$quantity|$reason';
+}
+
+String _formatLossEntryLabel(String entry, {String prefix = 'Perda'}) {
+  final decoded = _decodeEncodedLossEntry(entry);
+  if (decoded == null) return entry;
+  final quantity = decoded.quantity.isEmpty
+      ? 'quantidade não informada'
+      : decoded.quantity;
+  final reason = decoded.reason.isEmpty
+      ? 'motivo não informado'
+      : decoded.reason;
+  return '$prefix: ${decoded.material} • $quantity • $reason';
+}
+
+bool _isEncodedOxygenTherapyEntry(String entry) => entry.startsWith('__OXY__|');
+
+_OxygenTherapyEntry? _decodeEncodedOxygenTherapyEntry(String entry) {
+  if (!_isEncodedOxygenTherapyEntry(entry)) return null;
+  final parts = entry.split('|');
+  if (parts.length < 4) return null;
+  final flowLPerMin = double.tryParse(parts[2].trim());
+  final minutes = int.tryParse(parts[3].trim());
+  if (flowLPerMin == null ||
+      minutes == null ||
+      flowLPerMin <= 0 ||
+      minutes <= 0) {
+    return null;
+  }
+  return _OxygenTherapyEntry(
+    device: parts[1].trim(),
+    flowLPerMin: flowLPerMin,
+    minutes: minutes,
+  );
+}
+
+String _encodeOxygenTherapyEntry({
+  required String device,
+  required double flowLPerMin,
+  required int minutes,
+}) {
+  return '__OXY__|$device|${flowLPerMin.toStringAsFixed(1)}|$minutes';
+}
+
+String _oxygenTherapyDeviceLabel(String device) {
+  switch (device.trim().toLowerCase()) {
+    case 'cateter':
+      return 'Cateter de O₂';
+    case 'mascara':
+      return 'Máscara de O₂';
+    default:
+      return device.trim().isEmpty ? 'Dispositivo de O₂' : device.trim();
+  }
+}
+
+String _formatFlowLabel(double flowLPerMin) {
+  return flowLPerMin.toStringAsFixed(1).replaceAll('.', ',');
+}
+
+String _formatLitersLabel(double liters) {
+  final rounded = liters.roundToDouble();
+  final decimals = (liters - rounded).abs() < 0.05 ? 0 : 1;
+  return liters.toStringAsFixed(decimals).replaceAll('.', ',');
+}
+
+String _formatDurationMinutesLabel(int minutes) {
+  if (minutes <= 0) return '--';
+  if (minutes < 60) return '$minutes min';
+  final hours = minutes / 60;
+  if (minutes % 60 == 0) {
+    return '${hours.toStringAsFixed(0)} h';
+  }
+  return '${hours.toStringAsFixed(1).replaceAll('.', ',')} h';
+}
+
+String _formatOxygenTherapyEntryLabel(String entry) {
+  final decoded = _decodeEncodedOxygenTherapyEntry(entry);
+  if (decoded == null) return entry;
+  return '${_oxygenTherapyDeviceLabel(decoded.device)} • ${_formatFlowLabel(decoded.flowLPerMin)} L/min • ${_formatDurationMinutesLabel(decoded.minutes)} • consumo ${_formatLitersLabel(decoded.totalLiters)} L';
 }
 
 class _AirwaySupportRecommendation {
@@ -1475,6 +1621,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   Timer? _hemodynamicTicker;
   final GlobalKey _patientSummaryKey = GlobalKey();
   final GlobalKey _airwaySectionKey = GlobalKey();
+  final GlobalKey _ventilationSectionKey = GlobalKey();
   final GlobalKey _techniqueSectionKey = GlobalKey();
   final GlobalKey _drugsSectionKey = GlobalKey();
   final GlobalKey _neuraxialNeedlesSectionKey = GlobalKey();
@@ -1753,13 +1900,270 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     ).where((item) => item.split('|').first.trim() != name).toList();
   }
 
-  bool get _isTivaTechnique {
+  _TechniqueProfile get _techniqueProfile {
     final technique = _record.anesthesiaTechnique.toLowerCase();
     final details = _record.anesthesiaTechniqueDetails.toLowerCase();
-    return technique.contains('tiva') ||
+    final isEmpty = technique.trim().isEmpty && details.trim().isEmpty;
+    final hasTiva =
+        technique.contains('tiva') ||
         technique.contains('venosa total') ||
-        details.contains('tiva') ||
-        details.contains('venosa total');
+        (details.contains('convers') && details.contains('tiva'));
+    final hasInhalationalGeneral =
+        technique.contains('balanceada') || technique.contains('inalat');
+    final hasGeneralIntravenous =
+        technique.contains('geral venosa') || technique.contains('geral ev');
+    final hasGeneral =
+        hasTiva ||
+        technique.contains('anestesia geral') ||
+        technique.contains('intubação orotraqueal') ||
+        technique.contains('intubacao orotraqueal') ||
+        technique.contains('máscara laríngea') ||
+        technique.contains('mascara laringea') ||
+        technique.contains('ventilação controlada') ||
+        technique.contains('ventilacao controlada') ||
+        (details.contains('convers') && details.contains('geral'));
+    final hasSedation =
+        technique.contains('sedação') || technique.contains('sedacao');
+    final hasNeuraxial =
+        technique.contains('raqui') ||
+        technique.contains('peridural') ||
+        technique.contains('neurax');
+    final hasRegional =
+        technique.contains('bloqueio') ||
+        technique.contains('regional') ||
+        technique.contains('caudal');
+
+    return _TechniqueProfile(
+      isEmpty: isEmpty,
+      hasGeneral: hasGeneral,
+      hasTiva: hasTiva,
+      hasInhalationalGeneral: hasInhalationalGeneral,
+      hasGeneralIntravenous: hasGeneralIntravenous,
+      hasSedation: hasSedation,
+      hasNeuraxial: hasNeuraxial,
+      hasRegional: hasRegional,
+    );
+  }
+
+  bool get _isTivaTechnique {
+    return _techniqueProfile.hasTiva;
+  }
+
+  bool get _showsGeneralWorkflowCards =>
+      _techniqueProfile.isEmpty || _techniqueProfile.hasGeneral;
+
+  bool get _showsSedationWorkflowCard =>
+      _techniqueProfile.isEmpty ||
+      _techniqueProfile.hasSedation ||
+      _techniqueProfile.hasPureRegionalOrNeuraxialFlow;
+
+  bool get _showsNeuraxialWorkflowCard =>
+      _techniqueProfile.isEmpty || _techniqueProfile.hasNeuraxial;
+
+  bool get _showsMechanicalVentilationCard =>
+      _techniqueProfile.isEmpty || _techniqueProfile.hasGeneral;
+
+  bool get _hasAdvancedAirwayDevice {
+    final device = _record.airway.device.toLowerCase();
+    return device.contains('tot') ||
+        device.contains('tubo') ||
+        device.contains('intub') ||
+        device.contains('traque') ||
+        device.contains('máscara laríngea') ||
+        device.contains('mascara laringea') ||
+        device.contains('mla');
+  }
+
+  bool get _hasNeuromuscularBlocker {
+    final entries = [
+      ..._record.drugs,
+      ..._lineItems(_record.maintenanceAgents),
+    ].map((item) => item.toLowerCase());
+    return entries.any(
+      (item) =>
+          item.contains('rocur') ||
+          item.contains('cisatra') ||
+          item.contains('atrac') ||
+          item.contains('vecur') ||
+          item.contains('pancur') ||
+          item.contains('succin') ||
+          item.contains('suxa'),
+    );
+  }
+
+  bool get _suggestsControlledVentilation {
+    final technique = _record.anesthesiaTechnique.toLowerCase();
+    return _hasAdvancedAirwayDevice ||
+        _hasNeuromuscularBlocker ||
+        technique.contains('ventilação controlada') ||
+        technique.contains('ventilacao controlada');
+  }
+
+  double _parsedPositiveDouble(String value) {
+    final parsed = double.tryParse(value.trim().replaceAll(',', '.'));
+    if (parsed == null || parsed <= 0) return 0;
+    return parsed;
+  }
+
+  int _roundedPositiveInt(double value) => value <= 0 ? 0 : value.round();
+
+  String _formatVentilationNumber(double value) {
+    if (value == value.roundToDouble()) {
+      return value.toStringAsFixed(0);
+    }
+    return value.toStringAsFixed(1).replaceAll('.', ',');
+  }
+
+  int _suggestedRespiratoryRate() {
+    final age = _record.patient.age;
+    switch (_record.patient.population) {
+      case PatientPopulation.adult:
+        return 12;
+      case PatientPopulation.pediatric:
+        if (age <= 1) return 25;
+        if (age <= 3) return 22;
+        if (age <= 6) return 20;
+        if (age <= 12) return 16;
+        return 14;
+      case PatientPopulation.neonatal:
+        return 30;
+    }
+  }
+
+  _VentilationSuggestion get _suggestedMechanicalVentilation {
+    final weightKg = _record.patient.weightKg > 0
+        ? _record.patient.weightKg
+        : _record.patient.birthWeightKg;
+    final hasLaparoscopy = _record.surgeryDescription.toLowerCase().contains(
+      'lapar',
+    );
+    final hasDifficultVentilationRisk =
+        _record
+            .preAnestheticAssessment
+            .difficultVentilationPredictors
+            .isNotEmpty ||
+        _record.preAnestheticAssessment.otherDifficultVentilationPredictors
+            .trim()
+            .isNotEmpty;
+
+    switch (_record.patient.population) {
+      case PatientPopulation.adult:
+        final mode = hasLaparoscopy || hasDifficultVentilationRisk
+            ? 'PCV-VG'
+            : 'VCV';
+        final vtPerKg = 7.0;
+        final vtMl = weightKg > 0 ? _roundedPositiveInt(weightKg * vtPerKg) : 0;
+        return _VentilationSuggestion(
+          reason: _suggestsControlledVentilation
+              ? 'Via aérea avançada ou bloqueador neuromuscular sugerem ventilação controlada protetora.'
+              : 'Na anestesia geral, deixar um plano ventilatório explícito ajuda a condução e revisão do caso.',
+          settings: MechanicalVentilationSettings(
+            mode: mode,
+            fio2Percent: '50',
+            tidalVolumeMl: vtMl > 0 ? '$vtMl' : '',
+            tidalVolumePerKg: _formatVentilationNumber(vtPerKg),
+            respiratoryRate: '${_suggestedRespiratoryRate()}',
+            peep: '5',
+            ieRatio: '1:2',
+            targetEtco2: '35-40',
+            notes: mode == 'PCV-VG'
+                ? 'Ajustar para manter VT ~6-8 mL/kg, pressão de platô baixa e ETCO₂ alvo.'
+                : 'Estratégia protetora intraoperatória: VT ~6-8 mL/kg e PEEP basal.',
+          ),
+        );
+      case PatientPopulation.pediatric:
+        final mode = hasLaparoscopy ? 'PCV-VG' : 'PCV';
+        final vtPerKg = 7.0;
+        final vtMl = weightKg > 0 ? _roundedPositiveInt(weightKg * vtPerKg) : 0;
+        return _VentilationSuggestion(
+          reason:
+              'Em pediatria, costuma ser útil começar com estratégia protetora e ajuste fino por complacência, escape e ETCO₂.',
+          settings: MechanicalVentilationSettings(
+            mode: mode,
+            fio2Percent: '50',
+            tidalVolumeMl: vtMl > 0 ? '$vtMl' : '',
+            tidalVolumePerKg: _formatVentilationNumber(vtPerKg),
+            respiratoryRate: '${_suggestedRespiratoryRate()}',
+            peep: '5',
+            inspiratoryPressure: '14',
+            ieRatio: '1:2',
+            targetEtco2: '35-40',
+            notes:
+                'Titular pressão e FR para manter VT ~6-8 mL/kg e ETCO₂ adequado.',
+          ),
+        );
+      case PatientPopulation.neonatal:
+        final vtPerKg = 5.0;
+        final vtMl = weightKg > 0 ? _roundedPositiveInt(weightKg * vtPerKg) : 0;
+        return _VentilationSuggestion(
+          reason:
+              'No neonato, preferir ventilação com pressões e volumes baixos, com atenção ao escape, complacência e ETCO₂.',
+          settings: MechanicalVentilationSettings(
+            mode: 'PCV',
+            fio2Percent: '30',
+            tidalVolumeMl: vtMl > 0 ? '$vtMl' : '',
+            tidalVolumePerKg: _formatVentilationNumber(vtPerKg),
+            respiratoryRate: '${_suggestedRespiratoryRate()}',
+            peep: '4',
+            inspiratoryPressure: '12',
+            ieRatio: '1:2',
+            targetEtco2: '35-45',
+            notes:
+                'Objetivar VT ~4-6 mL/kg com menor FiO₂ necessária e vigilância térmica/respiratória.',
+          ),
+        );
+    }
+  }
+
+  MechanicalVentilationSettings get _effectiveMechanicalVentilation {
+    if (_record.mechanicalVentilation.isEmpty) {
+      return _suggestedMechanicalVentilation.settings;
+    }
+    return _record.mechanicalVentilation;
+  }
+
+  DateTime? get _hemodynamicAnesthesiaEndAt => _hemodynamicService
+      .markerStartAt(_record.hemodynamicMarkers, 'Fim da anestesia');
+
+  double get _anesthesiaElapsedHours {
+    final startedAt = _hemodynamicAnesthesiaStartAt;
+    if (startedAt == null) return 0;
+    final endedAt = _hemodynamicAnesthesiaEndAt ?? DateTime.now();
+    final elapsedMinutes = endedAt.difference(startedAt).inSeconds / 60;
+    if (elapsedMinutes <= 0) return 0;
+    return elapsedMinutes / 60;
+  }
+
+  String _formatElapsedHoursLabel(double hours) {
+    if (hours <= 0) return '--';
+    if (hours < 1) return '${(hours * 60).round()} min';
+    return '${hours.toStringAsFixed(1).replaceAll('.', ',')} h';
+  }
+
+  String get _techniqueWorkflowSummary {
+    final profile = _techniqueProfile;
+    if (profile.isEmpty) {
+      return 'Escolha primeiro a técnica principal para priorizar os cards abaixo e reduzir campos desnecessários.';
+    }
+    if (profile.hasTiva) {
+      return 'Fluxo de anestesia geral TIVA ativo: via aérea, indução e manutenção em bomba ficam priorizadas, com presets EV contínua/TIVA.';
+    }
+    if (profile.hasInhalationalGeneral) {
+      return 'Fluxo de anestesia geral balanceada/inalatória ativo: via aérea, indução e manutenção destacam agentes inalatórios e consumo automático por FGF.';
+    }
+    if (profile.hasGeneralIntravenous) {
+      return 'Fluxo de anestesia geral venosa ativo: via aérea, indução e manutenção EV contínua ficam em destaque.';
+    }
+    if (profile.hasPureRegionalOrNeuraxialFlow && profile.hasSedation) {
+      return 'Fluxo regional/neuraxial com sedação ativo: sedação associada e materiais específicos seguem visíveis; anestesia geral aparece apenas se houver associação ou conversão.';
+    }
+    if (profile.hasPureRegionalOrNeuraxialFlow) {
+      return 'Fluxo regional/neuraxial ativo: priorize bloqueios, agulhas e materiais; campos de anestesia geral ficam recolhidos até uma combinação ou conversão.';
+    }
+    if (profile.hasSedation) {
+      return 'Fluxo de sedação ativo: mantenha sedação e adjuvantes em foco; via aérea e manutenção geral só entram se a técnica evoluir para anestesia geral.';
+    }
+    return 'Fluxo técnico configurado conforme a seleção atual.';
   }
 
   String _maintenanceCategoryForPreset(_MaintenancePreset preset) {
@@ -1788,12 +2192,66 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     String? encodedEntry,
   ) {
     if (!preset.isInhalational || encodedEntry == null) return 2.0;
+    final oxygen = _maintenanceOxygenFlowFromEntry(preset, encodedEntry);
+    final compressedAir = _maintenanceCompressedAirFlowFromEntry(
+      preset,
+      encodedEntry,
+    );
+    final nitrousOxide = _maintenanceNitrousOxideFlowFromEntry(
+      preset,
+      encodedEntry,
+    );
+    final summedFlow = oxygen + compressedAir + nitrousOxide;
+    if (summedFlow > 0) return summedFlow;
     final parts = encodedEntry.split('|');
     if (parts.length > 3) {
       final stored = double.tryParse(parts[3].trim());
       if (stored != null && stored > 0) return stored;
     }
     return 2.0;
+  }
+
+  double _maintenanceOxygenFlowFromEntry(
+    _MaintenancePreset preset,
+    String? encodedEntry,
+  ) {
+    if (!preset.isInhalational || encodedEntry == null) return 1.0;
+    final parts = encodedEntry.split('|');
+    if (parts.length > 5) {
+      final stored = double.tryParse(parts[5].trim());
+      if (stored != null && stored >= 0) return stored;
+    }
+    final legacyTotal = parts.length > 3
+        ? double.tryParse(parts[3].trim())
+        : null;
+    if (legacyTotal != null && legacyTotal > 0) return legacyTotal;
+    return 1.0;
+  }
+
+  double _maintenanceCompressedAirFlowFromEntry(
+    _MaintenancePreset preset,
+    String? encodedEntry,
+  ) {
+    if (!preset.isInhalational || encodedEntry == null) return 1.0;
+    final parts = encodedEntry.split('|');
+    if (parts.length > 6) {
+      final stored = double.tryParse(parts[6].trim());
+      if (stored != null && stored >= 0) return stored;
+    }
+    return parts.length > 5 ? 0 : 1.0;
+  }
+
+  double _maintenanceNitrousOxideFlowFromEntry(
+    _MaintenancePreset preset,
+    String? encodedEntry,
+  ) {
+    if (!preset.isInhalational || encodedEntry == null) return 0.0;
+    final parts = encodedEntry.split('|');
+    if (parts.length > 7) {
+      final stored = double.tryParse(parts[7].trim());
+      if (stored != null && stored >= 0) return stored;
+    }
+    return 0.0;
   }
 
   double _maintenanceVolPercentFromEntry(
@@ -1859,7 +2317,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         preset.molecularWeight <= 0) {
       return 0;
     }
-    return (3 * freshGasFlowLPerMin * volumePercent * preset.molecularWeight) /
+    return (60 * freshGasFlowLPerMin * volumePercent * preset.molecularWeight) /
         (2412 * preset.density);
   }
 
@@ -1867,11 +2325,19 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     _MaintenancePreset preset, {
     double? freshGasFlowLPerMin,
     double? volumePercent,
+    double? oxygenFlowLPerMin,
+    double? compressedAirFlowLPerMin,
+    double? nitrousOxideFlowLPerMin,
   }) {
     if (!preset.isInhalational) {
       return '${_maintenanceDetailPrefixForPreset(preset)} • ${_maintenanceBaseDetailsForPreset(preset)}';
     }
-    final effectiveFlow = freshGasFlowLPerMin ?? 2.0;
+    final effectiveOxygen = oxygenFlowLPerMin ?? 1.0;
+    final effectiveCompressedAir = compressedAirFlowLPerMin ?? 1.0;
+    final effectiveNitrousOxide = nitrousOxideFlowLPerMin ?? 0.0;
+    final effectiveFlow =
+        freshGasFlowLPerMin ??
+        (effectiveOxygen + effectiveCompressedAir + effectiveNitrousOxide);
     final effectiveVol = volumePercent ?? preset.defaultVolPercent;
     final mlPerHour = _estimateInhalationalMlPerHour(
       preset,
@@ -1880,7 +2346,14 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     );
     final flowLabel = effectiveFlow.toStringAsFixed(1).replaceAll('.', ',');
     final volLabel = effectiveVol.toStringAsFixed(1).replaceAll('.', ',');
-    return '$volLabel vol% • ~${mlPerHour.toStringAsFixed(1)} mL/h (estimado com FGF $flowLabel L/min)';
+    final oxygenLabel = effectiveOxygen.toStringAsFixed(1).replaceAll('.', ',');
+    final compressedAirLabel = effectiveCompressedAir
+        .toStringAsFixed(1)
+        .replaceAll('.', ',');
+    final nitrousOxideLabel = effectiveNitrousOxide
+        .toStringAsFixed(1)
+        .replaceAll('.', ',');
+    return '$volLabel vol% • O₂ $oxygenLabel + ar $compressedAirLabel + N₂O $nitrousOxideLabel = FGF $flowLabel L/min • ~${mlPerHour.toStringAsFixed(1)} mL/h';
   }
 
   String _encodeMaintenanceEntry(
@@ -1889,11 +2362,22 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     required String detail,
     double? freshGasFlowLPerMin,
     double? volumePercent,
+    double? oxygenFlowLPerMin,
+    double? compressedAirFlowLPerMin,
+    double? nitrousOxideFlowLPerMin,
   }) {
     final parts = <String>[preset.name, category, detail];
     if (preset.isInhalational) {
-      parts.add((freshGasFlowLPerMin ?? 2.0).toStringAsFixed(1));
+      final oxygen = oxygenFlowLPerMin ?? 1.0;
+      final compressedAir = compressedAirFlowLPerMin ?? 1.0;
+      final nitrousOxide = nitrousOxideFlowLPerMin ?? 0.0;
+      final totalFlow =
+          freshGasFlowLPerMin ?? (oxygen + compressedAir + nitrousOxide);
+      parts.add(totalFlow.toStringAsFixed(1));
       parts.add((volumePercent ?? preset.defaultVolPercent).toStringAsFixed(1));
+      parts.add(oxygen.toStringAsFixed(1));
+      parts.add(compressedAir.toStringAsFixed(1));
+      parts.add(nitrousOxide.toStringAsFixed(1));
     }
     return parts.join('|');
   }
@@ -1927,6 +2411,18 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                 currentPreset,
                 item,
               ),
+              oxygenFlowLPerMin: _maintenanceOxygenFlowFromEntry(
+                currentPreset,
+                item,
+              ),
+              compressedAirFlowLPerMin: _maintenanceCompressedAirFlowFromEntry(
+                currentPreset,
+                item,
+              ),
+              nitrousOxideFlowLPerMin: _maintenanceNitrousOxideFlowFromEntry(
+                currentPreset,
+                item,
+              ),
             )
           : detail;
       refreshed.add(
@@ -1939,6 +2435,18 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             item,
           ),
           volumePercent: _maintenanceVolPercentFromEntry(currentPreset, item),
+          oxygenFlowLPerMin: _maintenanceOxygenFlowFromEntry(
+            currentPreset,
+            item,
+          ),
+          compressedAirFlowLPerMin: _maintenanceCompressedAirFlowFromEntry(
+            currentPreset,
+            item,
+          ),
+          nitrousOxideFlowLPerMin: _maintenanceNitrousOxideFlowFromEntry(
+            currentPreset,
+            item,
+          ),
         ),
       );
     }
@@ -2136,6 +2644,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
               volumePercent: preset.isInhalational
                   ? preset.defaultVolPercent
                   : null,
+              oxygenFlowLPerMin: preset.isInhalational ? 1.0 : null,
+              compressedAirFlowLPerMin: preset.isInhalational ? 1.0 : null,
+              nitrousOxideFlowLPerMin: preset.isInhalational ? 0.0 : null,
             ),
           )
         : _removeMaintenanceEntry(preset.name);
@@ -2160,6 +2671,18 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
               existing,
             ),
             volumePercent: _maintenanceVolPercentFromEntry(preset, existing),
+            oxygenFlowLPerMin: _maintenanceOxygenFlowFromEntry(
+              preset,
+              existing,
+            ),
+            compressedAirFlowLPerMin: _maintenanceCompressedAirFlowFromEntry(
+              preset,
+              existing,
+            ),
+            nitrousOxideFlowLPerMin: _maintenanceNitrousOxideFlowFromEntry(
+              preset,
+              existing,
+            ),
           );
     final result = await showDialog<MaintenanceEntryEditResult>(
       context: context,
@@ -2174,11 +2697,30 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           existing,
         ),
         initialVolumePercent: _maintenanceVolPercentFromEntry(preset, existing),
-        onInhalationalChanged: (volumePercent, freshGasFlowLPerMin) =>
-            _maintenancePresetDetails(
+        initialOxygenFlowLPerMin: _maintenanceOxygenFlowFromEntry(
+          preset,
+          existing,
+        ),
+        initialCompressedAirFlowLPerMin: _maintenanceCompressedAirFlowFromEntry(
+          preset,
+          existing,
+        ),
+        initialNitrousOxideFlowLPerMin: _maintenanceNitrousOxideFlowFromEntry(
+          preset,
+          existing,
+        ),
+        onInhalationalChanged:
+            (
+              volumePercent,
+              oxygenFlowLPerMin,
+              compressedAirFlowLPerMin,
+              nitrousOxideFlowLPerMin,
+            ) => _maintenancePresetDetails(
               preset,
-              freshGasFlowLPerMin: freshGasFlowLPerMin,
               volumePercent: volumePercent,
+              oxygenFlowLPerMin: oxygenFlowLPerMin,
+              compressedAirFlowLPerMin: compressedAirFlowLPerMin,
+              nitrousOxideFlowLPerMin: nitrousOxideFlowLPerMin,
             ),
       ),
     );
@@ -2197,9 +2739,15 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                       preset,
                       freshGasFlowLPerMin: result.freshGasFlowLPerMin,
                       volumePercent: result.volumePercent,
+                      oxygenFlowLPerMin: result.oxygenFlowLPerMin,
+                      compressedAirFlowLPerMin: result.compressedAirFlowLPerMin,
+                      nitrousOxideFlowLPerMin: result.nitrousOxideFlowLPerMin,
                     ),
               freshGasFlowLPerMin: result.freshGasFlowLPerMin,
               volumePercent: result.volumePercent,
+              oxygenFlowLPerMin: result.oxygenFlowLPerMin,
+              compressedAirFlowLPerMin: result.compressedAirFlowLPerMin,
+              nitrousOxideFlowLPerMin: result.nitrousOxideFlowLPerMin,
             ),
           );
     setState(() {
@@ -2598,10 +3146,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   bool get _hasPendingTimeOut =>
       _record.timeOutChecklist.isEmpty || !_record.timeOutCompleted;
 
-  bool get _usesNeuraxialTechnique {
-    final text = _record.anesthesiaTechnique.toLowerCase();
-    return text.contains('raqui') || text.contains('peridural');
-  }
+  bool get _usesNeuraxialTechnique => _techniqueProfile.hasNeuraxial;
 
   String get _caseStageLabel {
     if (!_hasAnesthesiaStartMarker) return 'Aguardando início';
@@ -3348,6 +3893,27 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     await _persistRecord();
   }
 
+  Future<void> _editMechanicalVentilation() async {
+    final suggestion = _suggestedMechanicalVentilation;
+    final current = _record.mechanicalVentilation.isEmpty
+        ? suggestion.settings
+        : _record.mechanicalVentilation;
+    final result = await showDialog<MechanicalVentilationSettings>(
+      context: context,
+      builder: (_) => MechanicalVentilationDialog(
+        initialSettings: current,
+        suggestedSettings: suggestion.settings,
+        suggestionReason: suggestion.reason,
+        population: _record.patient.population,
+      ),
+    );
+    if (result == null) return;
+    setState(() {
+      _record = _record.copyWith(mechanicalVentilation: result);
+    });
+    await _persistRecord();
+  }
+
   Future<void> _editReposicaoVolemica() async {
     final inferredSurgicalSize = _inferSurgicalSizeFromDescription();
     final result = await showDialog<FluidBalanceDialogResult>(
@@ -3459,13 +4025,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   Future<void> _editNeuraxialNeedles() async {
     final result = await showDialog<List<String>>(
       context: context,
-      builder: (_) => ListFieldDialog(
-        title: 'Agulhas para raqui / peridural',
-        label: 'Agulhas neuraxiais',
-        initialItems: _record.neuraxialNeedles,
-        hintText:
-            'Ex: Quincke 25G; Whitacre 27G; Tuohy 18G; cateter peridural 20G',
-      ),
+      builder: (_) =>
+          NeuraxialNeedlesDialog(initialItems: _record.neuraxialNeedles),
     );
     if (result == null) return;
     setState(() {
@@ -3477,13 +4038,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   Future<void> _editAnesthesiaMaterials() async {
     final result = await showDialog<List<String>>(
       context: context,
-      builder: (_) => ListFieldDialog(
-        title: 'Itens adicionais / ajuste manual',
-        label: 'Itens extras / ajustes / quantidades',
-        initialItems: _record.anesthesiaMaterials,
-        hintText:
-            'Ex: equipo de infusão 1 un; filtro HME 1 un; item não capturado automaticamente',
-      ),
+      builder: (_) =>
+          _AnesthesiaMaterialsDialog(initialItems: _record.anesthesiaMaterials),
     );
     if (result == null) return;
     setState(() {
@@ -3835,6 +4391,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                       onMedicationsTap: _editPatientMedications,
                     ),
                     const SizedBox(height: 10),
+                    SizedBox(height: 240, child: _buildEventsCard()),
+                    const SizedBox(height: 12),
                     desktop
                         ? _buildDesktopTopCardsAndFullWidthChart()
                         : Column(
@@ -4056,43 +4614,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           second: _buildVenousAccessCard(),
           third: _buildArterialAccessCard(),
         ),
-        const SizedBox(height: 12),
-        _buildEqualWidthTripletRow(
-          first: _buildMonitoringCard(),
-          second: _buildTimeOutCard(),
-          third: _buildTechniqueCard(),
-        ),
-        const SizedBox(height: 12),
-        _buildEqualWidthTripletRow(
-          first: _buildDrugsCard(),
-          second: _buildAdjunctsCard(),
-          third: _buildNeuraxialNeedlesCard(),
-        ),
-        const SizedBox(height: 12),
-        _buildEqualWidthTripletRow(
-          first: _buildAirwayCard(),
-          second: _buildMaintenanceCard(),
-          third: _buildVasoactiveDrugsCard(),
-        ),
-        const SizedBox(height: 12),
-        _buildEqualWidthTripletRow(
-          first: _buildOtherMedicationsCard(),
-          second: _buildAnesthesiaMaterialsCard(),
-          third: _buildVolumeReplacementCard(),
-        ),
-        const SizedBox(height: 12),
-        _buildEqualWidthTripletRow(
-          first: _buildFluidBalanceCard(),
-          second: _buildSurgerySummaryCard(
-            key: const Key('surgery-destination-card'),
-            tapKey: const Key('surgery-destination-entry'),
-            title: '21) Destino pós-operatório',
-            icon: Icons.local_hospital_outlined,
-            value: _displayPatientDestination,
-            section: SurgeryInfoSection.destination,
-            isCompleted: _record.patientDestination.trim().isNotEmpty,
-          ),
-          third: _buildUsageSummaryCard(),
+        const SizedBox(height: 14),
+        _buildOperationalCardGrid(
+          _buildTechniqueAwareOperationalCards().skip(3).toList(),
         ),
         const SizedBox(height: 14),
         _buildSectionHeader(
@@ -4102,8 +4626,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         ),
         const SizedBox(height: 10),
         _buildChartSection(dominant: true),
-        const SizedBox(height: 12),
-        SizedBox(height: 220, child: _buildEventsCard()),
       ],
     );
   }
@@ -4132,6 +4654,68 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         );
       },
     );
+  }
+
+  List<Widget> _buildTechniqueAwareOperationalCards() {
+    return [
+      _buildAntibioticProphylaxisCard(),
+      _buildVenousAccessCard(),
+      _buildArterialAccessCard(),
+      _buildMonitoringCard(),
+      _buildTimeOutCard(),
+      if (_showsSedationWorkflowCard) _buildTechniqueCard(),
+      if (_showsGeneralWorkflowCards) _buildDrugsCard(),
+      _buildAdjunctsCard(),
+      if (_showsNeuraxialWorkflowCard) _buildNeuraxialNeedlesCard(),
+      if (_showsGeneralWorkflowCards) _buildAirwayCard(),
+      if (_showsMechanicalVentilationCard) _buildMechanicalVentilationCard(),
+      if (_showsGeneralWorkflowCards) _buildMaintenanceCard(),
+      _buildVasoactiveDrugsCard(),
+      _buildOtherMedicationsCard(),
+      _buildAnesthesiaMaterialsCard(),
+      _buildVolumeReplacementCard(),
+      _buildFluidBalanceCard(),
+      _buildSurgerySummaryCard(
+        key: const Key('surgery-destination-card'),
+        tapKey: const Key('surgery-destination-entry'),
+        title: '22) Destino pós-operatório',
+        icon: Icons.local_hospital_outlined,
+        value: _displayPatientDestination,
+        section: SurgeryInfoSection.destination,
+        isCompleted: _record.patientDestination.trim().isNotEmpty,
+      ),
+      _buildUsageSummaryCard(),
+    ];
+  }
+
+  Widget _buildOperationalCardGrid(List<Widget> cards) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 12.0;
+        final cardWidth = (constraints.maxWidth - (spacing * 2)) / 3;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: 12,
+          children: cards
+              .map((card) => SizedBox(width: cardWidth, child: card))
+              .toList(),
+        );
+      },
+    );
+  }
+
+  List<Widget> _withVerticalSpacing(
+    List<Widget> widgets, {
+    double spacing = 12,
+  }) {
+    if (widgets.isEmpty) return const [];
+    final result = <Widget>[];
+    for (var index = 0; index < widgets.length; index++) {
+      if (index > 0) result.add(SizedBox(height: spacing));
+      result.add(widgets[index]);
+    }
+    return result;
   }
 
   // ignore: unused_element
@@ -4220,6 +4804,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Widget _buildMobileOverview() {
+    final operationalCards = _buildTechniqueAwareOperationalCards();
+
     return Column(
       children: [
         _buildSurgerySummaryCard(
@@ -4281,48 +4867,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           section: SurgeryInfoSection.notes,
           isCompleted: _record.operationalNotes.trim().isNotEmpty,
         ),
-        const SizedBox(height: 12),
-        _buildAntibioticProphylaxisCard(),
-        const SizedBox(height: 12),
-        _buildVenousAccessCard(),
-        const SizedBox(height: 12),
-        _buildArterialAccessCard(),
-        const SizedBox(height: 12),
-        _buildMonitoringCard(),
-        const SizedBox(height: 12),
-        _buildTimeOutCard(),
-        const SizedBox(height: 12),
-        _buildTechniqueCard(),
-        const SizedBox(height: 12),
-        _buildDrugsCard(),
-        const SizedBox(height: 12),
-        _buildAdjunctsCard(),
-        const SizedBox(height: 12),
-        _buildNeuraxialNeedlesCard(),
-        const SizedBox(height: 12),
-        _buildAirwayCard(),
-        const SizedBox(height: 12),
-        _buildMaintenanceCard(),
-        const SizedBox(height: 12),
-        _buildOtherMedicationsCard(),
-        const SizedBox(height: 12),
-        _buildAnesthesiaMaterialsCard(),
-        const SizedBox(height: 12),
-        _buildVasoactiveDrugsCard(),
-        const SizedBox(height: 12),
-        _buildVolumeReplacementCard(),
-        const SizedBox(height: 12),
-        _buildFluidBalanceCard(),
-        const SizedBox(height: 12),
-        _buildSurgerySummaryCard(
-          key: const Key('surgery-destination-card'),
-          tapKey: const Key('surgery-destination-entry'),
-          title: '21) Destino pós-operatório',
-          icon: Icons.local_hospital_outlined,
-          value: _displayPatientDestination,
-          section: SurgeryInfoSection.destination,
-          isCompleted: _record.patientDestination.trim().isNotEmpty,
-        ),
+        ..._withVerticalSpacing(operationalCards),
       ],
     );
   }
@@ -4503,8 +5048,169 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     );
   }
 
+  List<String> _mechanicalVentilationSummarySegments(
+    MechanicalVentilationSettings settings,
+  ) {
+    return [
+      if (settings.mode.trim().isNotEmpty) settings.mode.trim(),
+      if (settings.tidalVolumeMl.trim().isNotEmpty)
+        'VT ${settings.tidalVolumeMl.trim()} mL',
+      if (settings.tidalVolumePerKg.trim().isNotEmpty)
+        '${settings.tidalVolumePerKg.trim()} mL/kg',
+      if (settings.respiratoryRate.trim().isNotEmpty)
+        'FR ${settings.respiratoryRate.trim()}',
+      if (settings.peep.trim().isNotEmpty) 'PEEP ${settings.peep.trim()}',
+      if (settings.fio2Percent.trim().isNotEmpty)
+        'FiO₂ ${settings.fio2Percent.trim()}%',
+    ];
+  }
+
+  Widget _buildMechanicalVentilationCard() {
+    final suggestion = _suggestedMechanicalVentilation;
+    final settings = _effectiveMechanicalVentilation;
+    final summarySegments = _mechanicalVentilationSummarySegments(settings);
+    final status = _record.mechanicalVentilation.isEmpty
+        ? 'Sugestão: ${suggestion.settings.mode}'
+        : settings.mode.trim().isEmpty
+        ? 'Ventilação mecânica sem modo definido'
+        : settings.mode.trim();
+    final summary = summarySegments.isEmpty
+        ? 'Registrar modo e parâmetros ventilatórios'
+        : summarySegments.take(3).join(' • ');
+
+    return KeyedSubtree(
+      key: _ventilationSectionKey,
+      child: PanelCard(
+        key: const Key('ventilation-card'),
+        title: '16) Ventilação mecânica',
+        titleColor: _airwayFluidRowColor,
+        icon: Icons.air_outlined,
+        minHeight: 248,
+        isAttention:
+            _suggestsControlledVentilation &&
+            _record.mechanicalVentilation.isEmpty,
+        isCompleted: !_record.mechanicalVentilation.isEmpty,
+        collapsedChild: _buildCollapsedPanelSummary(
+          status: status,
+          summary: summary,
+        ),
+        trailing: AddButton(
+          label: _record.mechanicalVentilation.isEmpty
+              ? 'Aplicar plano'
+              : 'Editar',
+          onTap: _editMechanicalVentilation,
+        ),
+        child: InkWell(
+          key: const Key('ventilation-entry'),
+          borderRadius: BorderRadius.circular(18),
+          onTap: _editMechanicalVentilation,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF4F9FF),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFD8E6F4)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Sugestão contextual',
+                      style: TextStyle(
+                        color: Color(0xFF17324D),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      suggestion.reason,
+                      style: const TextStyle(
+                        color: Color(0xFF5D7288),
+                        fontWeight: FontWeight.w600,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 10,
+                children: [
+                  if (settings.mode.trim().isNotEmpty)
+                    _detailChip('Modo', settings.mode.trim()),
+                  if (settings.tidalVolumeMl.trim().isNotEmpty)
+                    _detailChip('VT', '${settings.tidalVolumeMl.trim()} mL'),
+                  if (settings.tidalVolumePerKg.trim().isNotEmpty)
+                    _detailChip(
+                      'VT/kg',
+                      '${settings.tidalVolumePerKg.trim()} mL/kg',
+                    ),
+                  if (settings.respiratoryRate.trim().isNotEmpty)
+                    _detailChip('FR', settings.respiratoryRate.trim()),
+                  if (settings.peep.trim().isNotEmpty)
+                    _detailChip('PEEP', settings.peep.trim()),
+                  if (settings.fio2Percent.trim().isNotEmpty)
+                    _detailChip('FiO₂', '${settings.fio2Percent.trim()}%'),
+                  if (settings.ieRatio.trim().isNotEmpty)
+                    _detailChip('I:E', settings.ieRatio.trim()),
+                  if (settings.targetEtco2.trim().isNotEmpty)
+                    _detailChip('ETCO₂ alvo', settings.targetEtco2.trim()),
+                ],
+              ),
+              if (settings.notes.trim().isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  settings.notes.trim(),
+                  style: const TextStyle(
+                    color: Color(0xFF5D7288),
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _detailChip(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFDCE7F3)),
+      ),
+      child: RichText(
+        text: TextSpan(
+          style: const TextStyle(
+            color: Color(0xFF17324D),
+            fontWeight: FontWeight.w600,
+          ),
+          children: [
+            TextSpan(
+              text: '$label: ',
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            TextSpan(text: value),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildVenousAccessCard() {
-    final successfulEntries = _venousAccesses.where((item) => !_isLossEntry(item)).toList();
+    final successfulEntries = _venousAccesses
+        .where((item) => !_isLossEntry(item))
+        .toList();
     final lossEntries = _venousAccesses.where(_isLossEntry).toList();
     final status = _venousAccesses.isEmpty
         ? 'Nenhum acesso venoso registrado'
@@ -4529,7 +5235,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Widget _buildArterialAccessCard() {
-    final successfulEntries = _arterialAccesses.where((item) => !_isLossEntry(item)).toList();
+    final successfulEntries = _arterialAccesses
+        .where((item) => !_isLossEntry(item))
+        .toList();
     final lossEntries = _arterialAccesses.where(_isLossEntry).toList();
     final status = _arterialAccesses.isEmpty
         ? 'Nenhum acesso arterial registrado'
@@ -4725,14 +5433,11 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       children: [
         _buildSectionHeader(
           title: 'Registro Intraoperatório',
-          subtitle: 'Técnica anestésica detalhada e condução do caso',
+          subtitle: 'Condução hemodinâmica e documentação contínua do caso',
           accent: const Color(0xFF4A5568),
         ),
         const SizedBox(height: 10),
-        KeyedSubtree(
-          key: _eventsSectionKey,
-          child: SizedBox(height: 220, child: _buildEventsCard()),
-        ),
+        _buildChartSection(dominant: true),
       ],
     );
   }
@@ -5222,6 +5927,34 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     );
   }
 
+  List<String> _inhalationalConsumptionSummaries() {
+    final summaries = <String>[];
+    final elapsedHours = _anesthesiaElapsedHours;
+    for (final preset in _maintenancePresets.where(
+      (item) => item.isInhalational,
+    )) {
+      final encodedEntry = _findMaintenanceEntry(preset.name);
+      if (encodedEntry == null) continue;
+      final mlPerHour = _estimateInhalationalMlPerHour(
+        preset,
+        freshGasFlowLPerMin: _maintenanceFreshGasFlowFromEntry(
+          preset,
+          encodedEntry,
+        ),
+        volumePercent: _maintenanceVolPercentFromEntry(preset, encodedEntry),
+      );
+      final accumulated = mlPerHour * elapsedHours;
+      final hourlyLabel = mlPerHour.toStringAsFixed(1).replaceAll('.', ',');
+      final accumulatedLabel = accumulated
+          .toStringAsFixed(1)
+          .replaceAll('.', ',');
+      summaries.add(
+        '${preset.name}: $hourlyLabel mL/h${elapsedHours > 0 ? ' • acumulado $accumulatedLabel mL em ${_formatElapsedHoursLabel(elapsedHours)}' : ''}',
+      );
+    }
+    return summaries;
+  }
+
   Widget _buildTimeOutCard() {
     final completed = _record.timeOutCompleted;
     final summary = _record.timeOutChecklist.isEmpty
@@ -5383,71 +6116,87 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Widget _buildEventsCard() {
-    return PanelCard(
-      key: const Key('events-card'),
-      title: 'Técnica anestésica',
-      titleColor: _techniqueRowColor,
-      icon: Icons.description_outlined,
-      fillChild: true,
-      isAttention: _hasPendingTechnique || _hasPendingTechniqueDetails,
-      isCompleted:
-          _record.anesthesiaTechnique.trim().isNotEmpty &&
-          _record.anesthesiaTechniqueDetails.trim().isNotEmpty,
-      trailing: AddButton(
-        label: 'Editar técnica',
-        onTap: _editTecnicaAnestesica,
-      ),
-      child: InkWell(
-        key: const Key('events-entry'),
-        borderRadius: BorderRadius.circular(18),
-        onTap: _editTecnicaAnestesica,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              LabeledSurface(
-                label: 'Técnicas selecionadas',
-                child: _record.anesthesiaTechnique.trim().isEmpty
-                    ? const Text(
-                        'Toque para selecionar a técnica.',
-                        style: TextStyle(
-                          color: Color(0xFF7A8EA5),
-                          fontWeight: FontWeight.w700,
+    return KeyedSubtree(
+      key: _eventsSectionKey,
+      child: PanelCard(
+        key: const Key('events-card'),
+        title: 'Técnica anestésica',
+        titleColor: _techniqueRowColor,
+        icon: Icons.description_outlined,
+        fillChild: true,
+        isAttention: _hasPendingTechnique || _hasPendingTechniqueDetails,
+        isCompleted:
+            _record.anesthesiaTechnique.trim().isNotEmpty &&
+            _record.anesthesiaTechniqueDetails.trim().isNotEmpty,
+        trailing: AddButton(
+          label: 'Editar técnica',
+          onTap: _editTecnicaAnestesica,
+        ),
+        child: InkWell(
+          key: const Key('events-entry'),
+          borderRadius: BorderRadius.circular(18),
+          onTap: _editTecnicaAnestesica,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                LabeledSurface(
+                  label: 'Técnicas selecionadas',
+                  child: _record.anesthesiaTechnique.trim().isEmpty
+                      ? const Text(
+                          'Toque para selecionar a técnica.',
+                          style: TextStyle(
+                            color: Color(0xFF7A8EA5),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        )
+                      : Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: _record.anesthesiaTechnique
+                              .split('\n')
+                              .where((item) => item.trim().isNotEmpty)
+                              .map(
+                                (item) => SoftTag(
+                                  text: item,
+                                  color: const Color(0xFFF1EAFE),
+                                  textColor: _techniqueRowColor,
+                                ),
+                              )
+                              .toList(),
                         ),
-                      )
-                    : Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _record.anesthesiaTechnique
-                            .split('\n')
-                            .where((item) => item.trim().isNotEmpty)
-                            .map(
-                              (item) => SoftTag(
-                                text: item,
-                                color: const Color(0xFFF1EAFE),
-                                textColor: _techniqueRowColor,
-                              ),
-                            )
-                            .toList(),
-                      ),
-              ),
-              const SizedBox(height: 12),
-              LabeledSurface(
-                label: 'Descrição breve',
-                child: Text(
-                  _record.anesthesiaTechniqueDetails.trim().isEmpty
-                      ? 'Toque para descrever fases da técnica, bloqueios, peridural, raqui, anestesia geral e sedação conforme o contexto do prontuário.'
-                      : _record.anesthesiaTechniqueDetails.trim(),
-                  style: TextStyle(
-                    color: _record.anesthesiaTechniqueDetails.trim().isEmpty
-                        ? const Color(0xFF7A8EA5)
-                        : const Color(0xFF17324D),
-                    fontWeight: FontWeight.w600,
-                    height: 1.45,
+                ),
+                const SizedBox(height: 12),
+                LabeledSurface(
+                  label: 'Descrição breve',
+                  child: Text(
+                    _record.anesthesiaTechniqueDetails.trim().isEmpty
+                        ? 'Toque para descrever fases da técnica, bloqueios, peridural, raqui, anestesia geral e sedação conforme o contexto do prontuário.'
+                        : _record.anesthesiaTechniqueDetails.trim(),
+                    style: TextStyle(
+                      color: _record.anesthesiaTechniqueDetails.trim().isEmpty
+                          ? const Color(0xFF7A8EA5)
+                          : const Color(0xFF17324D),
+                      fontWeight: FontWeight.w600,
+                      height: 1.45,
+                    ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                LabeledSurface(
+                  label: 'Fluxo guiado pelos cards abaixo',
+                  child: Text(
+                    key: const Key('technique-workflow-summary'),
+                    _techniqueWorkflowSummary,
+                    style: const TextStyle(
+                      color: Color(0xFF17324D),
+                      fontWeight: FontWeight.w600,
+                      height: 1.45,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -5618,7 +6367,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       child: _buildCompactOperationalCard(
         key: const Key('other-medications-card'),
         tapKey: const Key('other-medications-entry'),
-        title: '17) Outras medicações',
+        title: '18) Outras medicações',
         titleColor: _medicationsRowColor,
         icon: Icons.healing_outlined,
         minHeight: 92,
@@ -5631,17 +6380,24 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Widget _buildNeuraxialNeedlesCard() {
+    final successfulEntries = _record.neuraxialNeedles
+        .where((item) => !_isLossEntry(item))
+        .toList();
+    final lossEntries = _record.neuraxialNeedles.where(_isLossEntry).toList();
     final status = _record.neuraxialNeedles.isEmpty
         ? 'Nenhuma agulha neuraxial registrada'
-        : _record.neuraxialNeedles.first;
+        : successfulEntries.isNotEmpty
+        ? successfulEntries.first
+        : _lossEntryLabel(lossEntries.first);
     final summary = _record.neuraxialNeedles.isEmpty
         ? (_usesNeuraxialTechnique
               ? 'Relacionar agulhas usadas na raqui/peridural'
               : 'Preencha se houver técnica neuraxial')
-        : '${_record.neuraxialNeedles.length} item(ns) registrados';
+        : '${successfulEntries.length} agulha(s) principal(is) • ${lossEntries.length} consumo(s) extra';
     return KeyedSubtree(
       key: _neuraxialNeedlesSectionKey,
       child: _buildCompactOperationalCard(
+        key: const Key('neuraxial-needles-card'),
         title: 'Agulhas raqui / peridural',
         titleColor: _airwayFluidRowColor,
         icon: Icons.vaccines_outlined,
@@ -5657,15 +6413,21 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Widget _buildAnesthesiaMaterialsCard() {
+    final displayEntries = _record.anesthesiaMaterials
+        .map(_manualMaterialEntryLabel)
+        .where((item) => item.trim().isNotEmpty)
+        .toList();
     final status = _record.anesthesiaMaterials.isEmpty
         ? 'Nenhum item adicional registrado'
-        : _record.anesthesiaMaterials.first;
+        : displayEntries.first;
     final summary = _record.anesthesiaMaterials.isEmpty
         ? 'Use este campo apenas para itens adicionais ou ajustes manuais que nao apareceram automaticamente no consolidado'
         : '${_record.anesthesiaMaterials.length} item(ns) registrados';
     return KeyedSubtree(
       key: _materialsSectionKey,
       child: _buildCompactOperationalCard(
+        key: const Key('materials-card'),
+        tapKey: const Key('materials-entry'),
         title: 'Itens adicionais / ajuste manual',
         titleColor: _medicationsRowColor,
         icon: Icons.inventory_2_outlined,
@@ -5691,25 +6453,24 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return '$normalizedGroup|$normalizedName';
   }
 
-  bool _isLossEntry(String entry) => entry.startsWith('__LOSS__|');
+  bool _isLossEntry(String entry) => _isEncodedLossEntry(entry);
 
-  _LossEntry? _decodeLossEntry(String entry) {
-    if (!_isLossEntry(entry)) return null;
-    final parts = entry.split('|');
-    if (parts.length < 4) return null;
-    return _LossEntry(
-      material: parts[1].trim(),
-      quantity: parts[2].trim(),
-      reason: parts.sublist(3).join(' | ').trim(),
-    );
-  }
+  _LossEntry? _decodeLossEntry(String entry) => _decodeEncodedLossEntry(entry);
 
-  String _lossEntryLabel(String entry) {
-    final decoded = _decodeLossEntry(entry);
-    if (decoded == null) return entry;
-    final quantity = decoded.quantity.isEmpty ? 'quantidade não informada' : decoded.quantity;
-    final reason = decoded.reason.isEmpty ? 'motivo não informado' : decoded.reason;
-    return 'Perda: ${decoded.material} • $quantity • $reason';
+  String _lossEntryLabel(String entry) => _formatLossEntryLabel(entry);
+
+  bool _isOxygenTherapyEntry(String entry) =>
+      _isEncodedOxygenTherapyEntry(entry);
+
+  _OxygenTherapyEntry? _decodeOxygenTherapyEntry(String entry) =>
+      _decodeEncodedOxygenTherapyEntry(entry);
+
+  String _manualMaterialEntryLabel(String entry) {
+    if (_isLossEntry(entry)) return _lossEntryLabel(entry);
+    if (_isOxygenTherapyEntry(entry)) {
+      return _formatOxygenTherapyEntryLabel(entry);
+    }
+    return entry.trim();
   }
 
   void _addUsageItem(
@@ -5772,12 +6533,52 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }) {
     return entries
         .map((entry) => entry.trim())
-        .where((entry) => entry.isNotEmpty)
+        .where(
+          (entry) =>
+              entry.isNotEmpty &&
+              !_isLossEntry(entry) &&
+              !_isOxygenTherapyEntry(entry),
+        )
         .map(
           (entry) => _UsageSummaryItem(
             group: group,
             name: entry,
             quantity: quantity,
+            priority: priority,
+          ),
+        )
+        .toList();
+  }
+
+  List<_UsageSummaryItem> _usageItemsFromNeuraxialNeedles() {
+    return _record.neuraxialNeedles
+        .map((entry) => entry.trim())
+        .where((entry) => entry.isNotEmpty && !_isLossEntry(entry))
+        .map(
+          (entry) => _UsageSummaryItem(
+            group: 'Agulhas neuraxiais',
+            name: entry,
+            quantity: '1 un',
+            priority: 20,
+          ),
+        )
+        .toList();
+  }
+
+  List<_UsageSummaryItem> _usageItemsFromLossEntries(
+    String group,
+    List<String> entries, {
+    int priority = 90,
+  }) {
+    return entries
+        .map(_decodeLossEntry)
+        .whereType<_LossEntry>()
+        .map(
+          (entry) => _UsageSummaryItem(
+            group: group,
+            name: entry.material,
+            quantity: entry.quantity,
+            note: entry.reason,
             priority: priority,
           ),
         )
@@ -5828,7 +6629,12 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   List<_UsageSummaryItem> _usageItemsFromManualMaterials() {
     return _record.anesthesiaMaterials
         .map((entry) => entry.trim())
-        .where((entry) => entry.isNotEmpty)
+        .where(
+          (entry) =>
+              entry.isNotEmpty &&
+              !_isLossEntry(entry) &&
+              !_isOxygenTherapyEntry(entry),
+        )
         .map(
           (entry) => _UsageSummaryItem(
             group: 'Ajuste manual',
@@ -5837,6 +6643,122 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           ),
         )
         .toList();
+  }
+
+  List<_UsageSummaryItem> _usageItemsFromManualOxygenTherapy() {
+    return _record.anesthesiaMaterials
+        .map(_decodeOxygenTherapyEntry)
+        .whereType<_OxygenTherapyEntry>()
+        .map(
+          (entry) => _UsageSummaryItem(
+            group: 'Oxigenoterapia',
+            name: _oxygenTherapyDeviceLabel(entry.device),
+            quantity: '${_formatLitersLabel(entry.totalLiters)} L',
+            note:
+                '${_formatFlowLabel(entry.flowLPerMin)} L/min • ${_formatDurationMinutesLabel(entry.minutes)}',
+            priority: 18,
+          ),
+        )
+        .toList();
+  }
+
+  List<_UsageSummaryItem> _usageItemsFromMaintenanceGasFlows() {
+    final elapsedHours = _anesthesiaElapsedHours;
+    final elapsedMinutes = elapsedHours * 60;
+    final oxygenNotes = <String>[];
+    final compressedAirNotes = <String>[];
+    final nitrousOxideNotes = <String>[];
+    double oxygenTotalLiters = 0;
+    double compressedAirTotalLiters = 0;
+    double nitrousOxideTotalLiters = 0;
+
+    for (final preset in _maintenancePresets.where(
+      (item) => item.isInhalational,
+    )) {
+      final encodedEntry = _findMaintenanceEntry(preset.name);
+      if (encodedEntry == null) continue;
+
+      final oxygenFlow = _maintenanceOxygenFlowFromEntry(preset, encodedEntry);
+      final compressedAirFlow = _maintenanceCompressedAirFlowFromEntry(
+        preset,
+        encodedEntry,
+      );
+      final nitrousOxideFlow = _maintenanceNitrousOxideFlowFromEntry(
+        preset,
+        encodedEntry,
+      );
+
+      void addGasUsage({
+        required double flowLPerMin,
+        required List<String> notes,
+        required void Function(double liters) addToTotal,
+        required String source,
+      }) {
+        if (flowLPerMin <= 0) return;
+        final flowLabel = _formatFlowLabel(flowLPerMin);
+        if (elapsedMinutes > 0) {
+          final liters = flowLPerMin * elapsedMinutes;
+          addToTotal(liters);
+          notes.add(
+            '$source $flowLabel L/min • ${_formatElapsedHoursLabel(elapsedHours)}',
+          );
+          return;
+        }
+        notes.add('$source $flowLabel L/min • tempo anestésico não informado');
+      }
+
+      addGasUsage(
+        flowLPerMin: oxygenFlow,
+        notes: oxygenNotes,
+        addToTotal: (liters) => oxygenTotalLiters += liters,
+        source: '${preset.name} (O₂)',
+      );
+      addGasUsage(
+        flowLPerMin: compressedAirFlow,
+        notes: compressedAirNotes,
+        addToTotal: (liters) => compressedAirTotalLiters += liters,
+        source: '${preset.name} (ar)',
+      );
+      addGasUsage(
+        flowLPerMin: nitrousOxideFlow,
+        notes: nitrousOxideNotes,
+        addToTotal: (liters) => nitrousOxideTotalLiters += liters,
+        source: '${preset.name} (N₂O)',
+      );
+    }
+
+    _UsageSummaryItem? buildGasItem({
+      required String name,
+      required double liters,
+      required List<String> notes,
+    }) {
+      if (liters <= 0 && notes.isEmpty) return null;
+      return _UsageSummaryItem(
+        group: 'Gases medicinais',
+        name: name,
+        quantity: liters > 0 ? '${_formatLitersLabel(liters)} L' : '',
+        note: notes.join(' • '),
+        priority: 17,
+      );
+    }
+
+    return [
+      buildGasItem(
+        name: 'Oxigênio (O₂)',
+        liters: oxygenTotalLiters,
+        notes: oxygenNotes,
+      ),
+      buildGasItem(
+        name: 'Ar comprimido',
+        liters: compressedAirTotalLiters,
+        notes: compressedAirNotes,
+      ),
+      buildGasItem(
+        name: 'Óxido nitroso (N₂O)',
+        liters: nitrousOxideTotalLiters,
+        notes: nitrousOxideNotes,
+      ),
+    ].whereType<_UsageSummaryItem>().toList();
   }
 
   List<_UsageSummaryItem> _buildUsageSummaryItems() {
@@ -5862,12 +6784,21 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       ),
       ..._usageItemsFromAirway(),
       ..._usageItemsFromPlainEntries('Acesso venoso', _record.venousAccesses),
+      ..._usageItemsFromLossEntries(
+        'Perda de material',
+        _record.venousAccesses,
+      ),
       ..._usageItemsFromPlainEntries(
         'Acesso arterial',
         _record.arterialAccesses,
       ),
-      ..._usageItemsFromPlainEntries(
-        'Agulhas neuraxiais',
+      ..._usageItemsFromLossEntries(
+        'Perda de material',
+        _record.arterialAccesses,
+      ),
+      ..._usageItemsFromNeuraxialNeedles(),
+      ..._usageItemsFromLossEntries(
+        'Consumo extra neuraxial',
         _record.neuraxialNeedles,
       ),
       ..._usageItemsFromFluidEntries(
@@ -5882,6 +6813,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         'Sangue e derivados',
         _record.fluidBalance.bloodEntries,
       ),
+      ..._usageItemsFromMaintenanceGasFlows(),
+      ..._usageItemsFromManualOxygenTherapy(),
       ..._usageItemsFromManualMaterials(),
     ];
     for (final item in collected) {
@@ -5945,7 +6878,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       child: _buildCompactOperationalCard(
         key: const Key('vasoactive-card'),
         tapKey: const Key('vasoactive-entry'),
-        title: '18) Drogas vasoativas',
+        title: '19) Drogas vasoativas',
         titleColor: _medicationsRowColor,
         icon: Icons.show_chart_outlined,
         minHeight: 92,
@@ -5971,7 +6904,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       key: _fluidSectionKey,
       child: PanelCard(
         key: const Key('fluid-balance-card'),
-        title: '20) Balanço hídrico',
+        title: '21) Balanço hídrico',
         titleColor: _airwayFluidRowColor,
         icon: Icons.opacity_outlined,
         minHeight: 286,
@@ -6078,7 +7011,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     ];
 
     return PanelCard(
-      title: '19) Reposição volêmica, sangue e derivados',
+      title: '20) Reposição volêmica, sangue e derivados',
       titleColor: _airwayFluidRowColor,
       icon: Icons.bloodtype_outlined,
       minHeight: 286,
@@ -6170,6 +7103,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         .toSet()
         .toList();
     final maintenanceItems = _lineItems(_record.maintenanceAgents);
+    final inhalationalSummaries = _inhalationalConsumptionSummaries();
     final maintenanceStatus = maintenanceItems.isEmpty
         ? 'Nenhum agente de manutenção registrado'
         : maintenanceItems.first.split('|').first.trim();
@@ -6178,7 +7112,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         : '${maintenanceItems.length} item(ns) registrados';
     return PanelCard(
       key: const Key('maintenance-card'),
-      title: '16) Manutenção da anestesia',
+      title: '17) Manutenção da anestesia',
       titleColor: _medicationsRowColor,
       icon: Icons.tune_outlined,
       minHeight: 320,
@@ -6226,10 +7160,406 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
               fontWeight: FontWeight.w600,
             ),
           ),
+          if (inhalationalSummaries.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FBFF),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFDCE7F3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Consumo estimado do vaporizador',
+                    style: TextStyle(
+                      color: Color(0xFF17324D),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  ...inhalationalSummaries.map(
+                    (item) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        item,
+                        style: const TextStyle(
+                          color: Color(0xFF5D7288),
+                          fontWeight: FontWeight.w600,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           AddButton(label: 'Edição avançada', onTap: _editMaintenanceAgents),
         ],
       ),
+    );
+  }
+}
+
+class MechanicalVentilationDialog extends StatefulWidget {
+  const MechanicalVentilationDialog({
+    super.key,
+    required this.initialSettings,
+    required this.suggestedSettings,
+    required this.suggestionReason,
+    required this.population,
+  });
+
+  final MechanicalVentilationSettings initialSettings;
+  final MechanicalVentilationSettings suggestedSettings;
+  final String suggestionReason;
+  final PatientPopulation population;
+
+  @override
+  State<MechanicalVentilationDialog> createState() =>
+      _MechanicalVentilationDialogState();
+}
+
+class _MechanicalVentilationDialogState
+    extends State<MechanicalVentilationDialog> {
+  late final TextEditingController _modeController;
+  late final TextEditingController _fio2Controller;
+  late final TextEditingController _tidalVolumeMlController;
+  late final TextEditingController _tidalVolumePerKgController;
+  late final TextEditingController _respiratoryRateController;
+  late final TextEditingController _peepController;
+  late final TextEditingController _inspiratoryPressureController;
+  late final TextEditingController _pressureSupportController;
+  late final TextEditingController _ieRatioController;
+  late final TextEditingController _targetEtco2Controller;
+  late final TextEditingController _notesController;
+
+  List<String> get _modeSuggestions {
+    switch (widget.population) {
+      case PatientPopulation.adult:
+        return const ['VCV', 'PCV', 'PCV-VG', 'PSV/CPAP'];
+      case PatientPopulation.pediatric:
+        return const ['PCV', 'PCV-VG', 'VCV', 'PSV/CPAP'];
+      case PatientPopulation.neonatal:
+        return const ['PCV', 'VCV', 'PSV/CPAP'];
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _modeController = TextEditingController(text: widget.initialSettings.mode);
+    _fio2Controller = TextEditingController(
+      text: widget.initialSettings.fio2Percent,
+    );
+    _tidalVolumeMlController = TextEditingController(
+      text: widget.initialSettings.tidalVolumeMl,
+    );
+    _tidalVolumePerKgController = TextEditingController(
+      text: widget.initialSettings.tidalVolumePerKg,
+    );
+    _respiratoryRateController = TextEditingController(
+      text: widget.initialSettings.respiratoryRate,
+    );
+    _peepController = TextEditingController(text: widget.initialSettings.peep);
+    _inspiratoryPressureController = TextEditingController(
+      text: widget.initialSettings.inspiratoryPressure,
+    );
+    _pressureSupportController = TextEditingController(
+      text: widget.initialSettings.pressureSupport,
+    );
+    _ieRatioController = TextEditingController(
+      text: widget.initialSettings.ieRatio,
+    );
+    _targetEtco2Controller = TextEditingController(
+      text: widget.initialSettings.targetEtco2,
+    );
+    _notesController = TextEditingController(
+      text: widget.initialSettings.notes,
+    );
+  }
+
+  @override
+  void dispose() {
+    _modeController.dispose();
+    _fio2Controller.dispose();
+    _tidalVolumeMlController.dispose();
+    _tidalVolumePerKgController.dispose();
+    _respiratoryRateController.dispose();
+    _peepController.dispose();
+    _inspiratoryPressureController.dispose();
+    _pressureSupportController.dispose();
+    _ieRatioController.dispose();
+    _targetEtco2Controller.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  void _applySuggestedSettings() {
+    final suggested = widget.suggestedSettings;
+    setState(() {
+      _modeController.text = suggested.mode;
+      _fio2Controller.text = suggested.fio2Percent;
+      _tidalVolumeMlController.text = suggested.tidalVolumeMl;
+      _tidalVolumePerKgController.text = suggested.tidalVolumePerKg;
+      _respiratoryRateController.text = suggested.respiratoryRate;
+      _peepController.text = suggested.peep;
+      _inspiratoryPressureController.text = suggested.inspiratoryPressure;
+      _pressureSupportController.text = suggested.pressureSupport;
+      _ieRatioController.text = suggested.ieRatio;
+      _targetEtco2Controller.text = suggested.targetEtco2;
+      _notesController.text = suggested.notes;
+    });
+  }
+
+  MechanicalVentilationSettings _buildResult() {
+    return MechanicalVentilationSettings(
+      mode: _modeController.text.trim(),
+      fio2Percent: _fio2Controller.text.trim(),
+      tidalVolumeMl: _tidalVolumeMlController.text.trim(),
+      tidalVolumePerKg: _tidalVolumePerKgController.text.trim(),
+      respiratoryRate: _respiratoryRateController.text.trim(),
+      peep: _peepController.text.trim(),
+      inspiratoryPressure: _inspiratoryPressureController.text.trim(),
+      pressureSupport: _pressureSupportController.text.trim(),
+      ieRatio: _ieRatioController.text.trim(),
+      targetEtco2: _targetEtco2Controller.text.trim(),
+      notes: _notesController.text.trim(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Ventilação mecânica'),
+      content: SizedBox(
+        width: 640,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF4F9FF),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFD8E6F4)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Plano sugerido',
+                      style: TextStyle(
+                        color: Color(0xFF17324D),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      widget.suggestionReason,
+                      style: const TextStyle(
+                        color: Color(0xFF5D7288),
+                        fontWeight: FontWeight.w600,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    FilledButton.tonalIcon(
+                      key: const Key('ventilation-apply-suggestion'),
+                      onPressed: _applySuggestedSettings,
+                      icon: const Icon(Icons.auto_fix_high_outlined),
+                      label: const Text('Aplicar sugestão'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Modos mais usados em anestesia',
+                style: TextStyle(
+                  color: Color(0xFF17324D),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _modeSuggestions
+                    .map(
+                      (mode) => ChoiceChip(
+                        label: Text(mode),
+                        selected: _modeController.text.trim() == mode,
+                        onSelected: (_) {
+                          setState(() => _modeController.text = mode);
+                        },
+                      ),
+                    )
+                    .toList(),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                key: const Key('ventilation-mode-field'),
+                controller: _modeController,
+                decoration: const InputDecoration(
+                  labelText: 'Modo ventilatório',
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      key: const Key('ventilation-fio2-field'),
+                      controller: _fio2Controller,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: const InputDecoration(labelText: 'FiO₂ (%)'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      key: const Key('ventilation-peep-field'),
+                      controller: _peepController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'PEEP (cmH₂O)',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      key: const Key('ventilation-tidal-volume-ml-field'),
+                      controller: _tidalVolumeMlController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: const InputDecoration(labelText: 'VT (mL)'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      key: const Key('ventilation-tidal-volume-kg-field'),
+                      controller: _tidalVolumePerKgController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'VT (mL/kg)',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      key: const Key('ventilation-rr-field'),
+                      controller: _respiratoryRateController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'FR (irpm)'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      key: const Key('ventilation-ie-field'),
+                      controller: _ieRatioController,
+                      decoration: const InputDecoration(labelText: 'I:E'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      key: const Key('ventilation-pinsp-field'),
+                      controller: _inspiratoryPressureController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'P inspiratória (cmH₂O)',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      key: const Key('ventilation-ps-field'),
+                      controller: _pressureSupportController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'PS (cmH₂O)',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                key: const Key('ventilation-etco2-field'),
+                controller: _targetEtco2Controller,
+                decoration: const InputDecoration(
+                  labelText: 'ETCO₂ alvo',
+                  hintText: 'Ex: 35-40',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                key: const Key('ventilation-notes-field'),
+                controller: _notesController,
+                minLines: 2,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  labelText: 'Observações / estratégia',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(
+            context,
+          ).pop(const MechanicalVentilationSettings.empty()),
+          child: const Text('Limpar'),
+        ),
+        FilledButton(
+          key: const Key('ventilation-save-button'),
+          onPressed: () => Navigator.of(context).pop(_buildResult()),
+          child: const Text('Salvar'),
+        ),
+      ],
     );
   }
 }
@@ -6621,20 +7951,33 @@ class _VenousAccessDialogState extends State<VenousAccessDialog> {
   ];
 
   late List<String> _items;
+  late List<String> _lossEntries;
   String _selectedAvpSize = '';
   String _selectedCentral = '';
   late final TextEditingController _avpSiteController;
+  late final TextEditingController _lossMaterialController;
+  late final TextEditingController _lossQuantityController;
+  late final TextEditingController _lossReasonController;
 
   @override
   void initState() {
     super.initState();
-    _items = List<String>.from(widget.initialItems);
+    _items = widget.initialItems
+        .where((item) => !_isEncodedLossEntry(item))
+        .toList();
+    _lossEntries = widget.initialItems.where(_isEncodedLossEntry).toList();
     _avpSiteController = TextEditingController();
+    _lossMaterialController = TextEditingController();
+    _lossQuantityController = TextEditingController();
+    _lossReasonController = TextEditingController();
   }
 
   @override
   void dispose() {
     _avpSiteController.dispose();
+    _lossMaterialController.dispose();
+    _lossQuantityController.dispose();
+    _lossReasonController.dispose();
     super.dispose();
   }
 
@@ -6653,6 +7996,25 @@ class _VenousAccessDialogState extends State<VenousAccessDialog> {
     setState(() {
       _items.add(_selectedCentral);
       _selectedCentral = '';
+    });
+  }
+
+  void _addLossEntry() {
+    final material = _lossMaterialController.text.trim();
+    final quantity = _lossQuantityController.text.trim();
+    final reason = _lossReasonController.text.trim();
+    if (material.isEmpty || quantity.isEmpty || reason.isEmpty) return;
+    setState(() {
+      _lossEntries.add(
+        _encodeLossEntry(
+          material: material,
+          quantity: quantity,
+          reason: reason,
+        ),
+      );
+      _lossMaterialController.clear();
+      _lossQuantityController.clear();
+      _lossReasonController.clear();
     });
   }
 
@@ -6743,6 +8105,49 @@ class _VenousAccessDialogState extends State<VenousAccessDialog> {
               ),
               const SizedBox(height: 16),
               const Text(
+                'Perda de material / múltiplas tentativas / justificativa',
+                style: TextStyle(
+                  color: Color(0xFF17324D),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _lossMaterialController,
+                decoration: const InputDecoration(
+                  labelText: 'Material',
+                  hintText: 'Ex: AVP mse - 20G; CVC JID',
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _lossQuantityController,
+                decoration: const InputDecoration(
+                  labelText: 'Quantidade',
+                  hintText: 'Ex: 2 un; 3 tentativas',
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _lossReasonController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Justificativa',
+                  hintText:
+                      'Ex: punção sem sucesso; perda de acesso; troca por infiltração',
+                ),
+              ),
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton.icon(
+                  onPressed: _addLossEntry,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Adicionar perda/consumo'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
                 'Acessos lançados',
                 style: TextStyle(
                   color: Color(0xFF17324D),
@@ -6790,6 +8195,52 @@ class _VenousAccessDialogState extends State<VenousAccessDialog> {
                   ),
                 ),
               ),
+              if (_lossEntries.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                const Text(
+                  'Perdas e consumos extras',
+                  style: TextStyle(
+                    color: Color(0xFF17324D),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ..._lossEntries.asMap().entries.map(
+                  (entry) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFDCE7F3)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _formatLossEntryLabel(entry.value),
+                              style: const TextStyle(
+                                color: Color(0xFF17324D),
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              setState(() => _lossEntries.removeAt(entry.key));
+                            },
+                            icon: const Icon(Icons.close, size: 18),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -6800,7 +8251,8 @@ class _VenousAccessDialogState extends State<VenousAccessDialog> {
           child: const Text('Cancelar'),
         ),
         FilledButton(
-          onPressed: () => Navigator.of(context).pop(_items),
+          onPressed: () =>
+              Navigator.of(context).pop([..._items, ..._lossEntries]),
           child: const Text('Salvar'),
         ),
       ],
@@ -6819,19 +8271,32 @@ class ArterialAccessDialog extends StatefulWidget {
 
 class _ArterialAccessDialogState extends State<ArterialAccessDialog> {
   late List<String> _items;
+  late List<String> _lossEntries;
   bool _paiSelected = true;
   late final TextEditingController _descriptionController;
+  late final TextEditingController _lossMaterialController;
+  late final TextEditingController _lossQuantityController;
+  late final TextEditingController _lossReasonController;
 
   @override
   void initState() {
     super.initState();
-    _items = List<String>.from(widget.initialItems);
+    _items = widget.initialItems
+        .where((item) => !_isEncodedLossEntry(item))
+        .toList();
+    _lossEntries = widget.initialItems.where(_isEncodedLossEntry).toList();
     _descriptionController = TextEditingController();
+    _lossMaterialController = TextEditingController();
+    _lossQuantityController = TextEditingController();
+    _lossReasonController = TextEditingController();
   }
 
   @override
   void dispose() {
     _descriptionController.dispose();
+    _lossMaterialController.dispose();
+    _lossQuantityController.dispose();
+    _lossReasonController.dispose();
     super.dispose();
   }
 
@@ -6841,6 +8306,25 @@ class _ArterialAccessDialogState extends State<ArterialAccessDialog> {
     setState(() {
       _items.add('PAI - $description');
       _descriptionController.clear();
+    });
+  }
+
+  void _addLossEntry() {
+    final material = _lossMaterialController.text.trim();
+    final quantity = _lossQuantityController.text.trim();
+    final reason = _lossReasonController.text.trim();
+    if (material.isEmpty || quantity.isEmpty || reason.isEmpty) return;
+    setState(() {
+      _lossEntries.add(
+        _encodeLossEntry(
+          material: material,
+          quantity: quantity,
+          reason: reason,
+        ),
+      );
+      _lossMaterialController.clear();
+      _lossQuantityController.clear();
+      _lossReasonController.clear();
     });
   }
 
@@ -6879,6 +8363,48 @@ class _ArterialAccessDialogState extends State<ArterialAccessDialog> {
                   onPressed: _addArterialAccess,
                   icon: const Icon(Icons.add),
                   label: const Text('Adicionar PAI'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Perda de material / múltiplas tentativas / justificativa',
+                style: TextStyle(
+                  color: Color(0xFF17324D),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _lossMaterialController,
+                decoration: const InputDecoration(
+                  labelText: 'Material',
+                  hintText: 'Ex: PAI radial esquerda 20G',
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _lossQuantityController,
+                decoration: const InputDecoration(
+                  labelText: 'Quantidade',
+                  hintText: 'Ex: 2 un; 3 tentativas',
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _lossReasonController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Justificativa',
+                  hintText: 'Ex: sem refluxo; trombose; troca por disfunção',
+                ),
+              ),
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton.icon(
+                  onPressed: _addLossEntry,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Adicionar perda/consumo'),
                 ),
               ),
               const SizedBox(height: 16),
@@ -6930,6 +8456,52 @@ class _ArterialAccessDialogState extends State<ArterialAccessDialog> {
                   ),
                 ),
               ),
+              if (_lossEntries.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                const Text(
+                  'Perdas e consumos extras',
+                  style: TextStyle(
+                    color: Color(0xFF17324D),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ..._lossEntries.asMap().entries.map(
+                  (entry) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFDCE7F3)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _formatLossEntryLabel(entry.value),
+                              style: const TextStyle(
+                                color: Color(0xFF17324D),
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              setState(() => _lossEntries.removeAt(entry.key));
+                            },
+                            icon: const Icon(Icons.close, size: 18),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -6940,7 +8512,345 @@ class _ArterialAccessDialogState extends State<ArterialAccessDialog> {
           child: const Text('Cancelar'),
         ),
         FilledButton(
-          onPressed: () => Navigator.of(context).pop(_items),
+          onPressed: () =>
+              Navigator.of(context).pop([..._items, ..._lossEntries]),
+          child: const Text('Salvar'),
+        ),
+      ],
+    );
+  }
+}
+
+class NeuraxialNeedlesDialog extends StatefulWidget {
+  const NeuraxialNeedlesDialog({super.key, required this.initialItems});
+
+  final List<String> initialItems;
+
+  @override
+  State<NeuraxialNeedlesDialog> createState() => _NeuraxialNeedlesDialogState();
+}
+
+class _NeuraxialNeedlesDialogState extends State<NeuraxialNeedlesDialog> {
+  static const List<String> _spinalNeedles = [
+    'Quincke 25G',
+    'Quincke 26G',
+    'Quincke 27G',
+    'Whitacre 25G',
+    'Whitacre 27G',
+  ];
+  static const List<String> _epiduralNeedles = [
+    'Tuohy 16G',
+    'Tuohy 17G',
+    'Tuohy 18G',
+    'Cateter peridural 19G',
+    'Cateter peridural 20G',
+  ];
+
+  late Set<String> _selectedMainItems;
+  late List<String> _extraEntries;
+  late final TextEditingController _otherMainController;
+  late final TextEditingController _extraMaterialController;
+  late final TextEditingController _extraQuantityController;
+  late final TextEditingController _extraReasonController;
+
+  @override
+  void initState() {
+    super.initState();
+    final presetItems = {..._spinalNeedles, ..._epiduralNeedles};
+    _selectedMainItems = widget.initialItems
+        .where((item) => presetItems.contains(item.trim()))
+        .map((item) => item.trim())
+        .toSet();
+    _extraEntries = widget.initialItems
+        .where((item) => !presetItems.contains(item.trim()))
+        .where((item) => item.trim().isNotEmpty)
+        .toList();
+    _otherMainController = TextEditingController();
+    _extraMaterialController = TextEditingController();
+    _extraQuantityController = TextEditingController();
+    _extraReasonController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _otherMainController.dispose();
+    _extraMaterialController.dispose();
+    _extraQuantityController.dispose();
+    _extraReasonController.dispose();
+    super.dispose();
+  }
+
+  void _addOtherMainItem() {
+    final lines = _otherMainController.text
+        .split('\n')
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+    if (lines.isEmpty) return;
+    setState(() {
+      _extraEntries.addAll(lines);
+      _otherMainController.clear();
+    });
+  }
+
+  void _addExtraUsage() {
+    final material = _extraMaterialController.text.trim();
+    final quantity = _extraQuantityController.text.trim();
+    final reason = _extraReasonController.text.trim();
+    if (material.isEmpty || quantity.isEmpty || reason.isEmpty) return;
+    setState(() {
+      _extraEntries.add(
+        _encodeLossEntry(
+          material: material,
+          quantity: quantity,
+          reason: reason,
+        ),
+      );
+      _extraMaterialController.clear();
+      _extraQuantityController.clear();
+      _extraReasonController.clear();
+    });
+  }
+
+  String _displayExtraEntry(String entry) {
+    return _formatLossEntryLabel(entry, prefix: 'Consumo extra');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: const Color(0xFFF3F6FC),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      title: const Text('Agulhas para raqui / peridural'),
+      content: SizedBox(
+        width: 1120,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Raqui',
+                style: TextStyle(
+                  color: Color(0xFF17324D),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _spinalNeedles
+                    .map(
+                      (item) => FilterChip(
+                        label: Text(item),
+                        selected: _selectedMainItems.contains(item),
+                        onSelected: (selected) {
+                          setState(() {
+                            if (selected) {
+                              _selectedMainItems.add(item);
+                            } else {
+                              _selectedMainItems.remove(item);
+                            }
+                          });
+                        },
+                      ),
+                    )
+                    .toList(),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Peridural',
+                style: TextStyle(
+                  color: Color(0xFF17324D),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _epiduralNeedles
+                    .map(
+                      (item) => FilterChip(
+                        label: Text(item),
+                        selected: _selectedMainItems.contains(item),
+                        onSelected: (selected) {
+                          setState(() {
+                            if (selected) {
+                              _selectedMainItems.add(item);
+                            } else {
+                              _selectedMainItems.remove(item);
+                            }
+                          });
+                        },
+                      ),
+                    )
+                    .toList(),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _otherMainController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Outras agulhas / materiais neuraxiais',
+                  hintText: 'Ex: Sprotte 24G; conjunto CSE; introdutor 20G',
+                ),
+              ),
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton.tonalIcon(
+                  onPressed: _addOtherMainItem,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Adicionar item'),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Uso de mais de uma / perda de material com justificativa',
+                style: TextStyle(
+                  color: Color(0xFF17324D),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                key: const Key('neuraxial-extra-material-field'),
+                controller: _extraMaterialController,
+                decoration: const InputDecoration(
+                  labelText: 'Material',
+                  hintText: 'Ex: Quincke 27G; Tuohy 18G',
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                key: const Key('neuraxial-extra-quantity-field'),
+                controller: _extraQuantityController,
+                decoration: const InputDecoration(
+                  labelText: 'Quantidade usada',
+                  hintText: 'Ex: 2 un',
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                key: const Key('neuraxial-extra-reason-field'),
+                controller: _extraReasonController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Justificativa',
+                  hintText:
+                      'Ex: segunda punção por bloqueio insuficiente; troca por deformação',
+                ),
+              ),
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton.icon(
+                  key: const Key('neuraxial-extra-add-button'),
+                  onPressed: _addExtraUsage,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Adicionar consumo extra'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (_selectedMainItems.isEmpty && _extraEntries.isEmpty)
+                const Text(
+                  'Nenhuma agulha neuraxial registrada.',
+                  style: TextStyle(color: Color(0xFF7A8EA5)),
+                ),
+              ..._selectedMainItems.map(
+                (entry) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFDCE7F3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            entry,
+                            style: const TextStyle(
+                              color: Color(0xFF17324D),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            setState(() => _selectedMainItems.remove(entry));
+                          },
+                          icon: const Icon(Icons.close, size: 18),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              ..._extraEntries.asMap().entries.map(
+                (entry) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFDCE7F3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _displayExtraEntry(entry.value),
+                            style: const TextStyle(
+                              color: Color(0xFF17324D),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            setState(() => _extraEntries.removeAt(entry.key));
+                          },
+                          icon: const Icon(Icons.close, size: 18),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(const <String>[]),
+          child: const Text('Limpar'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop([
+            ..._selectedMainItems,
+            ..._extraEntries,
+            ..._otherMainController.text
+                .split('\n')
+                .map((item) => item.trim())
+                .where((item) => item.isNotEmpty),
+          ]),
           child: const Text('Salvar'),
         ),
       ],
@@ -8139,6 +10049,260 @@ class _EditSectionScreenState extends State<EditSectionScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _AnesthesiaMaterialsDialog extends StatefulWidget {
+  const _AnesthesiaMaterialsDialog({required this.initialItems});
+
+  final List<String> initialItems;
+
+  @override
+  State<_AnesthesiaMaterialsDialog> createState() =>
+      _AnesthesiaMaterialsDialogState();
+}
+
+class _AnesthesiaMaterialsDialogState
+    extends State<_AnesthesiaMaterialsDialog> {
+  late final TextEditingController _manualController;
+  late final TextEditingController _oxygenFlowController;
+  late final TextEditingController _oxygenMinutesController;
+  late List<String> _manualEntries;
+  late List<String> _oxygenEntries;
+  String _selectedOxygenDevice = 'cateter';
+
+  @override
+  void initState() {
+    super.initState();
+    _manualEntries = widget.initialItems
+        .where(
+          (item) =>
+              item.trim().isNotEmpty &&
+              !_isEncodedOxygenTherapyEntry(item) &&
+              !_isEncodedLossEntry(item),
+        )
+        .toList();
+    _oxygenEntries = widget.initialItems
+        .where(_isEncodedOxygenTherapyEntry)
+        .toList();
+    _manualController = TextEditingController();
+    _oxygenFlowController = TextEditingController();
+    _oxygenMinutesController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _manualController.dispose();
+    _oxygenFlowController.dispose();
+    _oxygenMinutesController.dispose();
+    super.dispose();
+  }
+
+  List<String> _draftManualItems() {
+    return _manualController.text
+        .split('\n')
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+  }
+
+  void _addManualItems() {
+    final draftItems = _draftManualItems();
+    if (draftItems.isEmpty) return;
+    setState(() {
+      _manualEntries = [..._manualEntries, ...draftItems];
+      _manualController.clear();
+    });
+  }
+
+  double? _parseFlow(String value) {
+    return double.tryParse(value.trim().replaceAll(',', '.'));
+  }
+
+  void _addOxygenEntry() {
+    final flowLPerMin = _parseFlow(_oxygenFlowController.text);
+    final minutes = int.tryParse(_oxygenMinutesController.text.trim());
+    if (flowLPerMin == null ||
+        flowLPerMin <= 0 ||
+        minutes == null ||
+        minutes <= 0) {
+      return;
+    }
+    setState(() {
+      _oxygenEntries.add(
+        _encodeOxygenTherapyEntry(
+          device: _selectedOxygenDevice,
+          flowLPerMin: flowLPerMin,
+          minutes: minutes,
+        ),
+      );
+      _oxygenFlowController.clear();
+      _oxygenMinutesController.clear();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Itens adicionais / ajuste manual'),
+      content: SizedBox(
+        width: 560,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: _manualController,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  labelText: 'Itens extras / ajustes / quantidades',
+                  hintText:
+                      'Ex: equipo de infusão 1 un; filtro HME 1 un; item não capturado automaticamente',
+                ),
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton.icon(
+                  onPressed: _addManualItems,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Adicionar item'),
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Oxigênio por dispositivo',
+                style: TextStyle(
+                  color: Color(0xFF17324D),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  ChoiceChip(
+                    label: const Text('O₂ em cateter'),
+                    selected: _selectedOxygenDevice == 'cateter',
+                    onSelected: (_) {
+                      setState(() => _selectedOxygenDevice = 'cateter');
+                    },
+                  ),
+                  ChoiceChip(
+                    label: const Text('O₂ em máscara'),
+                    selected: _selectedOxygenDevice == 'mascara',
+                    onSelected: (_) {
+                      setState(() => _selectedOxygenDevice = 'mascara');
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _oxygenFlowController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'Fluxo de O₂ (L/min)',
+                  hintText: 'Ex: 3,0',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _oxygenMinutesController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Tempo utilizado (min)',
+                  hintText: 'Ex: 45',
+                ),
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton.icon(
+                  onPressed: _addOxygenEntry,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Adicionar oxigenoterapia'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (_manualEntries.isNotEmpty) ...[
+                const Text(
+                  'Itens manuais lançados',
+                  style: TextStyle(
+                    color: Color(0xFF17324D),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ..._manualEntries.asMap().entries.map(
+                  (entry) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(entry.value),
+                    trailing: IconButton(
+                      onPressed: () {
+                        setState(() => _manualEntries.removeAt(entry.key));
+                      },
+                      icon: const Icon(Icons.close, size: 18),
+                    ),
+                  ),
+                ),
+              ],
+              if (_oxygenEntries.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                const Text(
+                  'Oxigenoterapia lançada',
+                  style: TextStyle(
+                    color: Color(0xFF17324D),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ..._oxygenEntries.asMap().entries.map(
+                  (entry) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(_formatOxygenTherapyEntryLabel(entry.value)),
+                    trailing: IconButton(
+                      onPressed: () {
+                        setState(() => _oxygenEntries.removeAt(entry.key));
+                      },
+                      icon: const Icon(Icons.close, size: 18),
+                    ),
+                  ),
+                ),
+              ],
+              if (_manualEntries.isEmpty && _oxygenEntries.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: Text(
+                    'Nenhum item adicional registrado.',
+                    style: TextStyle(color: Color(0xFF7A8EA5)),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(const <String>[]),
+          child: const Text('Limpar'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(
+            context,
+          ).pop([..._manualEntries, ..._oxygenEntries, ..._draftManualItems()]),
+          child: const Text('Salvar'),
+        ),
+      ],
     );
   }
 }

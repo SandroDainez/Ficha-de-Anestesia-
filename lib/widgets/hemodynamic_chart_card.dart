@@ -255,32 +255,43 @@ class HemodynamicChartCard extends StatelessWidget {
                 ),
               );
 
-              final row = Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _HemodynamicParameterSidebar(
-                    chartHeight: chartHeight,
-                    inlineHemodynamicType: inlineHemodynamicType,
-                    inlineHemodynamicRemoveMode: inlineHemodynamicRemoveMode,
-                    hasPoints: points.isNotEmpty,
-                    onSelectType: onSelectType,
-                    onToggleRemoveMode: onToggleRemoveMode,
-                  ),
-                  Expanded(child: chartStack),
-                ],
-              );
-
               final requiresHorizontalScroll =
                   viewWidth < 560 || minChartWidth > viewWidth;
               if (!requiresHorizontalScroll) {
-                return row;
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _HemodynamicParameterSidebar(
+                      chartHeight: chartHeight,
+                      inlineHemodynamicType: inlineHemodynamicType,
+                      inlineHemodynamicRemoveMode: inlineHemodynamicRemoveMode,
+                      hasPoints: points.isNotEmpty,
+                      onSelectType: onSelectType,
+                      onToggleRemoveMode: onToggleRemoveMode,
+                    ),
+                    Expanded(child: chartStack),
+                  ],
+                );
               }
 
               return SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minWidth: minChartWidth),
-                  child: row,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _HemodynamicParameterSidebar(
+                      chartHeight: chartHeight,
+                      inlineHemodynamicType: inlineHemodynamicType,
+                      inlineHemodynamicRemoveMode: inlineHemodynamicRemoveMode,
+                      hasPoints: points.isNotEmpty,
+                      onSelectType: onSelectType,
+                      onToggleRemoveMode: onToggleRemoveMode,
+                    ),
+                    SizedBox(
+                      width: minChartWidth,
+                      child: chartStack,
+                    ),
+                  ],
                 ),
               );
             },
