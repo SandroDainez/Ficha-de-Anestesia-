@@ -677,15 +677,49 @@ void main() {
       await tester.tap(find.text('16) MANUTENÇÃO DA ANESTESIA'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Anestésicos EV contínuo'), findsWidgets);
+      expect(find.text('Anestésicos EV contínuos em bomba'), findsWidgets);
       expect(find.text('Anestésicos inalatórios'), findsWidgets);
+      expect(find.text('Opioides EV contínuos em bomba'), findsWidgets);
       expect(find.text('Opioides'), findsWidgets);
       expect(find.text('Bloqueadores neuromusculares'), findsWidgets);
+      expect(find.textContaining('EV contínua em bomba'), findsWidgets);
       expect(
-        find.textContaining('mL/h (estimado com FGF 2 L/min)'),
+        find.textContaining('mL/h (estimado com FGF 2,0 L/min)'),
         findsWidgets,
       );
       expect(find.widgetWithText(FilledButton, 'Confirmar'), findsWidgets);
+    },
+  );
+
+  testWidgets(
+    'maintenance card switches propofol and remifentanil to TIVA labels and updates sevo estimate by FGF',
+    (WidgetTester tester) async {
+      final record = buildRecord().copyWith(
+        anesthesiaTechnique: 'Anestesia venosa total (TIVA)',
+      );
+
+      await pumpScreen(tester, record);
+
+      await tester.tap(find.text('16) MANUTENÇÃO DA ANESTESIA'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Manutenção TIVA'), findsWidgets);
+      expect(find.text('Anestésicos EV contínuos em bomba'), findsNothing);
+      expect(find.textContaining('TIVA em bomba'), findsWidgets);
+
+      await tester.ensureVisible(
+        find.byKey(const Key('maintenance-edit-sevoflurano')),
+      );
+      await tester.tap(find.byKey(const Key('maintenance-edit-sevoflurano')));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Fluxo de gases frescos (FGF)'),
+        '4,0',
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('FGF 4,0 L/min'), findsOneWidget);
     },
   );
 
@@ -1007,7 +1041,7 @@ void main() {
       await tester.ensureVisible(find.byKey(const Key('maintenance-card')));
       await tester.tap(find.text('Nenhum agente de manutenção registrado'));
       await tester.pumpAndSettle();
-      expect(find.text('Anestésicos EV contínuo'), findsWidgets);
+      expect(find.text('Anestésicos EV contínuos em bomba'), findsWidgets);
     },
   );
 
@@ -1206,17 +1240,20 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Indução: Propofol • 2 ampolas'), findsOneWidget);
-      expect(find.text('Acesso venoso: AVP MSE - 18G'), findsOneWidget);
+      expect(find.text('Via aérea: TOT 7.5 • 1 un'), findsOneWidget);
+      expect(find.text('Acesso venoso: AVP MSE - 18G • 1 un'), findsOneWidget);
       expect(
-        find.text('Acesso arterial: PAI - radial esquerda 20G'),
+        find.text('Acesso arterial: PAI - radial esquerda 20G • 1 un'),
         findsOneWidget,
       );
-      expect(find.text('Cristaloides: RL • 500'), findsOneWidget);
+      expect(find.text('Cristaloides: RL • 500 mL'), findsOneWidget);
       expect(
-        find.text('Sangue e derivados: Concentrado de hemácias • 1 UI • 280'),
+        find.text(
+          'Sangue e derivados: Concentrado de hemácias • 1 UI • 280 mL',
+        ),
         findsOneWidget,
       );
-      expect(find.text('Materiais livres: TOT 7,5 1 un'), findsOneWidget);
+      expect(find.text('Ajuste manual: TOT 7,5 1 un'), findsNothing);
     },
   );
 

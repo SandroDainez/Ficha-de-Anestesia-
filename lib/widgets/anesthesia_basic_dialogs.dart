@@ -3,6 +3,128 @@ import 'package:flutter/services.dart';
 
 import '../models/patient.dart';
 
+const _dialogSurfaceColor = Color(0xFFF3F6FC);
+const _dialogFieldBorderColor = Color(0xFFD5E4F7);
+const _dialogEmptyTextColor = Color(0xFF7A8EA5);
+const _dialogActionColor = Color(0xFF3C6C9C);
+const _dialogTitleStyle = TextStyle(
+  fontSize: 30,
+  fontWeight: FontWeight.w400,
+  color: Color(0xFF1F2630),
+);
+
+InputDecoration _dialogInputDecoration({
+  required String labelText,
+  String? hintText,
+  bool alignLabelWithHint = false,
+}) {
+  final border = OutlineInputBorder(
+    borderRadius: BorderRadius.circular(24),
+    borderSide: const BorderSide(color: _dialogFieldBorderColor),
+  );
+  return InputDecoration(
+    labelText: labelText,
+    hintText: hintText,
+    floatingLabelBehavior: FloatingLabelBehavior.never,
+    alignLabelWithHint: alignLabelWithHint,
+    filled: true,
+    fillColor: Colors.white,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+    border: border,
+    enabledBorder: border,
+    focusedBorder: border.copyWith(
+      borderSide: const BorderSide(color: _dialogActionColor, width: 1.2),
+    ),
+  );
+}
+
+ButtonStyle _dialogPrimaryButtonStyle({EdgeInsetsGeometry? padding}) {
+  return FilledButton.styleFrom(
+    backgroundColor: _dialogActionColor,
+    foregroundColor: Colors.white,
+    padding:
+        padding ?? const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
+    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+  );
+}
+
+ButtonStyle _dialogSecondaryButtonStyle() {
+  return TextButton.styleFrom(
+    foregroundColor: _dialogActionColor,
+    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+  );
+}
+
+Widget _dialogEmptyState(String text) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 56),
+    child: Center(
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: _dialogEmptyTextColor,
+          fontSize: 18,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _dialogListTile({
+  required String title,
+  String? subtitle,
+  required VoidCallback onDelete,
+}) {
+  return Container(
+    margin: const EdgeInsets.only(bottom: 10),
+    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: _dialogFieldBorderColor),
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Color(0xFF26384A),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+              if (subtitle != null && subtitle.trim().isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: _dialogEmptyTextColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        IconButton(
+          onPressed: onDelete,
+          icon: const Icon(Icons.delete_outline),
+          color: _dialogActionColor,
+        ),
+      ],
+    ),
+  );
+}
+
 class AnesthesiologistsDialog extends StatefulWidget {
   const AnesthesiologistsDialog({super.key, required this.initialItems});
 
@@ -59,45 +181,55 @@ class _AnesthesiologistsDialogState extends State<AnesthesiologistsDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Anestesiologistas'),
+      backgroundColor: _dialogSurfaceColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+      title: const Text('Anestesiologistas', style: _dialogTitleStyle),
       content: SizedBox(
-        width: 560,
+        width: 1120,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TextField(
                 key: const Key('anesthesiologist-name-field'),
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Nome'),
+                decoration: _dialogInputDecoration(labelText: 'Nome'),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 18),
               TextField(
                 key: const Key('anesthesiologist-crm-field'),
                 controller: _crmController,
-                decoration: const InputDecoration(labelText: 'CRM'),
+                decoration: _dialogInputDecoration(labelText: 'CRM'),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 18),
               TextField(
                 key: const Key('anesthesiologist-details-field'),
                 controller: _detailsController,
                 maxLines: 3,
-                decoration: const InputDecoration(
+                decoration: _dialogInputDecoration(
                   labelText: 'Dados complementares',
                   hintText: 'Ex: UF, RQE, equipe, observações',
+                  alignLabelWithHint: true,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 26),
               Align(
                 alignment: Alignment.centerRight,
                 child: FilledButton.icon(
                   key: const Key('anesthesiologist-add-button'),
                   onPressed: _addDraft,
+                  style: _dialogPrimaryButtonStyle(),
                   icon: const Icon(Icons.add),
                   label: const Text('Adicionar anestesiologista'),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
+              if (_items.isEmpty)
+                _dialogEmptyState('Nenhum anestesiologista adicionado.'),
               ..._items.asMap().entries.map((entry) {
                 final parts = entry.value.split('|');
                 final title = parts.isNotEmpty ? parts.first : '';
@@ -107,18 +239,14 @@ class _AnesthesiologistsDialogState extends State<AnesthesiologistsDialog> {
                   if (parts.length > 2 && parts[2].trim().isNotEmpty)
                     parts[2].trim(),
                 ].join(' • ');
-                return ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(title),
-                  subtitle: subtitle.isEmpty ? null : Text(subtitle),
-                  trailing: IconButton(
-                    onPressed: () {
-                      setState(() {
-                        _items.removeAt(entry.key);
-                      });
-                    },
-                    icon: const Icon(Icons.delete_outline),
-                  ),
+                return _dialogListTile(
+                  title: title,
+                  subtitle: subtitle.isEmpty ? null : subtitle,
+                  onDelete: () {
+                    setState(() {
+                      _items.removeAt(entry.key);
+                    });
+                  },
                 );
               }),
             ],
@@ -127,11 +255,15 @@ class _AnesthesiologistsDialogState extends State<AnesthesiologistsDialog> {
       ),
       actions: [
         TextButton(
+          style: _dialogSecondaryButtonStyle(),
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         FilledButton(
           key: const Key('anesthesiologist-save-button'),
+          style: _dialogPrimaryButtonStyle(
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+          ),
           onPressed: () {
             final draft = _buildDraftItem();
             Navigator.of(
@@ -196,51 +328,47 @@ class _NamedItemsDialogState extends State<NamedItemsDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.title),
+      backgroundColor: _dialogSurfaceColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(48, 40, 48, 0),
+      contentPadding: const EdgeInsets.fromLTRB(48, 28, 48, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(36, 0, 36, 30),
+      title: Text(widget.title, style: _dialogTitleStyle),
       content: SizedBox(
-        width: 560,
+        width: 1120,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TextField(
                 controller: _controller,
-                decoration: InputDecoration(
+                decoration: _dialogInputDecoration(
                   labelText: widget.label,
                   hintText: widget.hintText,
                 ),
                 onSubmitted: (_) => _addDraft(),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 26),
               Align(
                 alignment: Alignment.centerRight,
                 child: FilledButton.icon(
                   onPressed: _addDraft,
+                  style: _dialogPrimaryButtonStyle(),
                   icon: const Icon(Icons.add),
                   label: Text(widget.addButtonLabel),
                 ),
               ),
-              const SizedBox(height: 12),
-              if (_items.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 24),
-                  child: Text(
-                    widget.emptyStateText,
-                    style: const TextStyle(color: Color(0xFF7A8EA5)),
-                  ),
-                ),
+              const SizedBox(height: 16),
+              if (_items.isEmpty) _dialogEmptyState(widget.emptyStateText),
               ..._items.asMap().entries.map((entry) {
-                return ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(entry.value),
-                  trailing: IconButton(
-                    onPressed: () {
-                      setState(() {
-                        _items.removeAt(entry.key);
-                      });
-                    },
-                    icon: const Icon(Icons.delete_outline),
-                  ),
+                return _dialogListTile(
+                  title: entry.value,
+                  onDelete: () {
+                    setState(() {
+                      _items.removeAt(entry.key);
+                    });
+                  },
                 );
               }),
             ],
@@ -249,10 +377,14 @@ class _NamedItemsDialogState extends State<NamedItemsDialog> {
       ),
       actions: [
         TextButton(
+          style: _dialogSecondaryButtonStyle(),
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         FilledButton(
+          style: _dialogPrimaryButtonStyle(
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+          ),
           onPressed: () {
             final draft = _controller.text.trim();
             Navigator.of(

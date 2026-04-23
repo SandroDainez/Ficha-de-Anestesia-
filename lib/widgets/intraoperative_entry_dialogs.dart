@@ -28,6 +28,212 @@ class MedicationEntryEditResult {
   final bool remove;
 }
 
+class MaintenanceEntryEditResult {
+  const MaintenanceEntryEditResult({
+    required this.category,
+    required this.detail,
+    this.freshGasFlowLPerMin,
+    this.volumePercent,
+    required this.remove,
+  });
+
+  final String category;
+  final String detail;
+  final double? freshGasFlowLPerMin;
+  final double? volumePercent;
+  final bool remove;
+}
+
+class MaintenanceEntryEditDialog extends StatefulWidget {
+  const MaintenanceEntryEditDialog({
+    super.key,
+    required this.title,
+    required this.initialCategory,
+    required this.initialDetail,
+    this.initialFreshGasFlowLPerMin,
+    this.initialVolumePercent,
+    this.isInhalational = false,
+    this.defaultCategory = '',
+    this.onInhalationalChanged,
+  });
+
+  final String title;
+  final String initialCategory;
+  final String initialDetail;
+  final double? initialFreshGasFlowLPerMin;
+  final double? initialVolumePercent;
+  final bool isInhalational;
+  final String defaultCategory;
+  final String Function(double volumePercent, double freshGasFlowLPerMin)?
+  onInhalationalChanged;
+
+  @override
+  State<MaintenanceEntryEditDialog> createState() =>
+      _MaintenanceEntryEditDialogState();
+}
+
+class _MaintenanceEntryEditDialogState
+    extends State<MaintenanceEntryEditDialog> {
+  late final TextEditingController _categoryController;
+  late final TextEditingController _detailController;
+  late final TextEditingController _fgfController;
+  late final TextEditingController _volumeController;
+
+  @override
+  void initState() {
+    super.initState();
+    _categoryController = TextEditingController(
+      text: widget.initialCategory.isNotEmpty
+          ? widget.initialCategory
+          : widget.defaultCategory,
+    );
+    _detailController = TextEditingController(text: widget.initialDetail);
+    _fgfController = TextEditingController(
+      text: widget.initialFreshGasFlowLPerMin == null
+          ? ''
+          : widget.initialFreshGasFlowLPerMin!
+                .toStringAsFixed(1)
+                .replaceAll('.', ','),
+    );
+    _volumeController = TextEditingController(
+      text: widget.initialVolumePercent == null
+          ? ''
+          : widget.initialVolumePercent!
+                .toStringAsFixed(1)
+                .replaceAll('.', ','),
+    );
+    if (widget.isInhalational) {
+      _fgfController.addListener(_refreshInhalationalEstimate);
+      _volumeController.addListener(_refreshInhalationalEstimate);
+    }
+  }
+
+  @override
+  void dispose() {
+    if (widget.isInhalational) {
+      _fgfController.removeListener(_refreshInhalationalEstimate);
+      _volumeController.removeListener(_refreshInhalationalEstimate);
+    }
+    _categoryController.dispose();
+    _detailController.dispose();
+    _fgfController.dispose();
+    _volumeController.dispose();
+    super.dispose();
+  }
+
+  double? _parseDecimal(String value) {
+    return double.tryParse(value.trim().replaceAll(',', '.'));
+  }
+
+  void _refreshInhalationalEstimate() {
+    final builder = widget.onInhalationalChanged;
+    if (builder == null) return;
+    final volumePercent = _parseDecimal(_volumeController.text);
+    final freshGasFlowLPerMin = _parseDecimal(_fgfController.text);
+    if (volumePercent == null || freshGasFlowLPerMin == null) return;
+    final next = builder(volumePercent, freshGasFlowLPerMin);
+    if (_detailController.text == next) return;
+    _detailController.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: next.length),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.title),
+      content: SizedBox(
+        width: 460,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _categoryController,
+                decoration: const InputDecoration(
+                  labelText: 'Categoria',
+                  hintText: 'Ex: Manutenção TIVA',
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (widget.isInhalational) ...[
+                TextField(
+                  controller: _volumeController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Concentração expirada / vaporizador',
+                    hintText: 'Ex: 2,0 vol%',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _fgfController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Fluxo de gases frescos (FGF)',
+                    hintText: 'Ex: 2,0 L/min',
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              TextField(
+                controller: _detailController,
+                minLines: 2,
+                maxLines: 5,
+                decoration: InputDecoration(
+                  labelText: widget.isInhalational
+                      ? 'Dose / consumo estimado'
+                      : 'Dose / estratégia',
+                  hintText: widget.isInhalational
+                      ? 'Ex: 2,0 vol% • ~1,3 mL/h (estimado com FGF 2,0 L/min)'
+                      : 'Ex: 100-200 mcg/kg/min',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(
+            const MaintenanceEntryEditResult(
+              category: '',
+              detail: '',
+              remove: true,
+            ),
+          ),
+          child: const Text('Remover'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(
+            MaintenanceEntryEditResult(
+              category: _categoryController.text.trim(),
+              detail: _detailController.text.trim(),
+              freshGasFlowLPerMin: widget.isInhalational
+                  ? _parseDecimal(_fgfController.text)
+                  : null,
+              volumePercent: widget.isInhalational
+                  ? _parseDecimal(_volumeController.text)
+                  : null,
+              remove: false,
+            ),
+          ),
+          child: const Text('Salvar'),
+        ),
+      ],
+    );
+  }
+}
+
 class MedicationEntryEditDialog extends StatefulWidget {
   const MedicationEntryEditDialog({
     super.key,
@@ -117,7 +323,8 @@ class _MedicationEntryEditDialogState extends State<MedicationEntryEditDialog> {
               maxLines: 4,
               decoration: const InputDecoration(
                 labelText: 'Repiques / orientações',
-                hintText: 'Ex: repetir 50 mcg se necessário; nova dose em 40-60 min',
+                hintText:
+                    'Ex: repetir 50 mcg se necessário; nova dose em 40-60 min',
               ),
             ),
             const SizedBox(height: 12),
@@ -146,19 +353,13 @@ class _MedicationEntryEditDialogState extends State<MedicationEntryEditDialog> {
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(
-            const MedicationEntryEditResult(
-              encodedEntry: '',
-              remove: true,
-            ),
+            const MedicationEntryEditResult(encodedEntry: '', remove: true),
           ),
           child: const Text('Remover'),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(
-            MedicationEntryEditResult(
-              encodedEntry: _encode(),
-              remove: false,
-            ),
+            MedicationEntryEditResult(encodedEntry: _encode(), remove: false),
           ),
           child: const Text('Salvar'),
         ),
@@ -168,10 +369,7 @@ class _MedicationEntryEditDialogState extends State<MedicationEntryEditDialog> {
 }
 
 class DrugInfusionsDialog extends StatefulWidget {
-  const DrugInfusionsDialog({
-    super.key,
-    required this.initialItems,
-  });
+  const DrugInfusionsDialog({super.key, required this.initialItems});
 
   final List<String> initialItems;
 
@@ -180,11 +378,7 @@ class DrugInfusionsDialog extends StatefulWidget {
 }
 
 class _DrugInfusionsDialogState extends State<DrugInfusionsDialog> {
-  static const List<String> _hypnotics = [
-    'Propofol',
-    'Etomidato',
-    'Cetamina',
-  ];
+  static const List<String> _hypnotics = ['Propofol', 'Etomidato', 'Cetamina'];
   static const List<String> _analgesics = [
     'Fentanil',
     'Alfentanil',
@@ -313,7 +507,8 @@ class _DrugInfusionsDialogState extends State<DrugInfusionsDialog> {
               _ampouleControllers[name]!.text.trim().isNotEmpty,
         )
         .map(
-          (name) => '$name|${_doseControllers[name]!.text.trim()}|'
+          (name) =>
+              '$name|${_doseControllers[name]!.text.trim()}|'
               '${_timeControllers[name]!.text.trim()}|'
               '${_repeatControllers[name]!.text.trim()}|'
               '${_infusionControllers[name]!.text.trim()}|'
@@ -482,10 +677,7 @@ class _DrugInfusionsDialogState extends State<DrugInfusionsDialog> {
 }
 
 class EventsDialog extends StatefulWidget {
-  const EventsDialog({
-    super.key,
-    required this.initialItems,
-  });
+  const EventsDialog({super.key, required this.initialItems});
 
   final List<String> initialItems;
 
@@ -602,9 +794,7 @@ class _EventsDialogState extends State<EventsDialog> {
               TextField(
                 key: const Key('event-details-field'),
                 controller: _detailsController,
-                decoration: const InputDecoration(
-                  labelText: 'Detalhes',
-                ),
+                decoration: const InputDecoration(labelText: 'Detalhes'),
               ),
               const SizedBox(height: 12),
               Align(
@@ -644,9 +834,9 @@ class _EventsDialogState extends State<EventsDialog> {
           key: const Key('event-save-button'),
           onPressed: () {
             final pending = _buildDraftItem();
-            Navigator.of(context).pop(
-              pending == null ? _items : [..._items, pending],
-            );
+            Navigator.of(
+              context,
+            ).pop(pending == null ? _items : [..._items, pending]);
           },
           child: const Text('Salvar'),
         ),
@@ -656,10 +846,7 @@ class _EventsDialogState extends State<EventsDialog> {
 }
 
 class AdjunctsDialog extends StatefulWidget {
-  const AdjunctsDialog({
-    super.key,
-    required this.initialItems,
-  });
+  const AdjunctsDialog({super.key, required this.initialItems});
 
   final List<String> initialItems;
 
@@ -768,7 +955,8 @@ class _AdjunctsDialogState extends State<AdjunctsDialog> {
               _ampouleControllers[name]!.text.trim().isNotEmpty,
         )
         .map(
-          (name) => '$name|${_doseControllers[name]!.text.trim()}|'
+          (name) =>
+              '$name|${_doseControllers[name]!.text.trim()}|'
               '${_timeControllers[name]!.text.trim()}|'
               '${_repeatControllers[name]!.text.trim()}|'
               '${_infusionControllers[name]!.text.trim()}|'
@@ -908,7 +1096,8 @@ class CatalogMedicationDialog extends StatefulWidget {
   final List<MedicationCatalogSuggestion> suggestions;
 
   @override
-  State<CatalogMedicationDialog> createState() => _CatalogMedicationDialogState();
+  State<CatalogMedicationDialog> createState() =>
+      _CatalogMedicationDialogState();
 }
 
 class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
@@ -995,7 +1184,8 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
               _ampouleControllers[name]!.text.trim().isNotEmpty,
         )
         .map(
-          (name) => '$name|${_doseControllers[name]!.text.trim()}|'
+          (name) =>
+              '$name|${_doseControllers[name]!.text.trim()}|'
               '${_timeControllers[name]!.text.trim()}|'
               '${_repeatControllers[name]!.text.trim()}|'
               '${_infusionControllers[name]!.text.trim()}|'
@@ -1116,7 +1306,9 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              if (suggestion.additionalNotes.trim().isNotEmpty) ...[
+                              if (suggestion.additionalNotes
+                                  .trim()
+                                  .isNotEmpty) ...[
                                 const SizedBox(height: 4),
                                 Text(
                                   suggestion.additionalNotes,
@@ -1131,7 +1323,9 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
                                 alignment: Alignment.centerRight,
                                 child: OutlinedButton.icon(
                                   onPressed: () => _applySuggestion(suggestion),
-                                  icon: const Icon(Icons.auto_fix_high_outlined),
+                                  icon: const Icon(
+                                    Icons.auto_fix_high_outlined,
+                                  ),
                                   label: const Text('Aplicar sugestão'),
                                 ),
                               ),
@@ -1342,7 +1536,8 @@ class _VasoactiveDrugsDialogState extends State<VasoactiveDrugsDialog> {
               _ampouleControllers[name]!.text.trim().isNotEmpty,
         )
         .map(
-          (name) => '$name|${_doseControllers[name]!.text.trim()}|'
+          (name) =>
+              '$name|${_doseControllers[name]!.text.trim()}|'
               '${_timeControllers[name]!.text.trim()}|'
               '${_repeatControllers[name]!.text.trim()}|'
               '${_infusionControllers[name]!.text.trim()}|'

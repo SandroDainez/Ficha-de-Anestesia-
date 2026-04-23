@@ -664,7 +664,7 @@ class HemodynamicChartLayout {
   final Size size;
   final double? displayMaxTime;
 
-  static const double leftPadding = 34;
+  static const double leftPadding = 44;
   static const double rightPadding = 12;
   static const double topPadding = 34;
   static const double bottomPadding = 38;
@@ -770,6 +770,23 @@ class _ChartPainter extends CustomPainter {
       ..color = const Color(0xFFC8D6E5)
       ..strokeWidth = 1.2;
     final axisText = TextPainter(textDirection: TextDirection.ltr);
+    const spo2AxisStyle = TextStyle(
+      color: Color(0xFF0F9F63),
+      fontSize: 13,
+      fontWeight: FontWeight.w900,
+      letterSpacing: 0.1,
+    );
+    const hemoAxisStyle = TextStyle(
+      color: Color(0xFF5F7896),
+      fontSize: 12,
+      fontWeight: FontWeight.w800,
+      letterSpacing: 0.1,
+    );
+    const timeAxisStyle = TextStyle(
+      color: Color(0xFF5F7896),
+      fontSize: 11,
+      fontWeight: FontWeight.w800,
+    );
 
     for (var value = 70; value <= 100; value += 10) {
       final y = layout.yForValue(value.toDouble(), 'SpO2');
@@ -778,16 +795,9 @@ class _ChartPainter extends CustomPainter {
         Offset(size.width - HemodynamicChartLayout.rightPadding, y),
         grid,
       );
-      axisText.text = TextSpan(
-        text: value.toString(),
-        style: const TextStyle(
-          color: Color(0xFF16A96B),
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-        ),
-      );
+      axisText.text = TextSpan(text: value.toString(), style: spo2AxisStyle);
       axisText.layout();
-      axisText.paint(canvas, Offset(0, y - (axisText.height / 2)));
+      axisText.paint(canvas, Offset(2, y - (axisText.height / 2)));
     }
 
     for (var value = 0; value <= 200; value += 10) {
@@ -797,16 +807,9 @@ class _ChartPainter extends CustomPainter {
         Offset(size.width - HemodynamicChartLayout.rightPadding, y),
         grid,
       );
-      axisText.text = TextSpan(
-        text: value.toString(),
-        style: const TextStyle(
-          color: Color(0xFF7A8EA4),
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-        ),
-      );
+      axisText.text = TextSpan(text: value.toString(), style: hemoAxisStyle);
       axisText.layout();
-      axisText.paint(canvas, Offset(0, y - (axisText.height / 2)));
+      axisText.paint(canvas, Offset(2, y - (axisText.height / 2)));
     }
 
     canvas.drawLine(
@@ -821,13 +824,13 @@ class _ChartPainter extends CustomPainter {
     axisText.text = const TextSpan(
       text: 'SpO₂',
       style: TextStyle(
-        color: Color(0xFF16A96B),
-        fontSize: 11,
+        color: Color(0xFF0F9F63),
+        fontSize: 13,
         fontWeight: FontWeight.w800,
       ),
     );
     axisText.layout();
-    axisText.paint(canvas, const Offset(38, 16));
+    axisText.paint(canvas, const Offset(46, 14));
 
     for (double minute = 0; minute <= layout.maxTime; minute += 5) {
       final x = layout.xForTime(minute);
@@ -898,11 +901,7 @@ class _ChartPainter extends CustomPainter {
       final x = layout.xForTime(time);
       axisText.text = TextSpan(
         text: _formatAxisTime(time),
-        style: const TextStyle(
-          color: Color(0xFF7A8EA4),
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-        ),
+        style: timeAxisStyle,
       );
       axisText.layout();
       axisText.paint(canvas, Offset(x - 8, size.height - 16));

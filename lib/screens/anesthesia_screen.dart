@@ -59,9 +59,12 @@ class _SurgeryAntibioticSuggestionRule {
 class _MaintenancePreset {
   const _MaintenancePreset({
     required this.name,
-    required this.category,
     required this.summary,
     required this.defaultDetails,
+    this.category = '',
+    this.tivaCategory,
+    this.tivaSummary,
+    this.tivaDetails,
     this.isInhalational = false,
     this.defaultVolPercent = 0,
     this.molecularWeight = 0,
@@ -69,9 +72,12 @@ class _MaintenancePreset {
   });
 
   final String name;
-  final String category;
   final String summary;
   final String defaultDetails;
+  final String category;
+  final String? tivaCategory;
+  final String? tivaSummary;
+  final String? tivaDetails;
   final bool isInhalational;
   final double defaultVolPercent;
   final double molecularWeight;
@@ -110,6 +116,22 @@ class _AdjunctPreset {
   final String unit;
   final double concentrationPerMl;
   final String concentrationLabel;
+}
+
+class _UsageSummaryItem {
+  const _UsageSummaryItem({
+    required this.group,
+    required this.name,
+    this.quantity = '',
+    this.note = '',
+    this.priority = 0,
+  });
+
+  final String group;
+  final String name;
+  final String quantity;
+  final String note;
+  final int priority;
 }
 
 class _AirwaySupportRecommendation {
@@ -1179,15 +1201,21 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   static const List<_MaintenancePreset> _maintenancePresets = [
     _MaintenancePreset(
       name: 'Propofol em BIC',
-      category: 'Anestésicos EV contínuo',
-      summary: 'Infusão venosa contínua',
-      defaultDetails: '75-150 mcg/kg/min',
+      category: 'Anestésicos EV contínuos em bomba',
+      summary: 'EV contínua em bomba',
+      defaultDetails: '50-100 mcg/kg/min (3-6 mg/kg/h)',
+      tivaCategory: 'Manutenção TIVA',
+      tivaSummary: 'TIVA em bomba',
+      tivaDetails: '100-200 mcg/kg/min (6-12 mg/kg/h)',
     ),
     _MaintenancePreset(
       name: 'Remifentanil em BIC',
-      category: 'Opioides',
-      summary: 'Infusão venosa contínua',
+      category: 'Opioides EV contínuos em bomba',
+      summary: 'EV contínua em bomba',
       defaultDetails: '0,05-0,2 mcg/kg/min',
+      tivaCategory: 'Manutenção TIVA',
+      tivaSummary: 'TIVA em bomba',
+      tivaDetails: '0,05-0,25 mcg/kg/min',
     ),
     _MaintenancePreset(
       name: 'Fentanil em repiques',
@@ -1713,6 +1741,70 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     ).where((item) => item.split('|').first.trim() != name).toList();
   }
 
+  bool get _isTivaTechnique {
+    final technique = _record.anesthesiaTechnique.toLowerCase();
+    final details = _record.anesthesiaTechniqueDetails.toLowerCase();
+    return technique.contains('tiva') ||
+        technique.contains('venosa total') ||
+        details.contains('tiva') ||
+        details.contains('venosa total');
+  }
+
+  String _maintenanceCategoryForPreset(_MaintenancePreset preset) {
+    if (_isTivaTechnique && preset.tivaCategory != null) {
+      return preset.tivaCategory!;
+    }
+    return preset.category;
+  }
+
+  String _maintenanceBaseDetailsForPreset(_MaintenancePreset preset) {
+    if (_isTivaTechnique && preset.tivaDetails != null) {
+      return preset.tivaDetails!;
+    }
+    return preset.defaultDetails;
+  }
+
+  String _maintenanceDetailPrefixForPreset(_MaintenancePreset preset) {
+    if (_isTivaTechnique && preset.tivaSummary != null) {
+      return preset.tivaSummary!;
+    }
+    return preset.summary;
+  }
+
+  double _maintenanceFreshGasFlowFromEntry(
+    _MaintenancePreset preset,
+    String? encodedEntry,
+  ) {
+    if (!preset.isInhalational || encodedEntry == null) return 2.0;
+    final parts = encodedEntry.split('|');
+    if (parts.length > 3) {
+      final stored = double.tryParse(parts[3].trim());
+      if (stored != null && stored > 0) return stored;
+    }
+    return 2.0;
+  }
+
+  double _maintenanceVolPercentFromEntry(
+    _MaintenancePreset preset,
+    String? encodedEntry,
+  ) {
+    if (!preset.isInhalational || encodedEntry == null) {
+      return preset.defaultVolPercent;
+    }
+    final parts = encodedEntry.split('|');
+    if (parts.length > 4) {
+      final stored = double.tryParse(parts[4].trim());
+      if (stored != null && stored > 0) return stored;
+    }
+    final detail = parts.length > 2 ? parts[2].trim() : '';
+    final match = RegExp(r'([0-9]+(?:[.,][0-9]+)?)\s*vol%').firstMatch(detail);
+    if (match != null) {
+      final parsed = double.tryParse(match.group(1)!.replaceAll(',', '.'));
+      if (parsed != null && parsed > 0) return parsed;
+    }
+    return preset.defaultVolPercent;
+  }
+
   String _inferSurgicalSizeFromDescription() {
     final text = _record.surgeryDescription.toLowerCase();
     if (text.trim().isEmpty) return _record.surgicalSize;
@@ -1745,22 +1837,100 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return 'Pequeno';
   }
 
-  double _estimateInhalationalMlPerHour(_MaintenancePreset preset) {
+  double _estimateInhalationalMlPerHour(
+    _MaintenancePreset preset, {
+    required double freshGasFlowLPerMin,
+    required double volumePercent,
+  }) {
     if (!preset.isInhalational ||
         preset.density <= 0 ||
         preset.molecularWeight <= 0) {
       return 0;
     }
-    const freshGasFlowLPerMin = 2.0;
-    final volumePercent = preset.defaultVolPercent;
     return (3 * freshGasFlowLPerMin * volumePercent * preset.molecularWeight) /
         (2412 * preset.density);
   }
 
-  String _maintenancePresetDetails(_MaintenancePreset preset) {
-    if (!preset.isInhalational) return preset.defaultDetails;
-    final mlPerHour = _estimateInhalationalMlPerHour(preset);
-    return '${preset.defaultDetails} • ~${mlPerHour.toStringAsFixed(1)} mL/h (estimado com FGF 2 L/min)';
+  String _maintenancePresetDetails(
+    _MaintenancePreset preset, {
+    double? freshGasFlowLPerMin,
+    double? volumePercent,
+  }) {
+    if (!preset.isInhalational) {
+      return '${_maintenanceDetailPrefixForPreset(preset)} • ${_maintenanceBaseDetailsForPreset(preset)}';
+    }
+    final effectiveFlow = freshGasFlowLPerMin ?? 2.0;
+    final effectiveVol = volumePercent ?? preset.defaultVolPercent;
+    final mlPerHour = _estimateInhalationalMlPerHour(
+      preset,
+      freshGasFlowLPerMin: effectiveFlow,
+      volumePercent: effectiveVol,
+    );
+    final flowLabel = effectiveFlow.toStringAsFixed(1).replaceAll('.', ',');
+    final volLabel = effectiveVol.toStringAsFixed(1).replaceAll('.', ',');
+    return '$volLabel vol% • ~${mlPerHour.toStringAsFixed(1)} mL/h (estimado com FGF $flowLabel L/min)';
+  }
+
+  String _encodeMaintenanceEntry(
+    _MaintenancePreset preset, {
+    required String category,
+    required String detail,
+    double? freshGasFlowLPerMin,
+    double? volumePercent,
+  }) {
+    final parts = <String>[preset.name, category, detail];
+    if (preset.isInhalational) {
+      parts.add((freshGasFlowLPerMin ?? 2.0).toStringAsFixed(1));
+      parts.add((volumePercent ?? preset.defaultVolPercent).toStringAsFixed(1));
+    }
+    return parts.join('|');
+  }
+
+  List<String> _refreshMaintenanceEntriesForCurrentTechnique(
+    List<String> items,
+  ) {
+    final refreshed = <String>[];
+    for (final item in items) {
+      final parts = item.split('|');
+      final name = parts.isNotEmpty ? parts.first.trim() : '';
+      final preset = _maintenancePresets.where((entry) => entry.name == name);
+      if (preset.isEmpty) {
+        refreshed.add(item);
+        continue;
+      }
+      final currentPreset = preset.first;
+      final category = _maintenanceCategoryForPreset(currentPreset);
+      final detail = parts.length > 2 ? parts[2].trim() : '';
+      final defaultOld = currentPreset.defaultDetails;
+      final defaultNew = _maintenanceBaseDetailsForPreset(currentPreset);
+      final normalizedDetail =
+          detail == defaultOld || detail == defaultNew || detail.isEmpty
+          ? _maintenancePresetDetails(
+              currentPreset,
+              freshGasFlowLPerMin: _maintenanceFreshGasFlowFromEntry(
+                currentPreset,
+                item,
+              ),
+              volumePercent: _maintenanceVolPercentFromEntry(
+                currentPreset,
+                item,
+              ),
+            )
+          : detail;
+      refreshed.add(
+        _encodeMaintenanceEntry(
+          currentPreset,
+          category: category,
+          detail: normalizedDetail,
+          freshGasFlowLPerMin: _maintenanceFreshGasFlowFromEntry(
+            currentPreset,
+            item,
+          ),
+          volumePercent: _maintenanceVolPercentFromEntry(currentPreset, item),
+        ),
+      );
+    }
+    return refreshed;
   }
 
   String? _findDrugEntry(String name) {
@@ -1946,7 +2116,15 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     final existing = _findMaintenanceEntry(preset.name);
     final updated = existing == null
         ? _upsertMaintenanceEntry(
-            '${preset.name}|${preset.category}|${_maintenancePresetDetails(preset)}',
+            _encodeMaintenanceEntry(
+              preset,
+              category: _maintenanceCategoryForPreset(preset),
+              detail: _maintenancePresetDetails(preset),
+              freshGasFlowLPerMin: preset.isInhalational ? 2.0 : null,
+              volumePercent: preset.isInhalational
+                  ? preset.defaultVolPercent
+                  : null,
+            ),
           )
         : _removeMaintenanceEntry(preset.name);
     setState(() {
@@ -1958,26 +2136,59 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   Future<void> _editMaintenancePreset(_MaintenancePreset preset) async {
     final existing = _findMaintenanceEntry(preset.name);
     final parts = existing?.split('|') ?? const <String>[];
-    final result = await showDialog<MedicationEntryEditResult>(
+    final initialCategory = parts.length > 1 && parts[1].trim().isNotEmpty
+        ? parts[1].trim()
+        : _maintenanceCategoryForPreset(preset);
+    final initialDetail = parts.length > 2 && parts[2].trim().isNotEmpty
+        ? parts[2].trim()
+        : _maintenancePresetDetails(
+            preset,
+            freshGasFlowLPerMin: _maintenanceFreshGasFlowFromEntry(
+              preset,
+              existing,
+            ),
+            volumePercent: _maintenanceVolPercentFromEntry(preset, existing),
+          );
+    final result = await showDialog<MaintenanceEntryEditResult>(
       context: context,
-      builder: (_) => MedicationEntryEditDialog(
+      builder: (_) => MaintenanceEntryEditDialog(
         title: preset.name,
-        name: preset.name,
-        initialDose: parts.length > 2 && parts[2].trim().isNotEmpty
-            ? parts[2].trim()
-            : _maintenancePresetDetails(preset),
-        initialTime: '',
-        initialRepeats: parts.length > 1 && parts[1].trim().isNotEmpty
-            ? parts[1].trim()
-            : preset.category,
-        initialInfusion: preset.summary,
+        initialCategory: initialCategory,
+        defaultCategory: _maintenanceCategoryForPreset(preset),
+        initialDetail: initialDetail,
+        isInhalational: preset.isInhalational,
+        initialFreshGasFlowLPerMin: _maintenanceFreshGasFlowFromEntry(
+          preset,
+          existing,
+        ),
+        initialVolumePercent: _maintenanceVolPercentFromEntry(preset, existing),
+        onInhalationalChanged: (volumePercent, freshGasFlowLPerMin) =>
+            _maintenancePresetDetails(
+              preset,
+              freshGasFlowLPerMin: freshGasFlowLPerMin,
+              volumePercent: volumePercent,
+            ),
       ),
     );
     if (result == null) return;
     final updated = result.remove
         ? _removeMaintenanceEntry(preset.name)
         : _upsertMaintenanceEntry(
-            '${preset.name}|${result.encodedEntry.split('|').length > 3 ? result.encodedEntry.split('|')[3].trim() : preset.category}|${result.encodedEntry.split('|').length > 1 ? result.encodedEntry.split('|')[1].trim() : _maintenancePresetDetails(preset)}',
+            _encodeMaintenanceEntry(
+              preset,
+              category: result.category.isNotEmpty
+                  ? result.category
+                  : _maintenanceCategoryForPreset(preset),
+              detail: result.detail.isNotEmpty
+                  ? result.detail
+                  : _maintenancePresetDetails(
+                      preset,
+                      freshGasFlowLPerMin: result.freshGasFlowLPerMin,
+                      volumePercent: result.volumePercent,
+                    ),
+              freshGasFlowLPerMin: result.freshGasFlowLPerMin,
+              volumePercent: result.volumePercent,
+            ),
           );
     setState(() {
       _record = _record.copyWith(maintenanceAgents: updated.join('\n'));
@@ -3187,13 +3398,21 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
 
     if (result == null) return;
 
+    final nextRecord = _record.copyWith(
+      anesthesiaTechnique: result.technique,
+      anesthesiaTechniqueDetails: result.details,
+      preAnestheticAssessment: _record.preAnestheticAssessment.copyWith(
+        anestheticPlan: result.technique,
+      ),
+    );
+    final refreshedMaintenanceItems =
+        _refreshMaintenanceEntriesForCurrentTechnique(
+          _lineItems(nextRecord.maintenanceAgents),
+        );
+
     setState(() {
-      _record = _record.copyWith(
-        anesthesiaTechnique: result.technique,
-        anesthesiaTechniqueDetails: result.details,
-        preAnestheticAssessment: _record.preAnestheticAssessment.copyWith(
-          anestheticPlan: result.technique,
-        ),
+      _record = nextRecord.copyWith(
+        maintenanceAgents: refreshedMaintenanceItems.join('\n'),
       );
     });
     await _persistRecord();
@@ -3247,11 +3466,11 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     final result = await showDialog<List<String>>(
       context: context,
       builder: (_) => ListFieldDialog(
-        title: 'Materiais e consumos da anestesia',
-        label: 'Materiais / medicações / quantidades',
+        title: 'Itens adicionais / ajuste manual',
+        label: 'Itens extras / ajustes / quantidades',
         initialItems: _record.anesthesiaMaterials,
         hintText:
-            'Ex: TOT 7,0 1 un; AVP 20G 2 un; PAI radial 1 kit; SF 0,9% 3 frascos; Propofol 5 ampolas',
+            'Ex: equipo de infusão 1 un; filtro HME 1 un; item não capturado automaticamente',
       ),
     );
     if (result == null) return;
@@ -4822,6 +5041,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
 
   Widget _buildPresetActionCard({
     Key? key,
+    Key? confirmKey,
+    Key? editKey,
     required String title,
     String? badge,
     String? subtitle,
@@ -4908,6 +5129,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             runSpacing: 10,
             children: [
               FilledButton.icon(
+                key: confirmKey,
                 onPressed: onConfirm,
                 icon: Icon(
                   selected
@@ -4926,6 +5148,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
               ),
               if (onEdit != null)
                 OutlinedButton.icon(
+                  key: editKey,
                   onPressed: onEdit,
                   icon: const Icon(Icons.edit_outlined),
                   label: const Text('Editar'),
@@ -4965,8 +5188,14 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         : _maintenancePresetDetails(preset);
     final category = parts.length > 1 && parts[1].trim().isNotEmpty
         ? parts[1].trim()
-        : preset.category;
+        : _maintenanceCategoryForPreset(preset);
     return _buildPresetActionCard(
+      confirmKey: Key(
+        'maintenance-confirm-${preset.name.toLowerCase().replaceAll(' ', '-')}',
+      ),
+      editKey: Key(
+        'maintenance-edit-${preset.name.toLowerCase().replaceAll(' ', '-')}',
+      ),
       title: preset.name,
       subtitle: category,
       detail: detail,
@@ -5413,15 +5642,15 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
 
   Widget _buildAnesthesiaMaterialsCard() {
     final status = _record.anesthesiaMaterials.isEmpty
-        ? 'Nenhum material registrado'
+        ? 'Nenhum item adicional registrado'
         : _record.anesthesiaMaterials.first;
     final summary = _record.anesthesiaMaterials.isEmpty
-        ? 'Relacionar materiais, dispositivos, ampolas, soros, sangue e demais consumos'
+        ? 'Use este campo apenas para itens adicionais ou ajustes manuais que nao apareceram automaticamente no consolidado'
         : '${_record.anesthesiaMaterials.length} item(ns) registrados';
     return KeyedSubtree(
       key: _materialsSectionKey,
       child: _buildCompactOperationalCard(
-        title: 'Materiais e consumos',
+        title: 'Itens adicionais / ajuste manual',
         titleColor: _medicationsRowColor,
         icon: Icons.inventory_2_outlined,
         minHeight: 92,
@@ -5433,106 +5662,207 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     );
   }
 
-  List<String> _buildUsageSummaryLines() {
-    final lines = <String>[
-      ..._usageLinesFromEncodedEntries(
-        'Indução',
-        _record.drugs,
-        quantityIndex: 4,
-        fallbackDetailIndex: 1,
-      ),
-      ..._usageLinesFromEncodedEntries(
-        'Adjuvantes',
-        _record.adjuncts,
-        quantityIndex: 4,
-        fallbackDetailIndex: 1,
-      ),
-      ..._usageLinesFromEncodedEntries(
-        'Sedação',
-        _record.sedationMedications,
-        quantityIndex: 4,
-        fallbackDetailIndex: 1,
-      ),
-      ..._usageLinesFromEncodedEntries(
-        'Outras medicações',
-        _record.otherMedications,
-        quantityIndex: 4,
-        fallbackDetailIndex: 1,
-      ),
-      ..._usageLinesFromEncodedEntries(
-        'Vasoativas',
-        _record.vasoactiveDrugs,
-        quantityIndex: 4,
-        fallbackDetailIndex: 1,
-      ),
-      ..._usageLinesFromPlainEntries('Acesso venoso', _record.venousAccesses),
-      ..._usageLinesFromPlainEntries(
-        'Acesso arterial',
-        _record.arterialAccesses,
-      ),
-      ..._usageLinesFromPlainEntries(
-        'Agulhas neuraxiais',
-        _record.neuraxialNeedles,
-      ),
-      ..._usageLinesFromFluidEntries(
-        'Cristaloides',
-        _record.fluidBalance.crystalloidEntries,
-      ),
-      ..._usageLinesFromFluidEntries(
-        'Coloides',
-        _record.fluidBalance.colloidEntries,
-      ),
-      ..._usageLinesFromFluidEntries(
-        'Sangue e derivados',
-        _record.fluidBalance.bloodEntries,
-      ),
-      ..._usageLinesFromPlainEntries(
-        'Materiais livres',
-        _record.anesthesiaMaterials,
-      ),
-    ];
-    return lines;
+  String _usageNormalizedName(String name) {
+    return name
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9áàâãéèêíïóôõöúç]+'), ' ')
+        .trim();
   }
 
-  List<String> _usageLinesFromEncodedEntries(
-    String prefix,
+  String _usageItemKey(String group, String name) {
+    final normalizedGroup = group.toLowerCase().trim();
+    final normalizedName = _usageNormalizedName(name);
+    return '$normalizedGroup|$normalizedName';
+  }
+
+  void _addUsageItem(
+    Map<String, _UsageSummaryItem> items,
+    _UsageSummaryItem item,
+  ) {
+    if (item.group == 'Ajuste manual') {
+      final normalizedName = _usageNormalizedName(item.name);
+      final alreadyTracked = items.values.any((current) {
+        final currentName = _usageNormalizedName(current.name);
+        return currentName == normalizedName ||
+            currentName.startsWith(normalizedName) ||
+            normalizedName.startsWith(currentName);
+      });
+      if (alreadyTracked) return;
+    }
+    final key = _usageItemKey(item.group, item.name);
+    final current = items[key];
+    if (current == null) {
+      items[key] = item;
+      return;
+    }
+    final currentHasQuantity = current.quantity.trim().isNotEmpty;
+    final nextHasQuantity = item.quantity.trim().isNotEmpty;
+    if (!currentHasQuantity && nextHasQuantity) {
+      items[key] = item;
+      return;
+    }
+    if (currentHasQuantity == nextHasQuantity &&
+        item.priority > current.priority) {
+      items[key] = item;
+    }
+  }
+
+  List<_UsageSummaryItem> _usageItemsFromMedicationEntries(
+    String group,
     List<String> entries, {
-    required int quantityIndex,
-    required int fallbackDetailIndex,
+    int priority = 10,
   }) {
-    return entries.map((entry) {
+    return entries.where((entry) => entry.trim().isNotEmpty).map((entry) {
       final parts = entry.split('|');
       final name = parts.isNotEmpty ? parts.first.trim() : entry.trim();
-      final quantity = parts.length > quantityIndex
-          ? parts[quantityIndex].trim()
-          : '';
-      final fallbackDetail = parts.length > fallbackDetailIndex
-          ? parts[fallbackDetailIndex].trim()
-          : '';
-      final detail = quantity.isNotEmpty ? quantity : fallbackDetail;
-      if (detail.isEmpty) return '$prefix: $name';
-      return '$prefix: $name • $detail';
+      final quantity = parts.length > 4 ? parts[4].trim() : '';
+      final note = quantity.isEmpty ? 'quantidade não informada' : '';
+      return _UsageSummaryItem(
+        group: group,
+        name: name,
+        quantity: quantity,
+        note: note,
+        priority: priority,
+      );
     }).toList();
   }
 
-  List<String> _usageLinesFromPlainEntries(
-    String prefix,
-    List<String> entries,
-  ) {
-    return entries.map((entry) => '$prefix: ${entry.trim()}').toList();
-  }
-
-  List<String> _usageLinesFromFluidEntries(
-    String prefix,
-    List<String> entries,
-  ) {
+  List<_UsageSummaryItem> _usageItemsFromPlainEntries(
+    String group,
+    List<String> entries, {
+    String quantity = '1 un',
+    int priority = 20,
+  }) {
     return entries
-        .map((entry) => '$prefix: ${entry.replaceAll('|', ' • ').trim()}')
+        .map((entry) => entry.trim())
+        .where((entry) => entry.isNotEmpty)
+        .map(
+          (entry) => _UsageSummaryItem(
+            group: group,
+            name: entry,
+            quantity: quantity,
+            priority: priority,
+          ),
+        )
         .toList();
   }
 
+  List<_UsageSummaryItem> _usageItemsFromFluidEntries(
+    String group,
+    List<String> entries, {
+    int priority = 15,
+  }) {
+    return entries.where((entry) => entry.trim().isNotEmpty).map((entry) {
+      final parts = entry.split('|').map((item) => item.trim()).toList();
+      final name = parts.isNotEmpty ? parts[0] : entry.trim();
+      final quantity = parts.length > 2
+          ? '${parts[1]} • ${parts[2]} mL'
+          : parts.length > 1
+          ? '${parts[1]} mL'
+          : '';
+      return _UsageSummaryItem(
+        group: group,
+        name: name,
+        quantity: quantity,
+        note: quantity.isEmpty ? 'quantidade não informada' : '',
+        priority: priority,
+      );
+    }).toList();
+  }
+
+  List<_UsageSummaryItem> _usageItemsFromAirway() {
+    final items = <_UsageSummaryItem>[];
+    final device = _record.airway.device.trim();
+    final tubeNumber = _record.airway.tubeNumber.trim();
+    if (device.isNotEmpty) {
+      final label = tubeNumber.isEmpty ? device : '$device $tubeNumber';
+      items.add(
+        _UsageSummaryItem(
+          group: 'Via aérea',
+          name: label,
+          quantity: '1 un',
+          priority: 25,
+        ),
+      );
+    }
+    return items;
+  }
+
+  List<_UsageSummaryItem> _usageItemsFromManualMaterials() {
+    return _record.anesthesiaMaterials
+        .map((entry) => entry.trim())
+        .where((entry) => entry.isNotEmpty)
+        .map(
+          (entry) => _UsageSummaryItem(
+            group: 'Ajuste manual',
+            name: entry,
+            priority: 100,
+          ),
+        )
+        .toList();
+  }
+
+  List<_UsageSummaryItem> _buildUsageSummaryItems() {
+    final items = <String, _UsageSummaryItem>{};
+    final collected = <_UsageSummaryItem>[
+      ..._usageItemsFromMedicationEntries('Indução', _record.drugs),
+      ..._usageItemsFromMedicationEntries('Adjuvantes', _record.adjuncts),
+      ..._usageItemsFromMedicationEntries(
+        'Manutenção',
+        _lineItems(_record.maintenanceAgents),
+      ),
+      ..._usageItemsFromMedicationEntries(
+        'Sedação',
+        _record.sedationMedications,
+      ),
+      ..._usageItemsFromMedicationEntries(
+        'Outras medicações',
+        _record.otherMedications,
+      ),
+      ..._usageItemsFromMedicationEntries(
+        'Vasoativas',
+        _record.vasoactiveDrugs,
+      ),
+      ..._usageItemsFromAirway(),
+      ..._usageItemsFromPlainEntries('Acesso venoso', _record.venousAccesses),
+      ..._usageItemsFromPlainEntries(
+        'Acesso arterial',
+        _record.arterialAccesses,
+      ),
+      ..._usageItemsFromPlainEntries(
+        'Agulhas neuraxiais',
+        _record.neuraxialNeedles,
+      ),
+      ..._usageItemsFromFluidEntries(
+        'Cristaloides',
+        _record.fluidBalance.crystalloidEntries,
+      ),
+      ..._usageItemsFromFluidEntries(
+        'Coloides',
+        _record.fluidBalance.colloidEntries,
+      ),
+      ..._usageItemsFromFluidEntries(
+        'Sangue e derivados',
+        _record.fluidBalance.bloodEntries,
+      ),
+      ..._usageItemsFromManualMaterials(),
+    ];
+    for (final item in collected) {
+      _addUsageItem(items, item);
+    }
+    final result = items.values.toList();
+    result.sort((a, b) {
+      final priorityCompare = a.priority.compareTo(b.priority);
+      if (priorityCompare != 0) return priorityCompare;
+      final groupCompare = a.group.compareTo(b.group);
+      if (groupCompare != 0) return groupCompare;
+      return a.name.compareTo(b.name);
+    });
+    return result;
+  }
+
   Widget _buildUsageSummaryCard() {
-    final summary = _buildUsageSummaryLines();
+    final summary = _buildUsageSummaryItems();
 
     return PanelCard(
       title: 'Resumo de uso',
@@ -5546,14 +5876,19 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             ? const [
                 StatusHint(
                   text:
-                      'O resumo é preenchido automaticamente conforme drogas, acessos, agulhas e materiais forem registrados.',
+                      'O consolidado é montado automaticamente com drogas, manutenção, via aérea, acessos, agulhas, fluidos e itens adicionais.',
                 ),
               ]
             : summary
                   .map(
                     (item) => Padding(
                       padding: const EdgeInsets.only(bottom: 6),
-                      child: CheckLine(text: item),
+                      child: CheckLine(
+                        text:
+                            '${item.group}: ${item.name}'
+                            '${item.quantity.trim().isNotEmpty ? ' • ${item.quantity.trim()}' : ''}'
+                            '${item.note.trim().isNotEmpty ? ' • ${item.note.trim()}' : ''}',
+                      ),
                     ),
                   )
                   .toList(),
@@ -5793,12 +6128,10 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Widget _buildMaintenanceCard() {
-    final categories = [
-      'Anestésicos EV contínuo',
-      'Anestésicos inalatórios',
-      'Opioides',
-      'Bloqueadores neuromusculares',
-    ];
+    final categories = _maintenancePresets
+        .map(_maintenanceCategoryForPreset)
+        .toSet()
+        .toList();
     final maintenanceItems = _lineItems(_record.maintenanceAgents);
     final maintenanceStatus = maintenanceItems.isEmpty
         ? 'Nenhum agente de manutenção registrado'
@@ -5822,7 +6155,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         children: [
           ...categories.map((category) {
             final items = _maintenancePresets
-                .where((item) => item.category == category)
+                .where(
+                  (item) => _maintenanceCategoryForPreset(item) == category,
+                )
                 .toList();
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -5848,7 +6183,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             );
           }),
           const Text(
-            'Nos inalatórios, o volume em mL/h é uma estimativa baseada em FGF de 2 L/min.',
+            'Nos inalatórios, o consumo em mL/h é recalculado conforme a concentração vol% e o FGF informados no editor.',
             style: TextStyle(
               color: Color(0xFF5D7288),
               fontWeight: FontWeight.w600,
