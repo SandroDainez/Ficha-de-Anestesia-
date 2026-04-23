@@ -111,17 +111,74 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     'Recente',
   ];
   static const List<_OptionDetail> _pediatricFunctionalOptions = [
-    _OptionDetail('Atividade preservada', 'Brinca e acompanha a rotina habitual.'),
+    _OptionDetail(
+      'Atividade preservada',
+      'Brinca e acompanha a rotina habitual.',
+    ),
     _OptionDetail('Limitação leve', 'Cansaço, tosse ou chiado aos esforços.'),
-    _OptionDetail('Limitação importante', 'Dispneia, intolerância ou esforço reduzido.'),
+    _OptionDetail(
+      'Limitação importante',
+      'Dispneia, intolerância ou esforço reduzido.',
+    ),
   ];
   static const List<_OptionDetail> _neonatalFunctionalOptions = [
-    _OptionDetail('Estável em ar ambiente', 'Sem suporte atual e sem eventos recentes.'),
-    _OptionDetail('Oxigênio recente', 'Necessidade recente de oxigênio suplementar.'),
+    _OptionDetail(
+      'Estável em ar ambiente',
+      'Sem suporte atual e sem eventos recentes.',
+    ),
+    _OptionDetail(
+      'Oxigênio recente',
+      'Necessidade recente de oxigênio suplementar.',
+    ),
     _OptionDetail('Apneia/bradicardia', 'Eventos recentes ou em investigação.'),
-    _OptionDetail('Suporte ventilatório', 'CPAP ou ventilação mecânica recente.'),
+    _OptionDetail(
+      'Suporte ventilatório',
+      'CPAP ou ventilação mecânica recente.',
+    ),
   ];
   static const List<String> _mallampatiOptions = ['I', 'II', 'III', 'IV'];
+  static const List<_AsaReference> _asaReferences = [
+    _AsaReference(
+      grade: 'I',
+      description:
+          'Paciente saudavel, sem doenca sistemica clinicamente relevante.',
+      examples:
+          'Ex: adulto sem comorbidades ou crianca saudavel para cirurgia eletiva.',
+    ),
+    _AsaReference(
+      grade: 'II',
+      description: 'Doenca sistemica leve, sem limitacao funcional importante.',
+      examples:
+          'Ex: HAS controlada, obesidade leve, tabagismo, gestacao, asma leve.',
+    ),
+    _AsaReference(
+      grade: 'III',
+      description:
+          'Doenca sistemica importante, com repercussao funcional ou clinica relevante.',
+      examples:
+          'Ex: DM descompensado, obesidade grave, DPOC, IRC dialitica, DAC estavel.',
+    ),
+    _AsaReference(
+      grade: 'IV',
+      description:
+          'Doenca sistemica grave que representa ameaca constante a vida.',
+      examples:
+          'Ex: ICC descompensada, angina instavel, sepse, insuficiencia respiratoria.',
+    ),
+    _AsaReference(
+      grade: 'V',
+      description:
+          'Paciente moribundo, sem expectativa de sobreviver sem a cirurgia.',
+      examples:
+          'Ex: ruptura de aneurisma, politrauma grave, choque refratario.',
+    ),
+    _AsaReference(
+      grade: 'VI',
+      description:
+          'Paciente com morte encefalica mantido para doacao de orgaos.',
+      examples: 'Usado em contexto de captacao de orgaos.',
+    ),
+  ];
   static const List<_AirwayReference> _mallampatiReferences = [
     _AirwayReference(
       grade: 'I',
@@ -131,7 +188,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     _AirwayReference(
       grade: 'II',
       description: 'Palato mole, fauces e parte da uvula visiveis.',
-      technique: 'Laringoscopia direta ou videolaringoscopio conforme contexto.',
+      technique:
+          'Laringoscopia direta ou videolaringoscopio conforme contexto.',
     ),
     _AirwayReference(
       grade: 'III',
@@ -141,7 +199,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     _AirwayReference(
       grade: 'IV',
       description: 'Somente palato duro visivel.',
-      technique: 'Videolaringoscopio/fibroscopia e estrategia de resgate pronta.',
+      technique:
+          'Videolaringoscopio/fibroscopia e estrategia de resgate pronta.',
     ),
   ];
   static const List<String> _mouthOpeningOptions = [
@@ -338,7 +397,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   late final TextEditingController _otherAirwayController;
   late final TextEditingController _otherDifficultAirwayPredictorsController;
   late final TextEditingController
-      _otherDifficultVentilationPredictorsController;
+  _otherDifficultVentilationPredictorsController;
   late final TextEditingController _otherComorbiditiesController;
   late final TextEditingController _otherMedicationsController;
   late final TextEditingController _otherHabitsController;
@@ -497,7 +556,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       case PatientPopulation.neonatal:
         return const [
           'Rever cafeína, prostaglandina, diuréticos, anticonvulsivantes e drogas em uso recente na UTI.',
-      ];
+        ];
     }
   }
 
@@ -619,7 +678,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
 
   String get _functionalOtherHint {
     return switch (_selectedPopulation) {
-      PatientPopulation.adult => 'Descreva limitação funcional, dispneia, angina',
+      PatientPopulation.adult =>
+        'Descreva limitação funcional, dispneia, angina',
       PatientPopulation.pediatric =>
         'Descreva cansaço, redução de brincadeiras, mamadas lentas ou pausas respiratórias',
       PatientPopulation.neonatal =>
@@ -678,10 +738,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   }
 
   List<String> get _allDentitionOptions {
-    return {
-      ..._dentitionOptions,
-      ..._pediatricDentitionOptions,
-    }.toList();
+    return {..._dentitionOptions, ..._pediatricDentitionOptions}.toList();
   }
 
   List<String> get _allComplementaryExamOptions {
@@ -813,7 +870,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     return switch (_selectedPopulation) {
       PatientPopulation.adult => 'MV presente, sem ruídos adventícios',
       PatientPopulation.pediatric => 'MV presente, sibilos, tosse, secreção',
-      PatientPopulation.neonatal => 'Esforço respiratório, retrações, roncos, suporte',
+      PatientPopulation.neonatal =>
+        'Esforço respiratório, retrações, roncos, suporte',
     };
   }
 
@@ -1020,19 +1078,26 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         .map((line) => line.trim())
         .where((line) => line.isNotEmpty)
         .where(
-          (line) => !RegExp(r'^(AC|FC|PA|AP)\s*:', caseSensitive: false)
-              .hasMatch(line),
+          (line) => !RegExp(
+            r'^(AC|FC|PA|AP)\s*:',
+            caseSensitive: false,
+          ).hasMatch(line),
         )
         .join('\n');
   }
 
   String _buildPhysicalExamSummary() {
     final parts = <String>[
-      if (_acController.text.trim().isNotEmpty) 'AC: ${_acController.text.trim()}',
-      if (_fcController.text.trim().isNotEmpty) 'FC: ${_fcController.text.trim()}',
-      if (_paController.text.trim().isNotEmpty) 'PA: ${_paController.text.trim()}',
-      if (_apController.text.trim().isNotEmpty) 'AP: ${_apController.text.trim()}',
-      if (_physicalExamController.text.trim().isNotEmpty) _physicalExamController.text.trim(),
+      if (_acController.text.trim().isNotEmpty)
+        'AC: ${_acController.text.trim()}',
+      if (_fcController.text.trim().isNotEmpty)
+        'FC: ${_fcController.text.trim()}',
+      if (_paController.text.trim().isNotEmpty)
+        'PA: ${_paController.text.trim()}',
+      if (_apController.text.trim().isNotEmpty)
+        'AP: ${_apController.text.trim()}',
+      if (_physicalExamController.text.trim().isNotEmpty)
+        _physicalExamController.text.trim(),
     ];
     return parts.join('\n');
   }
@@ -1175,11 +1240,15 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     _otherMedicationsController = TextEditingController(
       text: assessment.otherMedications,
     );
-    _otherHabitsController = TextEditingController(text: assessment.otherHabits);
+    _otherHabitsController = TextEditingController(
+      text: assessment.otherHabits,
+    );
     _otherComplementaryExamsController = TextEditingController(
       text: assessment.otherComplementaryExams,
     );
-    _fastingNotesController = TextEditingController(text: assessment.fastingNotes);
+    _fastingNotesController = TextEditingController(
+      text: assessment.fastingNotes,
+    );
     _asaNotesController = TextEditingController(text: assessment.asaNotes);
     _otherAnestheticPlanController = TextEditingController(
       text: assessment.otherAnestheticPlan,
@@ -1232,42 +1301,48 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         .difficultVentilationPredictors
         .where(_allDifficultVentilationPredictorOptions.contains)
         .toSet();
-    _smokingStatus = _allSmokingExposureOptions.contains(assessment.smokingStatus)
+    _smokingStatus =
+        _allSmokingExposureOptions.contains(assessment.smokingStatus)
         ? assessment.smokingStatus
         : '';
-    _alcoholStatus = _allSecondaryExposureOptions.contains(assessment.alcoholStatus)
+    _alcoholStatus =
+        _allSecondaryExposureOptions.contains(assessment.alcoholStatus)
         ? assessment.alcoholStatus
         : '';
     _selectedMets = _allFunctionalValues.contains(assessment.mets)
         ? assessment.mets
         : '';
-    _selectedMallampati = _mallampatiOptions.contains(assessment.airway.mallampati)
+    _selectedMallampati =
+        _mallampatiOptions.contains(assessment.airway.mallampati)
         ? assessment.airway.mallampati
         : '';
-    _selectedMouthOpening = _allMouthOpeningOptions.contains(assessment.mouthOpening)
+    _selectedMouthOpening =
+        _allMouthOpeningOptions.contains(assessment.mouthOpening)
         ? assessment.mouthOpening
         : '';
-    _selectedNeckMobility = _neckMobilityOptions.contains(assessment.neckMobility)
+    _selectedNeckMobility =
+        _neckMobilityOptions.contains(assessment.neckMobility)
         ? assessment.neckMobility
         : '';
     _selectedDentition = _allDentitionOptions.contains(assessment.dentition)
         ? assessment.dentition
         : '';
-    _selectedSolidFasting = _solidFastingOptions.contains(assessment.fastingSolids)
+    _selectedSolidFasting =
+        _solidFastingOptions.contains(assessment.fastingSolids)
         ? assessment.fastingSolids
         : '';
     _selectedLiquidFasting =
         _liquidFastingOptions.contains(assessment.fastingLiquids)
-            ? assessment.fastingLiquids
-            : '';
+        ? assessment.fastingLiquids
+        : '';
     _selectedBreastMilkFasting =
         _breastMilkFastingOptions.contains(assessment.fastingBreastMilk)
-            ? assessment.fastingBreastMilk
-            : '';
+        ? assessment.fastingBreastMilk
+        : '';
     _selectedSurgeryPriority =
         _surgeryPriorityOptions.contains(assessment.surgeryPriority)
-            ? assessment.surgeryPriority
-            : '';
+        ? assessment.surgeryPriority
+        : '';
     _selectedAsa = _asaOptions.contains(assessment.asaClassification)
         ? assessment.asaClassification
         : widget.patient.asa;
@@ -1344,9 +1419,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
           onSelected: (_) => onToggle(option),
           selectedColor: color.withAlpha(36),
           checkmarkColor: color,
-          side: BorderSide(
-            color: selected ? color : const Color(0xFFD6E1ED),
-          ),
+          side: BorderSide(color: selected ? color : const Color(0xFFD6E1ED)),
           labelStyle: TextStyle(
             color: selected ? color : const Color(0xFF4F6378),
             fontWeight: FontWeight.w700,
@@ -1372,9 +1445,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
           selected: selected,
           onSelected: (_) => onSelected(option),
           selectedColor: color.withAlpha(32),
-          side: BorderSide(
-            color: selected ? color : const Color(0xFFD6E1ED),
-          ),
+          side: BorderSide(color: selected ? color : const Color(0xFFD6E1ED)),
           labelStyle: TextStyle(
             color: selected ? color : const Color(0xFF4F6378),
             fontWeight: FontWeight.w700,
@@ -1409,24 +1480,25 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     final updatedPatient = widget.patient.copyWith(
       name: _nameController.text.trim(),
       age: int.tryParse(_ageController.text.trim()) ?? widget.patient.age,
-      weightKg: double.tryParse(_weightController.text.replaceAll(',', '.')) ??
+      weightKg:
+          double.tryParse(_weightController.text.replaceAll(',', '.')) ??
           widget.patient.weightKg,
       heightMeters:
           double.tryParse(_heightController.text.replaceAll(',', '.')) ??
-              widget.patient.heightMeters,
+          widget.patient.heightMeters,
       population: _selectedPopulation,
       postnatalAgeDays:
           int.tryParse(_postnatalAgeController.text.trim()) ??
-              widget.patient.postnatalAgeDays,
+          widget.patient.postnatalAgeDays,
       gestationalAgeWeeks:
           int.tryParse(_gestationalAgeController.text.trim()) ??
-              widget.patient.gestationalAgeWeeks,
+          widget.patient.gestationalAgeWeeks,
       correctedGestationalAgeWeeks:
           int.tryParse(_correctedGestationalAgeController.text.trim()) ??
-              widget.patient.correctedGestationalAgeWeeks,
+          widget.patient.correctedGestationalAgeWeeks,
       birthWeightKg:
           double.tryParse(_birthWeightController.text.replaceAll(',', '.')) ??
-              widget.patient.birthWeightKg,
+          widget.patient.birthWeightKg,
       asa: _selectedAsa,
       allergies: _allergyController.text.trim().isEmpty
           ? const []
@@ -1452,12 +1524,12 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       mouthOpening: _selectedMouthOpening,
       neckMobility: _selectedNeckMobility,
       dentition: _selectedDentition,
-      difficultAirwayPredictors:
-          _selectedDifficultAirwayPredictors.toList(),
-      otherDifficultAirwayPredictors:
-          _otherDifficultAirwayPredictorsController.text.trim(),
-      difficultVentilationPredictors:
-          _selectedDifficultVentilationPredictors.toList(),
+      difficultAirwayPredictors: _selectedDifficultAirwayPredictors.toList(),
+      otherDifficultAirwayPredictors: _otherDifficultAirwayPredictorsController
+          .text
+          .trim(),
+      difficultVentilationPredictors: _selectedDifficultVentilationPredictors
+          .toList(),
       otherDifficultVentilationPredictors:
           _otherDifficultVentilationPredictorsController.text.trim(),
       otherAirwayDetails: _otherAirwayController.text.trim(),
@@ -1466,8 +1538,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       otherComplementaryExams: _otherComplementaryExamsController.text.trim(),
       fastingSolids: _selectedSolidFasting,
       fastingLiquids: _selectedLiquidFasting,
-      fastingBreastMilk:
-          _showBreastMilkFastingSection ? _selectedBreastMilkFasting : '',
+      fastingBreastMilk: _showBreastMilkFastingSection
+          ? _selectedBreastMilkFasting
+          : '',
       fastingNotes: _fastingNotesController.text.trim(),
       surgeryPriority: _selectedSurgeryPriority,
       asaClassification: _selectedAsa,
@@ -1475,8 +1548,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       anestheticPlan: anestheticPlanLines.join('\n'),
       otherAnestheticPlan: _otherAnestheticPlanController.text.trim(),
       postoperativePlanningItems: _selectedPostoperativePlanningItems.toList(),
-      otherPostoperativePlanning:
-          _otherPostoperativePlanningController.text.trim(),
+      otherPostoperativePlanning: _otherPostoperativePlanningController.text
+          .trim(),
       planningNotes: _freeNotesController.text.trim(),
       restrictionItems: _selectedRestrictions.toList(),
       patientRestrictions: restrictionLines.join('\n'),
@@ -1521,7 +1594,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                                 _selectedPopulation = item;
                                 _selectedPostoperativePlanningItems.removeWhere(
                                   (value) =>
-                                      !_profilePostoperativePlanningOptions.contains(value),
+                                      !_profilePostoperativePlanningOptions
+                                          .contains(value),
                                 );
                                 if (!_showMallampatiSection) {
                                   _selectedMallampati = '';
@@ -1554,9 +1628,12 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                       child: TextField(
                         controller: _ageController,
                         keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
                         decoration: InputDecoration(
-                          labelText: _selectedPopulation == PatientPopulation.neonatal
+                          labelText:
+                              _selectedPopulation == PatientPopulation.neonatal
                               ? 'Idade (anos, se aplicável)'
                               : 'Idade (anos)',
                         ),
@@ -1566,18 +1643,24 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                     Expanded(
                       child: TextField(
                         controller: _weightController,
-                        keyboardType:
-                            const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(labelText: 'Peso (kg)'),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: const InputDecoration(
+                          labelText: 'Peso (kg)',
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: TextField(
                         controller: _heightController,
-                        keyboardType:
-                            const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(labelText: 'Altura (m)'),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: const InputDecoration(
+                          labelText: 'Altura (m)',
+                        ),
                       ),
                     ),
                   ],
@@ -1590,19 +1673,23 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                         child: TextField(
                           controller: _postnatalAgeController,
                           keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
                           decoration: const InputDecoration(
                             labelText: 'Idade pós-natal (dias)',
                           ),
                         ),
                       ),
-                      if (_selectedPopulation == PatientPopulation.neonatal) ...[
+                      if (_selectedPopulation ==
+                          PatientPopulation.neonatal) ...[
                         const SizedBox(width: 12),
                         Expanded(
                           child: TextField(
                             controller: _birthWeightController,
-                            keyboardType:
-                                const TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
                             inputFormatters: [
                               FilteringTextInputFormatter.allow(
                                 RegExp(r'[0-9,.]'),
@@ -1625,7 +1712,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                         child: TextField(
                           controller: _gestationalAgeController,
                           keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
                           decoration: const InputDecoration(
                             labelText: 'IG ao nascer (semanas)',
                           ),
@@ -1636,7 +1725,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                         child: TextField(
                           controller: _correctedGestationalAgeController,
                           keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
                           decoration: const InputDecoration(
                             labelText: 'IG corrigida (semanas)',
                           ),
@@ -1775,7 +1866,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   maxLines: 5,
                   decoration: const InputDecoration(
                     labelText: 'Outros',
-                    hintText: 'Inclua dose, frequência e medicações não listadas',
+                    hintText:
+                        'Inclua dose, frequência e medicações não listadas',
                   ),
                 ),
               ],
@@ -1937,7 +2029,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                       child: TextField(
                         controller: _fcController,
                         keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
                         decoration: InputDecoration(
                           labelText: 'FC',
                           hintText: _fcHint,
@@ -2097,8 +2191,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                     _selectedPopulation == PatientPopulation.adult
                         ? 'Referência rápida: distância tireomentoniana menor que 6 cm sugere maior risco de laringoscopia/intubação difícil.'
                         : _selectedPopulation == PatientPopulation.pediatric
-                            ? 'Referência rápida pediátrica: valorize síndromes craniofaciais, hipertrofia adenotonsilar, limitação de abertura oral e história de dificuldade prévia.'
-                            : 'Referência rápida neonatal: valorize micrognatia, macroglossia, malformações craniofaciais, secreção e suporte ventilatório recente.',
+                        ? 'Referência rápida pediátrica: valorize síndromes craniofaciais, hipertrofia adenotonsilar, limitação de abertura oral e história de dificuldade prévia.'
+                        : 'Referência rápida neonatal: valorize micrognatia, macroglossia, malformações craniofaciais, secreção e suporte ventilatório recente.',
                     style: const TextStyle(
                       color: Color(0xFF5D7288),
                       fontWeight: FontWeight.w600,
@@ -2139,8 +2233,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   color: const Color(0xFFCC7A00),
                   onToggle: (value) {
                     setState(() {
-                      if (_selectedDifficultVentilationPredictors
-                          .contains(value)) {
+                      if (_selectedDifficultVentilationPredictors.contains(
+                        value,
+                      )) {
                         _selectedDifficultVentilationPredictors.remove(value);
                       } else {
                         _selectedDifficultVentilationPredictors.add(value);
@@ -2150,8 +2245,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                 ),
                 const SizedBox(height: 12),
                 TextField(
-                  controller:
-                      _otherDifficultVentilationPredictorsController,
+                  controller: _otherDifficultVentilationPredictorsController,
                   minLines: 2,
                   maxLines: 4,
                   decoration: const InputDecoration(
@@ -2169,8 +2263,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                     hintText: _selectedPopulation == PatientPopulation.adult
                         ? 'Ex: barba, limitação mandibular, pescoço curto'
                         : _selectedPopulation == PatientPopulation.pediatric
-                            ? 'Ex: laringomalácia, estenose subglótica, intubação difícil prévia'
-                            : 'Ex: via aérea difícil prévia, anomalia craniofacial, necessidade de fibroscopia',
+                        ? 'Ex: laringomalácia, estenose subglótica, intubação difícil prévia'
+                        : 'Ex: via aérea difícil prévia, anomalia craniofacial, necessidade de fibroscopia',
                   ),
                 ),
               ],
@@ -2237,7 +2331,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   maxLines: 5,
                   decoration: const InputDecoration(
                     labelText: 'Outros',
-                    hintText: 'Descreva alterações relevantes ou exames adicionais',
+                    hintText:
+                        'Descreva alterações relevantes ou exames adicionais',
                   ),
                 ),
               ],
@@ -2337,8 +2432,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                     hintText: _selectedPopulation == PatientPopulation.adult
                         ? 'Ex: jejum inadequado, horário da última refeição'
                         : _selectedPopulation == PatientPopulation.pediatric
-                            ? 'Ex: discriminar se foi leite materno, fórmula ou refeição sólida conforme a idade'
-                            : 'Ex: horário da última mamada, fórmula, glicemia, risco de hipoglicemia',
+                        ? 'Ex: discriminar se foi leite materno, fórmula ou refeição sólida conforme a idade'
+                        : 'Ex: horário da última mamada, fórmula, glicemia, risco de hipoglicemia',
                   ),
                 ),
               ],
@@ -2381,6 +2476,29 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   onSelected: (value) => setState(() => _selectedAsa = value),
                   color: const Color(0xFFCC3D3D),
                 ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Referencia rapida de ASA (classe e significado)',
+                  style: TextStyle(
+                    color: Color(0xFF17324D),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ..._asaReferences.map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _AsaReferenceCard(reference: item),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Use o sufixo E em urgencia/emergencia quando aplicavel.',
+                  style: TextStyle(
+                    color: Color(0xFF5D7288),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 14),
                 TextField(
                   controller: _asaNotesController,
@@ -2388,7 +2506,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   maxLines: 4,
                   decoration: const InputDecoration(
                     labelText: 'Outros',
-                    hintText: 'Justifique a classificação ASA quando necessário',
+                    hintText:
+                        'Justifique a classificação ASA quando necessário',
                   ),
                 ),
               ],
@@ -2447,7 +2566,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   maxLines: 5,
                   decoration: const InputDecoration(
                     labelText: 'Outros',
-                    hintText: 'Detalhe analgesia, bloqueios e condutas adicionais',
+                    hintText:
+                        'Detalhe analgesia, bloqueios e condutas adicionais',
                   ),
                 ),
               ],
@@ -2506,7 +2626,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   maxLines: 5,
                   decoration: const InputDecoration(
                     labelText: 'Outros',
-                    hintText: 'Detalhe reserva de leito, hemoterapia, ventilação, transporte ou observações logísticas',
+                    hintText:
+                        'Detalhe reserva de leito, hemoterapia, ventilação, transporte ou observações logísticas',
                   ),
                 ),
               ],
@@ -2641,8 +2762,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                 _selectedPopulation == PatientPopulation.adult
                     ? 'Consulta pré-anestésica do adulto'
                     : _selectedPopulation == PatientPopulation.pediatric
-                        ? 'Consulta pré-anestésica pediátrica'
-                        : 'Consulta pré-anestésica neonatal',
+                    ? 'Consulta pré-anestésica pediátrica'
+                    : 'Consulta pré-anestésica neonatal',
                 style: const TextStyle(
                   color: Color(0xFF5F7288),
                   fontWeight: FontWeight.w600,
@@ -2678,10 +2799,7 @@ class _SectionCard extends StatelessWidget {
         tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         childrenPadding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         expandedCrossAxisAlignment: CrossAxisAlignment.start,
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
         children: [child],
       ),
     );
@@ -2701,9 +2819,7 @@ class PreAnestheticScreenResult {
 }
 
 class _AirwayReferenceCard extends StatelessWidget {
-  const _AirwayReferenceCard({
-    required this.reference,
-  });
+  const _AirwayReferenceCard({required this.reference});
 
   final _AirwayReference reference;
 
@@ -2762,6 +2878,66 @@ class _AirwayReferenceCard extends StatelessWidget {
   }
 }
 
+class _AsaReferenceCard extends StatelessWidget {
+  const _AsaReferenceCard({required this.reference});
+
+  final _AsaReference reference;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF8F8),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFF1D3D3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCC3D3D).withAlpha(18),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  'ASA ${reference.grade}',
+                  style: const TextStyle(
+                    color: Color(0xFFCC3D3D),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            reference.description,
+            style: const TextStyle(
+              color: Color(0xFF17324D),
+              fontWeight: FontWeight.w700,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            reference.examples,
+            style: const TextStyle(
+              color: Color(0xFF5D7288),
+              fontWeight: FontWeight.w600,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _OptionDetail {
   const _OptionDetail(this.value, this.description);
 
@@ -2779,4 +2955,16 @@ class _AirwayReference {
   final String grade;
   final String description;
   final String technique;
+}
+
+class _AsaReference {
+  const _AsaReference({
+    required this.grade,
+    required this.description,
+    required this.examples,
+  });
+
+  final String grade;
+  final String description;
+  final String examples;
 }
