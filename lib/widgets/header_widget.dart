@@ -282,20 +282,26 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
         ? 'Toque para preencher'
         : patient.name;
     final ageLabel = patient.age > 0 ? '${patient.age} anos' : '--';
-    final weightLabel =
-        patient.weightKg > 0 ? '${patient.weightKg.toStringAsFixed(0)} kg' : '--';
+    final weightLabel = patient.weightKg > 0
+        ? '${patient.weightKg.toStringAsFixed(0)} kg'
+        : '--';
     final heightLabel = patient.heightMeters > 0
-        ? '${patient.heightMeters.toStringAsFixed(2).replaceAll('.', ',')} m'
+        ? '${(patient.heightMeters * 100).toStringAsFixed(0)} cm'
         : '--';
     final isPediatric = patient.population == PatientPopulation.pediatric;
     final isNeonatal = patient.population == PatientPopulation.neonatal;
     final populationLabel = patient.population.label;
-    final functionalCapacityLabel =
-        _functionalCapacityValue(preAnestheticAssessment);
+    final functionalCapacityLabel = _functionalCapacityValue(
+      preAnestheticAssessment,
+    );
     final difficultAirwayLabel = _airwayRiskValue(preAnestheticAssessment);
-    final difficultVentilationLabel =
-        _ventilationRiskValue(preAnestheticAssessment);
-    final fastingLabel = _fastingValue(preAnestheticAssessment, patient.population);
+    final difficultVentilationLabel = _ventilationRiskValue(
+      preAnestheticAssessment,
+    );
+    final fastingLabel = _fastingValue(
+      preAnestheticAssessment,
+      patient.population,
+    );
 
     return Container(
       width: double.infinity,
@@ -410,8 +416,9 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
                 ),
                 ClinicalChip(
                   label: 'ASA',
-                  value:
-                      patient.asa.trim().isEmpty ? 'Não definido' : patient.asa,
+                  value: patient.asa.trim().isEmpty
+                      ? 'Não definido'
+                      : patient.asa,
                   color: _asaColor(patient.asa),
                   onTap: onAsaTap,
                 ),
@@ -423,8 +430,8 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
                   color: patient.informedConsentStatus.trim() == 'Assinado'
                       ? UiColors.success
                       : patient.informedConsentStatus.trim() == 'Não assinado'
-                          ? UiColors.danger
-                          : UiColors.warning,
+                      ? UiColors.danger
+                      : UiColors.warning,
                   onTap: onInformedConsentTap,
                 ),
                 ClinicalChip(
@@ -448,7 +455,10 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
                 ClinicalChip(
                   label: 'Jejum',
                   value: fastingLabel,
-                  color: _fastingColor(preAnestheticAssessment, patient.population),
+                  color: _fastingColor(
+                    preAnestheticAssessment,
+                    patient.population,
+                  ),
                   onTap: onFastingTap,
                 ),
                 if (patient.population == PatientPopulation.adult)
@@ -573,7 +583,8 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
         value.contains('suporte ventilatório')) {
       return UiColors.danger;
     }
-    if (value.contains('limitação leve') || value.contains('oxigênio recente')) {
+    if (value.contains('limitação leve') ||
+        value.contains('oxigênio recente')) {
       return UiColors.warning;
     }
     return UiColors.success;
@@ -593,7 +604,8 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
   }
 
   static Color _airwayRiskColor(PreAnestheticAssessment assessment) {
-    final hasRisk = assessment.difficultAirwayPredictors.isNotEmpty ||
+    final hasRisk =
+        assessment.difficultAirwayPredictors.isNotEmpty ||
         assessment.otherDifficultAirwayPredictors.trim().isNotEmpty;
     return hasRisk ? UiColors.danger : UiColors.success;
   }
@@ -612,7 +624,8 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
   }
 
   static Color _ventilationRiskColor(PreAnestheticAssessment assessment) {
-    final hasRisk = assessment.difficultVentilationPredictors.isNotEmpty ||
+    final hasRisk =
+        assessment.difficultVentilationPredictors.isNotEmpty ||
         assessment.otherDifficultVentilationPredictors.trim().isNotEmpty;
     return hasRisk ? UiColors.danger : UiColors.success;
   }
@@ -645,7 +658,8 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
     final liquids = assessment.fastingLiquids.trim().toLowerCase();
     final breastMilk = assessment.fastingBreastMilk.trim().toLowerCase();
     final notes = assessment.fastingNotes.trim().toLowerCase();
-    final highRisk = solids.startsWith('<') ||
+    final highRisk =
+        solids.startsWith('<') ||
         liquids.startsWith('<') ||
         breastMilk.startsWith('<') ||
         notes.contains('inadequado') ||

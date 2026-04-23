@@ -32,6 +32,9 @@ void main() {
     expect(find.text('Histerectomia por vídeo'), findsOneWidget);
     expect(find.text('Vídeo colecistectomia'), findsOneWidget);
     expect(find.text('Bariátrica sleeve'), findsOneWidget);
+    expect(find.text('Bariátrica by pass'), findsOneWidget);
+    expect(find.text('Gastrectomia vertical'), findsNothing);
+    expect(find.text('Bypass gástrico em Y de Roux'), findsNothing);
     expect(find.text('Nefrectomia direita'), findsOneWidget);
     expect(find.text('Herniorrafia incisional'), findsOneWidget);
     expect(find.text('Fratura de fêmur esquerdo'), findsOneWidget);

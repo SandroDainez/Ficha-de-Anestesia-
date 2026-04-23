@@ -18,6 +18,7 @@ class PanelCard extends StatefulWidget {
     this.isCompleted = false,
     this.collapsible = true,
     this.initiallyExpanded = false,
+    this.collapsedChild,
   });
 
   final String title;
@@ -31,6 +32,7 @@ class PanelCard extends StatefulWidget {
   final bool isCompleted;
   final bool collapsible;
   final bool initiallyExpanded;
+  final Widget? collapsedChild;
 
   @override
   State<PanelCard> createState() => _PanelCardState();
@@ -120,18 +122,19 @@ class _PanelCardState extends State<PanelCard> {
               ),
               child: Row(
                 children: [
-                  Icon(widget.icon, size: 15, color: effectiveTitleColor),
-                  const SizedBox(width: 6),
+                  Icon(widget.icon, size: 18, color: effectiveTitleColor),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       widget.title.toUpperCase(),
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: effectiveTitleColor,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 12,
-                        letterSpacing: 0.2,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                        height: 1.1,
+                        letterSpacing: 0.3,
                       ),
                     ),
                   ),
@@ -157,7 +160,20 @@ class _PanelCardState extends State<PanelCard> {
                 ),
               )
             else
-              Padding(padding: const EdgeInsets.all(12), child: widget.child),
+              Padding(padding: const EdgeInsets.all(12), child: widget.child)
+          else if (widget.collapsedChild != null)
+            InkWell(
+              onTap: widget.collapsible
+                  ? () => setState(() => _isExpanded = true)
+                  : null,
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(13),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: widget.collapsedChild!,
+              ),
+            ),
         ],
       ),
     );

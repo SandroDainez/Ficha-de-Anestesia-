@@ -1183,7 +1183,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     );
     _heightController = TextEditingController(
       text: widget.patient.heightMeters > 0
-          ? widget.patient.heightMeters.toStringAsFixed(2).replaceAll('.', ',')
+          ? (widget.patient.heightMeters * 100)
+                .toStringAsFixed(0)
+                .replaceAll('.', ',')
           : '',
     );
     _postnatalAgeController = TextEditingController(
@@ -1484,8 +1486,13 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
           double.tryParse(_weightController.text.replaceAll(',', '.')) ??
           widget.patient.weightKg,
       heightMeters:
-          double.tryParse(_heightController.text.replaceAll(',', '.')) ??
-          widget.patient.heightMeters,
+          ((double.tryParse(_heightController.text.replaceAll(',', '.')) ?? 0) /
+                  100) >
+              0
+          ? (double.tryParse(_heightController.text.replaceAll(',', '.')) ??
+                    0) /
+                100
+          : widget.patient.heightMeters,
       population: _selectedPopulation,
       postnatalAgeDays:
           int.tryParse(_postnatalAgeController.text.trim()) ??
@@ -1659,7 +1666,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                           decimal: true,
                         ),
                         decoration: const InputDecoration(
-                          labelText: 'Altura (m)',
+                          labelText: 'Altura (cm)',
                         ),
                       ),
                     ),

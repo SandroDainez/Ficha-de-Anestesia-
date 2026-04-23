@@ -54,7 +54,10 @@ flutter run
 ## Publicação
 
 - GitHub: `https://github.com/SandroDainez/Ficha-de-Anestesia-`
-- Produção Vercel: `https://web-three-ivory-51.vercel.app`
+- Produção Vercel: `https://anestesiaapp.vercel.app`
+- Aliases Vercel atuais:
+  `https://anestesiaapp-sandro-rogerio-dainezs-projects.vercel.app`
+  `https://anestesiaapp-sandrodainez-sandro-rogerio-dainezs-projects.vercel.app`
 - Projeto Vercel vinculado: `anestesia_app`
 - Link local do Vercel salvo em `.vercel/` e ignorado no Git
 

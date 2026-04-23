@@ -11,6 +11,7 @@ import '../models/fluid_balance.dart';
 import '../models/hemodynamic_point.dart';
 import '../models/patient.dart';
 import '../models/post_anesthesia_recovery.dart';
+import '../models/pre_anesthetic_assessment.dart';
 import '../services/ai_record_analysis_service.dart';
 import '../services/hemodynamic_record_service.dart';
 import '../services/record_validation_service.dart';
@@ -119,6 +120,407 @@ class _AirwaySupportRecommendation {
 
   final String title;
   final List<String> lines;
+}
+
+class _QuickChoiceOption {
+  const _QuickChoiceOption({
+    required this.value,
+    required this.title,
+    required this.description,
+    this.supportingText = '',
+  });
+
+  final String value;
+  final String title;
+  final String description;
+  final String supportingText;
+}
+
+class _DetailedChoiceDialog extends StatefulWidget {
+  const _DetailedChoiceDialog({
+    required this.title,
+    required this.options,
+    required this.color,
+    this.initialValue = '',
+    this.customLabel,
+    this.customHintText,
+    this.footerText = '',
+  });
+
+  final String title;
+  final List<_QuickChoiceOption> options;
+  final Color color;
+  final String initialValue;
+  final String? customLabel;
+  final String? customHintText;
+  final String footerText;
+
+  @override
+  State<_DetailedChoiceDialog> createState() => _DetailedChoiceDialogState();
+}
+
+class _DetailedChoiceDialogState extends State<_DetailedChoiceDialog> {
+  late String _selectedValue;
+  late final TextEditingController _customController;
+
+  @override
+  void initState() {
+    super.initState();
+    final matchesPreset = widget.options.any(
+      (option) => option.value == widget.initialValue,
+    );
+    _selectedValue = matchesPreset ? widget.initialValue : '';
+    _customController = TextEditingController(
+      text: matchesPreset ? '' : widget.initialValue,
+    );
+  }
+
+  @override
+  void dispose() {
+    _customController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final allowsCustom = widget.customLabel != null;
+    return AlertDialog(
+      title: Text(widget.title),
+      content: SizedBox(
+        width: 620,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ...widget.options.map((option) {
+                final selected =
+                    _selectedValue == option.value &&
+                    _customController.text.trim().isEmpty;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(18),
+                      onTap: () {
+                        setState(() {
+                          _selectedValue = option.value;
+                          if (allowsCustom) {
+                            _customController.clear();
+                          }
+                        });
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 160),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? widget.color.withAlpha(18)
+                              : const Color(0xFFF8FAFE),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: selected
+                                ? widget.color
+                                : const Color(0xFFD7E3F3),
+                            width: selected ? 1.6 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 34,
+                              height: 34,
+                              decoration: BoxDecoration(
+                                color: selected
+                                    ? widget.color
+                                    : widget.color.withAlpha(20),
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                option.title,
+                                style: TextStyle(
+                                  color: selected ? Colors.white : widget.color,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    option.description,
+                                    style: const TextStyle(
+                                      color: Color(0xFF17324D),
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  if (option.supportingText.isNotEmpty) ...[
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      option.supportingText,
+                                      style: const TextStyle(
+                                        color: Color(0xFF5D7288),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+              if (allowsCustom) ...[
+                const SizedBox(height: 6),
+                TextField(
+                  controller: _customController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText: widget.customLabel,
+                    hintText: widget.customHintText,
+                  ),
+                  onTap: () {
+                    if (_selectedValue.isNotEmpty) {
+                      setState(() {
+                        _selectedValue = '';
+                      });
+                    }
+                  },
+                  onChanged: (_) {
+                    if (_selectedValue.isNotEmpty) {
+                      setState(() {
+                        _selectedValue = '';
+                      });
+                    }
+                  },
+                ),
+              ],
+              if (widget.footerText.trim().isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  widget.footerText,
+                  style: const TextStyle(
+                    color: Color(0xFF5D7288),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(''),
+          child: const Text('Limpar'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(
+            _customController.text.trim().isNotEmpty
+                ? _customController.text.trim()
+                : _selectedValue,
+          ),
+          child: const Text('Salvar'),
+        ),
+      ],
+    );
+  }
+}
+
+class _FastingQuickEditResult {
+  const _FastingQuickEditResult({
+    required this.solids,
+    required this.liquids,
+    required this.breastMilk,
+    required this.notes,
+  });
+
+  final String solids;
+  final String liquids;
+  final String breastMilk;
+  final String notes;
+}
+
+class _FastingQuickEditDialog extends StatefulWidget {
+  const _FastingQuickEditDialog({
+    required this.population,
+    required this.initialSolids,
+    required this.initialLiquids,
+    required this.initialBreastMilk,
+    required this.initialNotes,
+  });
+
+  final PatientPopulation population;
+  final String initialSolids;
+  final String initialLiquids;
+  final String initialBreastMilk;
+  final String initialNotes;
+
+  @override
+  State<_FastingQuickEditDialog> createState() =>
+      _FastingQuickEditDialogState();
+}
+
+class _FastingQuickEditDialogState extends State<_FastingQuickEditDialog> {
+  static const List<String> _solidOptions = ['<6h', '6-8h', '>8h'];
+  static const List<String> _liquidOptions = ['<2h', '2-4h', '>4h'];
+  static const List<String> _breastMilkOptions = ['<4h', '4-6h', '>6h'];
+
+  late String _selectedSolids;
+  late String _selectedLiquids;
+  late String _selectedBreastMilk;
+  late final TextEditingController _notesController;
+
+  bool get _showBreastMilk => widget.population != PatientPopulation.adult;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedSolids = _solidOptions.contains(widget.initialSolids)
+        ? widget.initialSolids
+        : '';
+    _selectedLiquids = _liquidOptions.contains(widget.initialLiquids)
+        ? widget.initialLiquids
+        : '';
+    _selectedBreastMilk = _breastMilkOptions.contains(widget.initialBreastMilk)
+        ? widget.initialBreastMilk
+        : '';
+    _notesController = TextEditingController(text: widget.initialNotes);
+  }
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildOptionGroup({
+    required String title,
+    required List<String> options,
+    required String selectedValue,
+    required ValueChanged<String> onSelected,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: Color(0xFF17324D),
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: options
+              .map(
+                (option) => ChoiceChip(
+                  label: Text(option),
+                  selected: selectedValue == option,
+                  onSelected: (_) => setState(() => onSelected(option)),
+                ),
+              )
+              .toList(),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final solidsLabel = widget.population == PatientPopulation.adult
+        ? 'Sólidos'
+        : 'Fórmula / refeição';
+    return AlertDialog(
+      title: const Text('Jejum'),
+      content: SizedBox(
+        width: 620,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildOptionGroup(
+                title: solidsLabel,
+                options: _solidOptions,
+                selectedValue: _selectedSolids,
+                onSelected: (value) => _selectedSolids = value,
+              ),
+              const SizedBox(height: 14),
+              if (_showBreastMilk) ...[
+                _buildOptionGroup(
+                  title: 'Leite materno',
+                  options: _breastMilkOptions,
+                  selectedValue: _selectedBreastMilk,
+                  onSelected: (value) => _selectedBreastMilk = value,
+                ),
+                const SizedBox(height: 14),
+              ],
+              _buildOptionGroup(
+                title: 'Líquidos claros',
+                options: _liquidOptions,
+                selectedValue: _selectedLiquids,
+                onSelected: (value) => _selectedLiquids = value,
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: _notesController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Observações',
+                  hintText:
+                      'Ex: jejum inadequado, horário informado pela família',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(
+            const _FastingQuickEditResult(
+              solids: '',
+              liquids: '',
+              breastMilk: '',
+              notes: '',
+            ),
+          ),
+          child: const Text('Limpar'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(
+            _FastingQuickEditResult(
+              solids: _selectedSolids,
+              liquids: _selectedLiquids,
+              breastMilk: _showBreastMilk ? _selectedBreastMilk : '',
+              notes: _notesController.text.trim(),
+            ),
+          ),
+          child: const Text('Salvar'),
+        ),
+      ],
+    );
+  }
 }
 
 double _adultReferenceWeightKg({
@@ -359,8 +761,203 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   static const Color _techniqueRowColor = Color(0xFF8A5DD3);
   static const Color _medicationsRowColor = Color(0xFFAF5A7A);
   static const Color _airwayFluidRowColor = Color(0xFF168B79);
-  static const List<String> _asaOptions = ['I', 'II', 'III', 'IV', 'V', 'VI'];
-  static const List<String> _mallampatiOptions = ['I', 'II', 'III', 'IV'];
+  static const List<_QuickChoiceOption> _adultFunctionalOptions = [
+    _QuickChoiceOption(
+      value: '1 MET',
+      title: '1 MET',
+      description: 'Restrito a autocuidado.',
+      supportingText: 'Dependente para atividades básicas ou esforço mínimo.',
+    ),
+    _QuickChoiceOption(
+      value: '2-3 METs',
+      title: '2-3',
+      description: 'Caminha dentro de casa.',
+      supportingText: 'Baixa reserva funcional para esforços leves.',
+    ),
+    _QuickChoiceOption(
+      value: '4 METs',
+      title: '4',
+      description: 'Sobe 1 lance de escada.',
+      supportingText: 'Capacidade funcional intermediária.',
+    ),
+    _QuickChoiceOption(
+      value: '>4 METs',
+      title: '>4',
+      description: 'Boa capacidade funcional.',
+      supportingText: 'Tolera esforço habitual sem limitação relevante.',
+    ),
+    _QuickChoiceOption(
+      value: '>10 METs',
+      title: '>10',
+      description: 'Exercício vigoroso.',
+      supportingText: 'Alta reserva funcional.',
+    ),
+  ];
+  static const List<_QuickChoiceOption> _pediatricFunctionalOptions = [
+    _QuickChoiceOption(
+      value: 'Atividade preservada',
+      title: 'OK',
+      description: 'Brinca e acompanha a rotina habitual.',
+      supportingText: 'Sem limitação funcional relevante.',
+    ),
+    _QuickChoiceOption(
+      value: 'Limitação leve',
+      title: 'Leve',
+      description: 'Cansaço, tosse ou chiado aos esforços.',
+      supportingText: 'Sintomas leves ao brincar ou correr.',
+    ),
+    _QuickChoiceOption(
+      value: 'Limitação importante',
+      title: 'Alta',
+      description: 'Dispneia, intolerância ou esforço reduzido.',
+      supportingText: 'Reserva funcional baixa para a idade.',
+    ),
+  ];
+  static const List<_QuickChoiceOption> _neonatalFunctionalOptions = [
+    _QuickChoiceOption(
+      value: 'Estável em ar ambiente',
+      title: 'AA',
+      description: 'Sem suporte atual e sem eventos recentes.',
+      supportingText: 'Bom padrão clínico neonatal.',
+    ),
+    _QuickChoiceOption(
+      value: 'Oxigênio recente',
+      title: 'O2',
+      description: 'Necessidade recente de oxigênio suplementar.',
+      supportingText: 'Alerta intermediário.',
+    ),
+    _QuickChoiceOption(
+      value: 'Apneia/bradicardia',
+      title: 'A/B',
+      description: 'Eventos recentes ou em investigação.',
+      supportingText: 'Maior risco perioperatório.',
+    ),
+    _QuickChoiceOption(
+      value: 'Suporte ventilatório',
+      title: 'VM',
+      description: 'CPAP ou ventilação mecânica recente.',
+      supportingText: 'Reserva clínica reduzida.',
+    ),
+  ];
+  static const List<_QuickChoiceOption> _asaReferenceOptions = [
+    _QuickChoiceOption(
+      value: 'I',
+      title: 'I',
+      description:
+          'Paciente saudavel, sem doenca sistemica clinicamente relevante.',
+      supportingText:
+          'Ex: adulto sem comorbidades ou crianca saudavel para cirurgia eletiva.',
+    ),
+    _QuickChoiceOption(
+      value: 'II',
+      title: 'II',
+      description: 'Doenca sistemica leve, sem limitacao funcional importante.',
+      supportingText:
+          'Ex: HAS controlada, obesidade leve, tabagismo, gestacao, asma leve.',
+    ),
+    _QuickChoiceOption(
+      value: 'III',
+      title: 'III',
+      description:
+          'Doenca sistemica importante, com repercussao funcional ou clinica relevante.',
+      supportingText:
+          'Ex: DM descompensado, obesidade grave, DPOC, IRC dialitica, DAC estavel.',
+    ),
+    _QuickChoiceOption(
+      value: 'IV',
+      title: 'IV',
+      description:
+          'Doenca sistemica grave que representa ameaca constante a vida.',
+      supportingText:
+          'Ex: ICC descompensada, angina instavel, sepse, insuficiencia respiratoria.',
+    ),
+    _QuickChoiceOption(
+      value: 'V',
+      title: 'V',
+      description:
+          'Paciente moribundo, sem expectativa de sobreviver sem a cirurgia.',
+      supportingText:
+          'Ex: ruptura de aneurisma, politrauma grave, choque refratario.',
+    ),
+    _QuickChoiceOption(
+      value: 'VI',
+      title: 'VI',
+      description:
+          'Paciente com morte encefalica mantido para doacao de orgaos.',
+      supportingText: 'Usado em contexto de captacao de orgaos.',
+    ),
+  ];
+  static const List<_QuickChoiceOption> _mallampatiReferenceOptions = [
+    _QuickChoiceOption(
+      value: 'I',
+      title: 'I',
+      description: 'Palato mole, fauces, uvula e pilares visiveis.',
+      supportingText: 'Laringoscopia direta usualmente adequada.',
+    ),
+    _QuickChoiceOption(
+      value: 'II',
+      title: 'II',
+      description: 'Palato mole, fauces e parte da uvula visiveis.',
+      supportingText:
+          'Laringoscopia direta ou videolaringoscopio conforme contexto.',
+    ),
+    _QuickChoiceOption(
+      value: 'III',
+      title: 'III',
+      description: 'Palato mole e base da uvula visiveis.',
+      supportingText:
+          'Preferir videolaringoscopio e planejar via aerea dificil.',
+    ),
+    _QuickChoiceOption(
+      value: 'IV',
+      title: 'IV',
+      description: 'Somente palato duro visivel.',
+      supportingText:
+          'Videolaringoscopio/fibroscopia e estrategia de resgate pronta.',
+    ),
+  ];
+  static const List<String> _adultDifficultAirwayPredictorOptions = [
+    'Mallampati III/IV',
+    'Abertura oral reduzida',
+    'Mobilidade cervical limitada',
+    'Distância tireomentoniana reduzida',
+    'Micrognatia/retrognatia',
+    'Pescoço curto',
+    'Obesidade',
+  ];
+  static const List<String> _pediatricDifficultAirwayPredictorOptions = [
+    'Micrognatia/retrognatia',
+    'Macroglossia',
+    'Hipertrofia adenotonsilar',
+    'Síndrome craniofacial',
+  ];
+  static const List<String> _neonatalDifficultAirwayPredictorOptions = [
+    'Micrognatia/retrognatia',
+    'Macroglossia',
+    'Malformação craniofacial',
+    'Prematuridade',
+  ];
+  static const List<String> _adultDifficultVentilationPredictorOptions = [
+    'Barba',
+    'Obesidade',
+    'Sem dentes',
+    'Apneia do sono',
+    'Ronco importante',
+    'Idade > 55 anos',
+    'Limitação mandibular',
+  ];
+  static const List<String> _pediatricDifficultVentilationPredictorOptions = [
+    'IVAS recente',
+    'Secreção abundante',
+    'Sibilância/broncoespasmo',
+    'Hipertrofia adenotonsilar',
+  ];
+  static const List<String> _neonatalDifficultVentilationPredictorOptions = [
+    'Apneia prévia',
+    'Secreção abundante',
+    'Suporte ventilatório recente',
+    'Distensão abdominal importante',
+  ];
   static const List<String> _commonAllergies = [
     'Látex',
     'Dipirona',
@@ -1541,6 +2138,167 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     await _persistRecord();
   }
 
+  Future<void> _updatePreAnestheticAssessment(
+    PreAnestheticAssessment assessment, {
+    String? asaForPatient,
+    String? mallampatiForAirway,
+  }) async {
+    setState(() {
+      _record = _record.copyWith(
+        patient: asaForPatient == null
+            ? _record.patient
+            : _record.patient.copyWith(asa: asaForPatient),
+        preAnestheticAssessment: assessment,
+        airway: mallampatiForAirway == null
+            ? _record.airway
+            : _record.airway.copyWith(mallampati: mallampatiForAirway),
+      );
+    });
+
+    await _persistRecord();
+  }
+
+  List<_QuickChoiceOption> get _functionalQuickOptions {
+    switch (_record.patient.population) {
+      case PatientPopulation.adult:
+        return _adultFunctionalOptions;
+      case PatientPopulation.pediatric:
+        return _pediatricFunctionalOptions;
+      case PatientPopulation.neonatal:
+        return _neonatalFunctionalOptions;
+    }
+  }
+
+  List<String> get _difficultAirwayPredictorOptions {
+    switch (_record.patient.population) {
+      case PatientPopulation.adult:
+        return _adultDifficultAirwayPredictorOptions;
+      case PatientPopulation.pediatric:
+        return _pediatricDifficultAirwayPredictorOptions;
+      case PatientPopulation.neonatal:
+        return _neonatalDifficultAirwayPredictorOptions;
+    }
+  }
+
+  List<String> get _difficultVentilationPredictorOptions {
+    switch (_record.patient.population) {
+      case PatientPopulation.adult:
+        return _adultDifficultVentilationPredictorOptions;
+      case PatientPopulation.pediatric:
+        return _pediatricDifficultVentilationPredictorOptions;
+      case PatientPopulation.neonatal:
+        return _neonatalDifficultVentilationPredictorOptions;
+    }
+  }
+
+  Future<void> _editPatientFunctionalCapacityQuick() async {
+    final assessment = _record.preAnestheticAssessment;
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => _DetailedChoiceDialog(
+        title: 'METS / capacidade funcional',
+        options: _functionalQuickOptions,
+        color: const Color(0xFFD98C16),
+        initialValue: assessment.mets,
+        customLabel: 'Outros / observações',
+        customHintText: 'Descreva limitação funcional se necessário',
+      ),
+    );
+
+    if (result == null) return;
+    await _updatePreAnestheticAssessment(assessment.copyWith(mets: result));
+  }
+
+  Future<void> _editPatientDifficultAirwayQuick() async {
+    final assessment = _record.preAnestheticAssessment;
+    final initialItems = [
+      ...assessment.difficultAirwayPredictors,
+      if (assessment.otherDifficultAirwayPredictors.trim().isNotEmpty)
+        assessment.otherDifficultAirwayPredictors.trim(),
+    ];
+    final result = await showDialog<List<String>>(
+      context: context,
+      builder: (_) => ListFieldDialog(
+        title: 'Via aérea difícil',
+        label: 'Outros achados (um por linha)',
+        initialItems: initialItems,
+        suggestions: _difficultAirwayPredictorOptions,
+        hintText: 'Ex: massa cervical, limitação mandibular, trauma facial',
+      ),
+    );
+
+    if (result == null) return;
+    final selectedSuggestions = result
+        .where(_difficultAirwayPredictorOptions.contains)
+        .toList();
+    final manualItems = result
+        .where((item) => !_difficultAirwayPredictorOptions.contains(item))
+        .toList();
+    await _updatePreAnestheticAssessment(
+      assessment.copyWith(
+        difficultAirwayPredictors: selectedSuggestions,
+        otherDifficultAirwayPredictors: manualItems.join('\n'),
+      ),
+    );
+  }
+
+  Future<void> _editPatientDifficultVentilationQuick() async {
+    final assessment = _record.preAnestheticAssessment;
+    final initialItems = [
+      ...assessment.difficultVentilationPredictors,
+      if (assessment.otherDifficultVentilationPredictors.trim().isNotEmpty)
+        assessment.otherDifficultVentilationPredictors.trim(),
+    ];
+    final result = await showDialog<List<String>>(
+      context: context,
+      builder: (_) => ListFieldDialog(
+        title: 'Ventilação difícil',
+        label: 'Outros achados (um por linha)',
+        initialItems: initialItems,
+        suggestions: _difficultVentilationPredictorOptions,
+        hintText: 'Ex: vedação difícil, barba densa, edema facial',
+      ),
+    );
+
+    if (result == null) return;
+    final selectedSuggestions = result
+        .where(_difficultVentilationPredictorOptions.contains)
+        .toList();
+    final manualItems = result
+        .where((item) => !_difficultVentilationPredictorOptions.contains(item))
+        .toList();
+    await _updatePreAnestheticAssessment(
+      assessment.copyWith(
+        difficultVentilationPredictors: selectedSuggestions,
+        otherDifficultVentilationPredictors: manualItems.join('\n'),
+      ),
+    );
+  }
+
+  Future<void> _editPatientFastingQuick() async {
+    final assessment = _record.preAnestheticAssessment;
+    final result = await showDialog<_FastingQuickEditResult>(
+      context: context,
+      builder: (_) => _FastingQuickEditDialog(
+        population: _record.patient.population,
+        initialSolids: assessment.fastingSolids,
+        initialLiquids: assessment.fastingLiquids,
+        initialBreastMilk: assessment.fastingBreastMilk,
+        initialNotes: assessment.fastingNotes,
+      ),
+    );
+
+    if (result == null) return;
+    await _updatePreAnestheticAssessment(
+      assessment.copyWith(
+        fastingSolids: result.solids,
+        fastingLiquids: result.liquids,
+        fastingBreastMilk: result.breastMilk,
+        fastingNotes: result.notes,
+      ),
+    );
+  }
+
   Future<void> _editPatientInformedConsentStatus() async {
     final result = await showDialog<String>(
       context: context,
@@ -2126,36 +2884,39 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
 
   Future<void> _editPatientHeight() async {
     final initialValue = _record.patient.heightMeters > 0
-        ? _record.patient.heightMeters.toStringAsFixed(2).replaceAll('.', ',')
+        ? (_record.patient.heightMeters * 100)
+              .toStringAsFixed(0)
+              .replaceAll('.', ',')
         : '';
     final result = await showDialog<String>(
       context: context,
       builder: (_) => SingleFieldDialog(
         title: 'Altura do paciente',
-        label: 'Altura (m)',
+        label: 'Altura (cm)',
         initialValue: initialValue,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         inputFormatters: [
           FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
         ],
-        hintText: 'Digite a altura em metros',
+        hintText: 'Digite a altura em centímetros',
       ),
     );
 
     if (result == null) return;
     await _updatePatient(
-      heightMeters: double.tryParse(result.replaceAll(',', '.')) ?? 0,
+      heightMeters: (double.tryParse(result.replaceAll(',', '.')) ?? 0) / 100,
     );
   }
 
   Future<void> _editPatientAsa() async {
     final result = await showDialog<String>(
       context: context,
-      builder: (_) => ChoiceFieldDialog(
+      builder: (_) => _DetailedChoiceDialog(
         title: 'Classificação ASA',
-        options: _asaOptions,
+        options: _asaReferenceOptions,
         initialValue: _record.patient.asa,
-        optionLabelBuilder: (option) => 'ASA $option',
+        color: const Color(0xFFD98C16),
+        footerText: 'Use o sufixo E em urgencia/emergencia quando aplicavel.',
       ),
     );
 
@@ -2170,11 +2931,11 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         : _record.airway.mallampati;
     final result = await showDialog<String>(
       context: context,
-      builder: (_) => ChoiceFieldDialog(
+      builder: (_) => _DetailedChoiceDialog(
         title: 'Mallampati',
-        options: _mallampatiOptions,
+        options: _mallampatiReferenceOptions,
         initialValue: currentMallampati,
-        optionLabelBuilder: (option) => 'Classe $option',
+        color: const Color(0xFF2B76D2),
       ),
     );
 
@@ -2829,10 +3590,12 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                       onBirthWeightTap: _editPatientBirthWeight,
                       onAsaTap: _editPatientAsa,
                       onInformedConsentTap: _editPatientInformedConsentStatus,
-                      onFunctionalCapacityTap: _showPreAnestheticDialog,
-                      onDifficultAirwayTap: _showPreAnestheticDialog,
-                      onDifficultVentilationTap: _showPreAnestheticDialog,
-                      onFastingTap: _showPreAnestheticDialog,
+                      onFunctionalCapacityTap:
+                          _editPatientFunctionalCapacityQuick,
+                      onDifficultAirwayTap: _editPatientDifficultAirwayQuick,
+                      onDifficultVentilationTap:
+                          _editPatientDifficultVentilationQuick,
+                      onFastingTap: _editPatientFastingQuick,
                       onMallampatiTap: _usesMallampatiInCase
                           ? _editPatientMallampati
                           : null,
@@ -3388,6 +4151,21 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
 
   Widget _buildAirwayCard() {
     final airwaySupport = _buildAirwaySupportRecommendation(_record.patient);
+    final airwayHighlights = <String>[
+      if (_record.airway.cormackLehane.trim().isNotEmpty)
+        'Cormack ${_record.airway.cormackLehane}',
+      if (_record.airway.device.trim().isNotEmpty)
+        '${_record.airway.device} ${_record.airway.tubeNumber}'.trim(),
+      if (_record.airway.technique.trim().isNotEmpty) _record.airway.technique,
+      if (_record.airway.observation.trim().isNotEmpty)
+        _record.airway.observation,
+    ];
+    final airwayStatus = airwayHighlights.isEmpty
+        ? 'Via aérea pendente'
+        : '${airwayHighlights.length} item(ns) preenchido(s)';
+    final airwaySummary = airwayHighlights.isEmpty
+        ? 'Toque para preencher'
+        : airwayHighlights.take(2).join(' • ');
 
     return KeyedSubtree(
       key: _airwaySectionKey,
@@ -3405,9 +4183,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                 _record.airway.technique.trim().isNotEmpty ||
                 _record.airway.observation.trim().isNotEmpty ||
                 _record.airway.cormackLehane.trim().isNotEmpty,
-            trailing: const Icon(
-              Icons.keyboard_arrow_up,
-              color: Color(0xFF7D93AA),
+            collapsedChild: _buildCollapsedPanelSummary(
+              status: airwayStatus,
+              summary: airwaySummary,
             ),
             child: Padding(
               padding: const EdgeInsets.only(top: 2),
@@ -3564,6 +4342,26 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       icon: Icons.monitor_heart_outlined,
       minHeight: 250,
       isCompleted: _monitoringItems.isNotEmpty,
+      collapsedChild: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            status,
+            style: const TextStyle(
+              color: Color(0xFF17324D),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _monitoringItems.isEmpty ? 'Toque para preencher' : summary,
+            style: const TextStyle(
+              color: Color(0xFF5D7288),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -3956,6 +4754,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       minHeight: minHeight,
       isAttention: isAttention,
       isCompleted: isCompleted,
+      collapsible: false,
       child: InkWell(
         key: tapKey,
         borderRadius: BorderRadius.circular(10),
@@ -3994,6 +4793,30 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCollapsedPanelSummary({
+    required String status,
+    required String summary,
+    Color statusColor = const Color(0xFF17324D),
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          status,
+          style: TextStyle(color: statusColor, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          summary,
+          style: const TextStyle(
+            color: Color(0xFF5D7288),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 
@@ -4167,6 +4990,28 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       minHeight: 220,
       isAttention: _hasPendingTimeOut,
       isCompleted: completed,
+      collapsedChild: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            completed ? 'Time-out finalizado' : 'Time-out pendente',
+            style: TextStyle(
+              color: completed
+                  ? const Color(0xFF169653)
+                  : const Color(0xFFF59E0B),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            summary,
+            style: const TextStyle(
+              color: Color(0xFF5D7288),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -4405,6 +5250,10 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         minHeight: 320,
         isAttention: _hasPendingDrugs,
         isCompleted: _record.drugs.isNotEmpty,
+        collapsedChild: _buildCollapsedPanelSummary(
+          status: status,
+          summary: _record.drugs.isEmpty ? 'Toque para preencher' : summary,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -4464,6 +5313,10 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       icon: Icons.auto_awesome_outlined,
       minHeight: 280,
       isCompleted: _record.adjuncts.isNotEmpty,
+      collapsedChild: _buildCollapsedPanelSummary(
+        status: status,
+        summary: _record.adjuncts.isEmpty ? 'Toque para preencher' : summary,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -4736,6 +5589,12 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     final documentedInputs = _documentedInputsMl;
     final documentedLosses = _documentedLossesMl;
     final spongeEstimatedLoss = _record.fluidBalance.estimatedSpongeLoss;
+    final status = _record.fluidBalance.isComplete
+        ? 'Balanço hídrico preenchido'
+        : 'Balanço hídrico pendente';
+    final summary = documentedInputs == 0 && documentedLosses == 0
+        ? 'Toque para preencher'
+        : 'Entradas ${documentedInputs.toStringAsFixed(0)} mL • Saídas ${documentedLosses.toStringAsFixed(0)} mL';
     return KeyedSubtree(
       key: _fluidSectionKey,
       child: PanelCard(
@@ -4746,6 +5605,10 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         minHeight: 286,
         isAttention: _hasPendingFluidBalance,
         isCompleted: _record.fluidBalance.isComplete,
+        collapsedChild: _buildCollapsedPanelSummary(
+          status: status,
+          summary: summary,
+        ),
         child: InkWell(
           key: const Key('fluid-balance-entry'),
           borderRadius: BorderRadius.circular(18),
@@ -4829,16 +5692,33 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           ? _inferSurgicalSizeFromDescription()
           : _record.surgicalSize,
     );
+    final hasReplacementData =
+        _record.fluidBalance.blood.trim().isNotEmpty ||
+        _record.fluidBalance.colloids.trim().isNotEmpty ||
+        _record.fluidBalance.crystalloids.trim().isNotEmpty;
+    final replacementSegments = <String>[
+      if (_record.fluidBalance.crystalloids.trim().isNotEmpty)
+        'Cristaloides ${_record.fluidBalance.crystalloids} mL',
+      if (_record.fluidBalance.colloids.trim().isNotEmpty)
+        'Coloides ${_record.fluidBalance.colloids} mL',
+      if (_record.fluidBalance.blood.trim().isNotEmpty)
+        'Sangue ${_record.fluidBalance.blood} mL',
+    ];
 
     return PanelCard(
       title: '19) Reposição volêmica, sangue e derivados',
       titleColor: _airwayFluidRowColor,
       icon: Icons.bloodtype_outlined,
       minHeight: 286,
-      isCompleted:
-          _record.fluidBalance.blood.trim().isNotEmpty ||
-          _record.fluidBalance.colloids.trim().isNotEmpty ||
-          _record.fluidBalance.crystalloids.trim().isNotEmpty,
+      isCompleted: hasReplacementData,
+      collapsedChild: _buildCollapsedPanelSummary(
+        status: hasReplacementData
+            ? 'Reposição registrada'
+            : 'Nenhuma reposição registrada',
+        summary: hasReplacementData
+            ? replacementSegments.join(' • ')
+            : 'Toque para preencher',
+      ),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
         onTap: _editReposicaoVolemica,
@@ -4919,6 +5799,13 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       'Opioides',
       'Bloqueadores neuromusculares',
     ];
+    final maintenanceItems = _lineItems(_record.maintenanceAgents);
+    final maintenanceStatus = maintenanceItems.isEmpty
+        ? 'Nenhum agente de manutenção registrado'
+        : maintenanceItems.first.split('|').first.trim();
+    final maintenanceSummary = maintenanceItems.isEmpty
+        ? 'Toque para preencher'
+        : '${maintenanceItems.length} item(ns) registrados';
     return PanelCard(
       key: const Key('maintenance-card'),
       title: '16) Manutenção da anestesia',
@@ -4926,6 +5813,10 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       icon: Icons.tune_outlined,
       minHeight: 320,
       isCompleted: _record.maintenanceAgents.trim().isNotEmpty,
+      collapsedChild: _buildCollapsedPanelSummary(
+        status: maintenanceStatus,
+        summary: maintenanceSummary,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

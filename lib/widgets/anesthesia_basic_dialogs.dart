@@ -4,10 +4,7 @@ import 'package:flutter/services.dart';
 import '../models/patient.dart';
 
 class AnesthesiologistsDialog extends StatefulWidget {
-  const AnesthesiologistsDialog({
-    super.key,
-    required this.initialItems,
-  });
+  const AnesthesiologistsDialog({super.key, required this.initialItems});
 
   final List<String> initialItems;
 
@@ -137,9 +134,9 @@ class _AnesthesiologistsDialogState extends State<AnesthesiologistsDialog> {
           key: const Key('anesthesiologist-save-button'),
           onPressed: () {
             final draft = _buildDraftItem();
-            Navigator.of(context).pop(
-              draft == null ? _items : [..._items, draft],
-            );
+            Navigator.of(
+              context,
+            ).pop(draft == null ? _items : [..._items, draft]);
           },
           child: const Text('Salvar'),
         ),
@@ -201,7 +198,7 @@ class _NamedItemsDialogState extends State<NamedItemsDialog> {
     return AlertDialog(
       title: Text(widget.title),
       content: SizedBox(
-        width: 520,
+        width: 560,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -225,9 +222,12 @@ class _NamedItemsDialogState extends State<NamedItemsDialog> {
               ),
               const SizedBox(height: 12),
               if (_items.isEmpty)
-                Text(
-                  widget.emptyStateText,
-                  style: const TextStyle(color: Color(0xFF7A8EA5)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Text(
+                    widget.emptyStateText,
+                    style: const TextStyle(color: Color(0xFF7A8EA5)),
+                  ),
                 ),
               ..._items.asMap().entries.map((entry) {
                 return ListTile(
@@ -255,9 +255,9 @@ class _NamedItemsDialogState extends State<NamedItemsDialog> {
         FilledButton(
           onPressed: () {
             final draft = _controller.text.trim();
-            Navigator.of(context).pop(
-              draft.isEmpty ? _items : [..._items, draft],
-            );
+            Navigator.of(
+              context,
+            ).pop(draft.isEmpty ? _items : [..._items, draft]);
           },
           child: const Text('Salvar'),
         ),
@@ -368,9 +368,7 @@ class ChoiceFieldDialog extends StatelessWidget {
               children: options
                   .map(
                     (option) => ChoiceChip(
-                      label: Text(
-                        optionLabelBuilder?.call(option) ?? option,
-                      ),
+                      label: Text(optionLabelBuilder?.call(option) ?? option),
                       selected: selectedValue == option,
                       onSelected: (_) {
                         setState(() {
@@ -510,10 +508,9 @@ class _ListFieldDialogState extends State<ListFieldDialog> {
           child: const Text('Limpar'),
         ),
         FilledButton(
-          onPressed: () => Navigator.of(context).pop([
-            ..._selectedSuggestions,
-            ..._manualItems(),
-          ]),
+          onPressed: () => Navigator.of(
+            context,
+          ).pop([..._selectedSuggestions, ..._manualItems()]),
           child: const Text('Salvar'),
         ),
       ],
@@ -522,10 +519,7 @@ class _ListFieldDialogState extends State<ListFieldDialog> {
 }
 
 class PatientIdentificationDialog extends StatefulWidget {
-  const PatientIdentificationDialog({
-    super.key,
-    required this.initialPatient,
-  });
+  const PatientIdentificationDialog({super.key, required this.initialPatient});
 
   final Patient initialPatient;
 
@@ -595,7 +589,9 @@ class _PatientIdentificationDialogState
     );
     _heightController = TextEditingController(
       text: widget.initialPatient.heightMeters > 0
-          ? widget.initialPatient.heightMeters.toStringAsFixed(2).replaceAll('.', ',')
+          ? (widget.initialPatient.heightMeters * 100)
+                .toStringAsFixed(0)
+                .replaceAll('.', ',')
           : '',
     );
     _postnatalAgeController = TextEditingController(
@@ -615,7 +611,9 @@ class _PatientIdentificationDialogState
     );
     _birthWeightController = TextEditingController(
       text: widget.initialPatient.birthWeightKg > 0
-          ? widget.initialPatient.birthWeightKg.toStringAsFixed(2).replaceAll('.', ',')
+          ? widget.initialPatient.birthWeightKg
+                .toStringAsFixed(2)
+                .replaceAll('.', ',')
           : '',
     );
     _asaController = TextEditingController(text: widget.initialPatient.asa);
@@ -648,10 +646,10 @@ class _PatientIdentificationDialogState
         : '';
     _selectedInformedConsentStatus =
         _informedConsentOptions.contains(
-              widget.initialPatient.informedConsentStatus,
-            )
-            ? widget.initialPatient.informedConsentStatus
-            : '';
+          widget.initialPatient.informedConsentStatus,
+        )
+        ? widget.initialPatient.informedConsentStatus
+        : '';
     _selectedPopulation = widget.initialPatient.population;
   }
 
@@ -722,7 +720,8 @@ class _PatientIdentificationDialogState
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       decoration: InputDecoration(
-                        labelText: _selectedPopulation == PatientPopulation.neonatal
+                        labelText:
+                            _selectedPopulation == PatientPopulation.neonatal
                             ? 'Idade (anos, se aplicável)'
                             : 'Idade (anos)',
                       ),
@@ -732,8 +731,9 @@ class _PatientIdentificationDialogState
                   Expanded(
                     child: TextField(
                       controller: _weightController,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
                       ],
@@ -744,12 +744,15 @@ class _PatientIdentificationDialogState
                   Expanded(
                     child: TextField(
                       controller: _heightController,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
                       ],
-                      decoration: const InputDecoration(labelText: 'Altura (m)'),
+                      decoration: const InputDecoration(
+                        labelText: 'Altura (cm)',
+                      ),
                     ),
                   ),
                 ],
@@ -762,7 +765,9 @@ class _PatientIdentificationDialogState
                       child: TextField(
                         controller: _postnatalAgeController,
                         keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
                         decoration: const InputDecoration(
                           labelText: 'Idade pós-natal (dias)',
                         ),
@@ -773,10 +778,13 @@ class _PatientIdentificationDialogState
                       Expanded(
                         child: TextField(
                           controller: _birthWeightController,
-                          keyboardType:
-                              const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[0-9,.]'),
+                            ),
                           ],
                           decoration: const InputDecoration(
                             labelText: 'Peso ao nascer (kg)',
@@ -795,7 +803,9 @@ class _PatientIdentificationDialogState
                       child: TextField(
                         controller: _gestationalAgeController,
                         keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
                         decoration: const InputDecoration(
                           labelText: 'IG ao nascer (semanas)',
                         ),
@@ -806,7 +816,9 @@ class _PatientIdentificationDialogState
                       child: TextField(
                         controller: _correctedGestationalAgeController,
                         keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
                         decoration: const InputDecoration(
                           labelText: 'IG corrigida (semanas)',
                         ),
@@ -966,20 +978,31 @@ class _PatientIdentificationDialogState
               name: _nameController.text.trim(),
               age: int.tryParse(_ageController.text.trim()) ?? 0,
               weightKg:
-                  double.tryParse(_weightController.text.replaceAll(',', '.')) ?? 0,
+                  double.tryParse(
+                    _weightController.text.replaceAll(',', '.'),
+                  ) ??
+                  0,
               heightMeters:
-                  double.tryParse(_heightController.text.replaceAll(',', '.')) ??
-                      0,
+                  (double.tryParse(
+                        _heightController.text.replaceAll(',', '.'),
+                      ) ??
+                      0) /
+                  100,
               population: _selectedPopulation,
               postnatalAgeDays:
                   int.tryParse(_postnatalAgeController.text.trim()) ?? 0,
               gestationalAgeWeeks:
                   int.tryParse(_gestationalAgeController.text.trim()) ?? 0,
               correctedGestationalAgeWeeks:
-                  int.tryParse(_correctedGestationalAgeController.text.trim()) ?? 0,
+                  int.tryParse(
+                    _correctedGestationalAgeController.text.trim(),
+                  ) ??
+                  0,
               birthWeightKg:
-                  double.tryParse(_birthWeightController.text.replaceAll(',', '.')) ??
-                      0,
+                  double.tryParse(
+                    _birthWeightController.text.replaceAll(',', '.'),
+                  ) ??
+                  0,
               asa: _selectedAsa.isNotEmpty
                   ? _selectedAsa
                   : _asaController.text.trim(),

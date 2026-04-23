@@ -173,6 +173,107 @@ void main() {
   });
 
   testWidgets(
+    'opens quick header editors for METS, airway risk, ventilation and fasting',
+    (WidgetTester tester) async {
+      final record = buildRecord().copyWith(
+        preAnestheticAssessment: buildRecord().preAnestheticAssessment.copyWith(
+          mets: '',
+          difficultAirwayPredictors: const [],
+          difficultVentilationPredictors: const [],
+          fastingSolids: '',
+          fastingLiquids: '',
+        ),
+      );
+
+      await pumpScreen(tester, record);
+
+      await tester.tap(find.text('METS / FUNCIONAL').first);
+      await tester.pumpAndSettle();
+      expect(find.text('METS / capacidade funcional'), findsOneWidget);
+      expect(find.text('Boa capacidade funcional.'), findsOneWidget);
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('VIA AÉREA DIFÍCIL').first);
+      await tester.pumpAndSettle();
+      expect(find.text('Via aérea difícil'), findsOneWidget);
+      expect(find.text('Outros achados (um por linha)'), findsOneWidget);
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('VENTILAÇÃO DIFÍCIL').first);
+      await tester.pumpAndSettle();
+      expect(find.text('Ventilação difícil'), findsOneWidget);
+      expect(find.text('Outros achados (um por linha)'), findsOneWidget);
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('JEJUM').first);
+      await tester.pumpAndSettle();
+      expect(find.text('Jejum'), findsOneWidget);
+      expect(find.text('Líquidos claros'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'shows explanatory choices for ASA and Mallampati from header chips',
+    (WidgetTester tester) async {
+      await pumpScreen(tester, buildRecord());
+
+      await tester.tap(find.text('ASA').first);
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          'Paciente saudavel, sem doenca sistemica clinicamente relevante.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Doenca sistemica grave que representa ameaca constante a vida.',
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('MALLAMPATI').first);
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Palato mole, fauces, uvula e pilares visiveis.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Videolaringoscopio/fibroscopia e estrategia de resgate pronta.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('saves functional capacity through the header quick dialog', (
+    WidgetTester tester,
+  ) async {
+    final record = buildRecord().copyWith(
+      preAnestheticAssessment: buildRecord().preAnestheticAssessment.copyWith(
+        mets: '',
+      ),
+    );
+
+    await pumpScreen(tester, record);
+
+    await tester.tap(find.text('METS / FUNCIONAL').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Boa capacidade funcional.'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Salvar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('>4 METs'), findsOneWidget);
+  });
+
+  testWidgets(
     'summarizes pediatric fasting by intake type in anesthesia screen',
     (WidgetTester tester) async {
       final record = buildRecord().copyWith(
@@ -816,6 +917,128 @@ void main() {
     expect(find.text('2 item(ns) selecionados'), findsOneWidget);
     expect(find.textContaining('Sugeridos ausentes:'), findsOneWidget);
   });
+
+  testWidgets(
+    'shows touch-to-fill summary for monitoring and expands on first tap',
+    (WidgetTester tester) async {
+      final record = buildRecord().copyWith(monitoringItems: const []);
+
+      await pumpScreen(tester, record);
+
+      expect(find.text('Monitorização pendente'), findsOneWidget);
+      expect(find.text('Toque para preencher'), findsWidgets);
+      expect(find.text('ECG (5 derivações)'), findsNothing);
+
+      await tester.tap(find.text('Toque para preencher').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('ECG (5 derivações)'), findsOneWidget);
+      expect(find.text('PA não invasiva'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'shows touch-to-fill summary for timeout and expands on first tap',
+    (WidgetTester tester) async {
+      final record = buildRecord().copyWith(
+        timeOutChecklist: const [],
+        timeOutCompleted: false,
+      );
+
+      await pumpScreen(tester, record);
+
+      expect(find.text('Time-out pendente'), findsOneWidget);
+      expect(find.text('Toque para preencher'), findsWidgets);
+      expect(find.text('Equipe identificada por nome e funcao'), findsNothing);
+
+      await tester.tap(find.text('Toque para preencher').last);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Equipe identificada por nome e funcao'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Paciente, procedimento e sitio confirmados'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'starts inline anesthesia cards collapsed and expands on first tap',
+    (WidgetTester tester) async {
+      final record = buildRecord().copyWith(
+        drugs: const [],
+        adjuncts: const [],
+        airway: const Airway.empty(),
+        maintenanceAgents: '',
+        fluidBalance: const FluidBalance.empty(),
+      );
+
+      await pumpScreen(tester, record);
+
+      expect(find.text('Nenhuma droga de indução registrada'), findsOneWidget);
+      expect(find.text('Nenhum adjuvante registrado'), findsOneWidget);
+      expect(find.text('Via aérea pendente'), findsOneWidget);
+      expect(
+        find.text('Nenhum agente de manutenção registrado'),
+        findsOneWidget,
+      );
+      expect(find.text('Balanço hídrico pendente'), findsOneWidget);
+
+      expect(find.text('Propofol'), findsNothing);
+      expect(find.text('Sulfato de Mg'), findsNothing);
+      expect(find.text('Dispositivo'), findsNothing);
+
+      await tester.tap(find.text('Nenhuma droga de indução registrada'));
+      await tester.pumpAndSettle();
+      expect(find.text('Propofol'), findsOneWidget);
+
+      await tester.tap(find.text('Nenhum adjuvante registrado'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sulfato de Mg'), findsOneWidget);
+
+      await tester.ensureVisible(find.byKey(const Key('airway-card')));
+      await tester.tap(find.text('Via aérea pendente'));
+      await tester.pumpAndSettle();
+      expect(find.text('Dispositivo'), findsOneWidget);
+
+      await tester.ensureVisible(find.byKey(const Key('maintenance-card')));
+      await tester.tap(find.text('Nenhum agente de manutenção registrado'));
+      await tester.pumpAndSettle();
+      expect(find.text('Anestésicos EV contínuo'), findsWidgets);
+    },
+  );
+
+  testWidgets(
+    'opens antibiotic and access dialogs directly from the compact cards',
+    (WidgetTester tester) async {
+      final record = buildRecord().copyWith(
+        prophylacticAntibiotics: const [],
+        venousAccesses: const [],
+        arterialAccesses: const [],
+      );
+
+      await pumpScreen(tester, record);
+
+      await tester.tap(find.byKey(const Key('antibiotic-entry')));
+      await tester.pumpAndSettle();
+      expect(find.text('Editar Antibiótico profilaxia'), findsOneWidget);
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('venous-access-entry')));
+      await tester.pumpAndSettle();
+      expect(find.text('Editar Acesso venoso'), findsOneWidget);
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('arterial-access-entry')));
+      await tester.pumpAndSettle();
+      expect(find.text('Editar Acesso arterial'), findsOneWidget);
+    },
+  );
 
   testWidgets('saves venous access through the dialog', (
     WidgetTester tester,
