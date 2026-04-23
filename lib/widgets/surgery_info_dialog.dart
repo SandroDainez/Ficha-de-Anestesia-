@@ -77,51 +77,78 @@ class SurgeryInfoDialog extends StatefulWidget {
 class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
   static const List<String> _commonProcedureOptions = [
     'Histerectomia por vídeo',
+    'Histerectomia',
     'Histerectomia abdominal',
     'Histerectomia vaginal',
     'Miomectomia',
     'Vídeo colecistectomia',
     'Colecistectomia',
     'Bariátrica sleeve',
+    'Bariátrica by pass',
     'Bariátrica bypass',
+    'Gastrectomia vertical',
+    'Bypass gástrico em Y de Roux',
+    'Nefrectomia por vídeo direita',
+    'Nefrectomia por vídeo esquerda',
     'Nefrectomia direita',
     'Nefrectomia esquerda',
     'Herniorrafia umbilical',
     'Herniorrafia incisional',
     'Herniorrafia inguinal direita',
     'Herniorrafia inguinal esquerda',
+    'Herniorrafia inguinal bilateral',
+    'Herniorrafia inguinal direita por vídeo',
+    'Herniorrafia inguinal esquerda por vídeo',
     'Herniorrafia inguinal bilateral por vídeo',
     'Hernioplastia ventral',
+    'Hernioplastia epigástrica',
     'Fratura de fêmur direito',
     'Fratura de fêmur esquerdo',
+    'Fratura de rádio distal direito',
+    'Fratura de rádio distal esquerdo',
+    'Fratura de tornozelo direito',
+    'Fratura de tornozelo esquerdo',
     'Apendicectomia por vídeo',
     'Apendicectomia',
     'Cesárea',
     'Mastectomia',
     'Quadrantectomia',
+    'Setorectomia de mama',
     'Prótese de mama',
+    'Troca de prótese de mama',
     'Mamoplastia redutora',
     'Mastopexia',
     'Abdominoplastia',
     'Lipoaspiração',
+    'Lipoescultura',
+    'Ritidoplastia',
     'Blefaroplastia',
     'Rinoplastia',
     'Septoplastia',
     'Sinusectomia endoscópica',
     'Artroscopia de joelho',
+    'Artroscopia de ombro',
     'Artroplastia total de joelho',
     'Artroplastia total de quadril',
     'Fixação de fratura de rádio distal',
     'Osteossíntese de tíbia',
     'Tireoidectomia',
+    'Paratireoidectomia',
     'Amigdalectomia',
     'Adenoidectomia',
     'Hemorroidectomia',
     'Fissurectomia anal',
+    'Colecistostomia',
+    'Laparotomia exploradora',
+    'Videolaparoscopia diagnóstica',
+    'RTU de bexiga',
     'Varicocelectomia',
     'Orquidopexia',
     'RTU de próstata',
     'Cistoscopia',
+    'Ureterolitotripsia',
+    'Postectomia',
+    'Vasectomia',
   ];
   static const List<String> _priorityOptions = [
     'Eletiva',
@@ -191,9 +218,7 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
         .where((item) => !_commonProcedureOptions.contains(item))
         .join('\n');
 
-    _otherProceduresController = TextEditingController(
-      text: otherProcedures,
-    );
+    _otherProceduresController = TextEditingController(text: otherProcedures);
     _surgeonController = TextEditingController(text: widget.initialSurgeon);
     _assistantsController = TextEditingController(
       text: widget.initialAssistants.join('\n'),
@@ -237,21 +262,29 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final showDescription = widget.section == SurgeryInfoSection.all ||
+    final showDescription =
+        widget.section == SurgeryInfoSection.all ||
         widget.section == SurgeryInfoSection.description;
-    final showPriority = widget.section == SurgeryInfoSection.all ||
+    final showPriority =
+        widget.section == SurgeryInfoSection.all ||
         widget.section == SurgeryInfoSection.priority;
-    final showSurgeon = widget.section == SurgeryInfoSection.all ||
+    final showSurgeon =
+        widget.section == SurgeryInfoSection.all ||
         widget.section == SurgeryInfoSection.surgeon;
-    final showAssistants = widget.section == SurgeryInfoSection.all ||
+    final showAssistants =
+        widget.section == SurgeryInfoSection.all ||
         widget.section == SurgeryInfoSection.assistants;
-    final showDestination = widget.section == SurgeryInfoSection.all ||
+    final showDestination =
+        widget.section == SurgeryInfoSection.all ||
         widget.section == SurgeryInfoSection.destination;
-    final showNotes = widget.section == SurgeryInfoSection.all ||
+    final showNotes =
+        widget.section == SurgeryInfoSection.all ||
         widget.section == SurgeryInfoSection.notes;
-    final showChecklist = widget.section == SurgeryInfoSection.all ||
+    final showChecklist =
+        widget.section == SurgeryInfoSection.all ||
         widget.section == SurgeryInfoSection.checklist;
-    final showTimeOut = widget.section == SurgeryInfoSection.all ||
+    final showTimeOut =
+        widget.section == SurgeryInfoSection.all ||
         widget.section == SurgeryInfoSection.timeOut;
 
     final title = switch (widget.section) {
@@ -280,8 +313,8 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
                   child: Text(
                     'Principais cirurgias',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               if (showDescription) const SizedBox(height: 8),
@@ -333,8 +366,8 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
                   child: Text(
                     'Tipo de cirurgia',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               if (showPriority) const SizedBox(height: 8),
@@ -355,7 +388,11 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
                       .toList(),
                 ),
               if (showPriority &&
-                  (showSurgeon || showAssistants || showDestination || showNotes || showChecklist))
+                  (showSurgeon ||
+                      showAssistants ||
+                      showDestination ||
+                      showNotes ||
+                      showChecklist))
                 const SizedBox(height: 12),
               if (showSurgeon)
                 TextField(
@@ -364,7 +401,10 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
                   decoration: const InputDecoration(labelText: 'Cirurgião'),
                 ),
               if (showSurgeon &&
-                  (showAssistants || showDestination || showNotes || showChecklist))
+                  (showAssistants ||
+                      showDestination ||
+                      showNotes ||
+                      showChecklist))
                 const SizedBox(height: 12),
               if (showAssistants)
                 TextField(
@@ -376,7 +416,11 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
                     hintText: 'Um por linha',
                   ),
                 ),
-              if (showAssistants && (showDestination || showNotes || showChecklist || showTimeOut))
+              if (showAssistants &&
+                  (showDestination ||
+                      showNotes ||
+                      showChecklist ||
+                      showTimeOut))
                 const SizedBox(height: 16),
               if (showDestination)
                 Align(
@@ -384,8 +428,8 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
                   child: Text(
                     'Destino pós-operatório',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               if (showDestination) const SizedBox(height: 10),
@@ -413,10 +457,12 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
                   maxLines: 2,
                   decoration: const InputDecoration(
                     labelText: 'Outro destino / detalhes',
-                    hintText: 'Ex: observação prolongada, transporte ventilado, sala híbrida',
+                    hintText:
+                        'Ex: observação prolongada, transporte ventilado, sala híbrida',
                   ),
                 ),
-              if (showDestination && (showNotes || showChecklist || showTimeOut))
+              if (showDestination &&
+                  (showNotes || showChecklist || showTimeOut))
                 const SizedBox(height: 16),
               if (showNotes)
                 TextField(
@@ -426,7 +472,8 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
                   maxLines: 6,
                   decoration: const InputDecoration(
                     labelText: 'Anotações relevantes',
-                    hintText: 'Ex: condições de chegada ao centro cirúrgico, cirurgia suspensa e motivo, intercorrências logísticas, observações relevantes',
+                    hintText:
+                        'Ex: condições de chegada ao centro cirúrgico, cirurgia suspensa e motivo, intercorrências logísticas, observações relevantes',
                   ),
                 ),
               if (showNotes && (showChecklist || showTimeOut))
@@ -437,8 +484,8 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
                   child: Text(
                     'Checklist de cirurgia segura',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               if (showChecklist) const SizedBox(height: 10),
@@ -471,8 +518,8 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
                   child: Text(
                     'Etapa de time-out',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               if (showTimeOut) const SizedBox(height: 10),
@@ -508,7 +555,8 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
                   width: double.infinity,
                   child: FilledButton.icon(
                     key: const Key('surgery-complete-timeout-button'),
-                    onPressed: _selectedTimeOutChecklist.length ==
+                    onPressed:
+                        _selectedTimeOutChecklist.length ==
                             _timeOutOptions.length
                         ? () {
                             setState(() {
@@ -598,11 +646,11 @@ class _ProcedureCard extends StatelessWidget {
                 child: Text(
                   label,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: selected
-                            ? colorScheme.onPrimaryContainer
-                            : colorScheme.onSurface,
-                      ),
+                    fontWeight: FontWeight.w600,
+                    color: selected
+                        ? colorScheme.onPrimaryContainer
+                        : colorScheme.onSurface,
+                  ),
                 ),
               ),
             ],

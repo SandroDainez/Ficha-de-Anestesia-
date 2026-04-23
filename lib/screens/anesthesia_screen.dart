@@ -31,10 +31,7 @@ import '../widgets/page_container.dart';
 import '../widgets/surgery_info_dialog.dart';
 
 class _FluidSupportRecommendation {
-  const _FluidSupportRecommendation({
-    required this.title,
-    required this.lines,
-  });
+  const _FluidSupportRecommendation({required this.title, required this.lines});
 
   final String title;
   final List<String> lines;
@@ -157,10 +154,7 @@ double _pediatricMaintenanceRateMlPerHour(double weightKg) {
     _ => (120.0, 150.0),
   };
 
-  return (
-    (weightKg * lowerPerDay) / 24,
-    (weightKg * upperPerDay) / 24,
-  );
+  return ((weightKg * lowerPerDay) / 24, (weightKg * upperPerDay) / 24);
 }
 
 _FluidSupportRecommendation _buildFluidSupportRecommendation({
@@ -195,7 +189,8 @@ _FluidSupportRecommendation _buildFluidSupportRecommendation({
             'Intraoperatória sugerida: ${intraopRate.toStringAsFixed(0)} mL/h pelo porte $surgicalSize',
           'Manutenção inicial por 25-30 mL/kg/dia; usar peso de referência se obesidade.',
           'Perdas registradas: ${documentedLossesMl.toStringAsFixed(0)} mL',
-          if (fasting.isNotEmpty) 'Jejum informado: $fasting h; não repor déficit fixo automaticamente.',
+          if (fasting.isNotEmpty)
+            'Jejum informado: $fasting h; não repor déficit fixo automaticamente.',
         ],
       );
 
@@ -235,7 +230,8 @@ _FluidSupportRecommendation _buildFluidSupportRecommendation({
           'Manutenção: ${range.$1.toStringAsFixed(0)}-${range.$2.toStringAsFixed(0)} mL/h'
         else
           'Sem taxa automática fixa no sistema.',
-        if (sizeFactor > 0 && (patient.weightKg > 0 || patient.birthWeightKg > 0))
+        if (sizeFactor > 0 &&
+            (patient.weightKg > 0 || patient.birthWeightKg > 0))
           'Intraoperatória sugerida: ${((patient.weightKg > 0 ? patient.weightKg : patient.birthWeightKg) * (sizeFactor + 2)).toStringAsFixed(0)} mL/h pelo porte $surgicalSize',
         if (isTerm && patient.postnatalAgeDays > 0)
           'Neonato termo, ${patient.postnatalAgeDays} dia(s) de vida.'
@@ -254,7 +250,9 @@ _FluidSupportRecommendation _buildFluidSupportRecommendation({
   }
 }
 
-_AirwaySupportRecommendation? _buildAirwaySupportRecommendation(Patient patient) {
+_AirwaySupportRecommendation? _buildAirwaySupportRecommendation(
+  Patient patient,
+) {
   switch (patient.population) {
     case PatientPopulation.adult:
       return null;
@@ -282,7 +280,9 @@ _AirwaySupportRecommendation? _buildAirwaySupportRecommendation(Patient patient)
         ],
       );
     case PatientPopulation.neonatal:
-      final weightKg = patient.weightKg > 0 ? patient.weightKg : patient.birthWeightKg;
+      final weightKg = patient.weightKg > 0
+          ? patient.weightKg
+          : patient.birthWeightKg;
       if (weightKg <= 0) {
         return const _AirwaySupportRecommendation(
           title: 'Referência neonatal',
@@ -642,14 +642,16 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     ),
   ];
   static const List<_SurgeryAntibioticSuggestionRule>
-      _adultSurgeryAntibioticSuggestionRules = [
+  _adultSurgeryAntibioticSuggestionRules = [
     _SurgeryAntibioticSuggestionRule(
       matchTerms: ['histerectomia', 'colecistectomia', 'apendicectomia'],
       title: 'Ginecológica / abdominal limpa-contaminada',
       antibioticName: 'Cefazolina',
       dose: '2 g IV',
-      repeatGuidance: 'Redose em 4 h se cirurgia prolongada ou perda sanguínea importante.',
-      additionalNotes: 'Indicação habitual para profilaxia de procedimentos ginecológicos e abdominais sem alergia beta-lactâmica.',
+      repeatGuidance:
+          'Redose em 4 h se cirurgia prolongada ou perda sanguínea importante.',
+      additionalNotes:
+          'Indicação habitual para profilaxia de procedimentos ginecológicos e abdominais sem alergia beta-lactâmica.',
     ),
     _SurgeryAntibioticSuggestionRule(
       matchTerms: ['bariátrica', 'sleeve', 'bypass'],
@@ -657,23 +659,40 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       antibioticName: 'Cefazolina',
       dose: '2 g IV (3 g se peso >= 120 kg)',
       repeatGuidance: 'Redose em 4 h ou antes se grande perda sanguínea.',
-      additionalNotes: 'Ajustar para 3 g em obesidade importante quando aplicável.',
+      additionalNotes:
+          'Ajustar para 3 g em obesidade importante quando aplicável.',
     ),
     _SurgeryAntibioticSuggestionRule(
-      matchTerms: ['herniorrafia', 'hernia', 'inguinal', 'umbilical', 'incisional'],
+      matchTerms: [
+        'herniorrafia',
+        'hernia',
+        'inguinal',
+        'umbilical',
+        'incisional',
+      ],
       title: 'Parede abdominal / hernioplastia',
       antibioticName: 'Cefazolina',
       dose: '2 g IV',
-      repeatGuidance: 'Redose em 4 h se tela, duração prolongada ou sangramento.',
-      additionalNotes: 'Considerar profilaxia sobretudo quando houver implante de tela.',
+      repeatGuidance:
+          'Redose em 4 h se tela, duração prolongada ou sangramento.',
+      additionalNotes:
+          'Considerar profilaxia sobretudo quando houver implante de tela.',
     ),
     _SurgeryAntibioticSuggestionRule(
-      matchTerms: ['fratura de fêmur', 'artroplastia', 'joelho', 'quadril', 'ortop'],
+      matchTerms: [
+        'fratura de fêmur',
+        'artroplastia',
+        'joelho',
+        'quadril',
+        'ortop',
+      ],
       title: 'Ortopédica',
       antibioticName: 'Cefazolina',
       dose: '2 g IV',
-      repeatGuidance: 'Redose em 4 h; considerar cobertura adicional conforme implante e protocolo local.',
-      additionalNotes: 'Em prótese/implante, respeitar tempo de infusão antes da incisão.',
+      repeatGuidance:
+          'Redose em 4 h; considerar cobertura adicional conforme implante e protocolo local.',
+      additionalNotes:
+          'Em prótese/implante, respeitar tempo de infusão antes da incisão.',
     ),
     _SurgeryAntibioticSuggestionRule(
       matchTerms: ['nefrectomia', 'urol'],
@@ -681,7 +700,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       antibioticName: 'Cefazolina',
       dose: '2 g IV',
       repeatGuidance: 'Redose em 4 h se procedimento prolongado.',
-      additionalNotes: 'Se manipulação de trato urinário contaminado, individualizar conforme urocultura e protocolo local.',
+      additionalNotes:
+          'Se manipulação de trato urinário contaminado, individualizar conforme urocultura e protocolo local.',
     ),
     _SurgeryAntibioticSuggestionRule(
       matchTerms: ['mastectomia', 'quadrantectomia', 'mama', 'prótese de mama'],
@@ -689,7 +709,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       antibioticName: 'Cefazolina',
       dose: '2 g IV',
       repeatGuidance: 'Redose em 4 h se cirurgia prolongada.',
-      additionalNotes: 'Em cirurgia com implante, manter administração antes da incisão.',
+      additionalNotes:
+          'Em cirurgia com implante, manter administração antes da incisão.',
     ),
     _SurgeryAntibioticSuggestionRule(
       matchTerms: ['abdominoplastia', 'lipoaspiração', 'rinoplastia'],
@@ -697,7 +718,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       antibioticName: 'Cefazolina',
       dose: '2 g IV',
       repeatGuidance: 'Redose em 4 h se procedimento extenso.',
-      additionalNotes: 'Ajustar conforme associação com implantes ou cirurgia combinada.',
+      additionalNotes:
+          'Ajustar conforme associação com implantes ou cirurgia combinada.',
     ),
     _SurgeryAntibioticSuggestionRule(
       matchTerms: ['septoplastia', 'amigdalectomia', 'tireoidectomia'],
@@ -705,15 +727,18 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       antibioticName: 'Cefazolina',
       dose: '2 g IV',
       repeatGuidance: 'Redose em 4 h se duração prolongada.',
-      additionalNotes: 'Em procedimentos selecionados, validar real necessidade de profilaxia pelo protocolo do serviço.',
+      additionalNotes:
+          'Em procedimentos selecionados, validar real necessidade de profilaxia pelo protocolo do serviço.',
     ),
     _SurgeryAntibioticSuggestionRule(
       matchTerms: ['cesárea', 'cesarea'],
       title: 'Cesárea',
       antibioticName: 'Cefazolina',
       dose: '2 g IV',
-      repeatGuidance: 'Redose em 4 h se cirurgia prolongada ou hemorragia importante.',
-      additionalNotes: 'Administrar antes da incisão; considerar azitromicina conforme contexto e protocolo local.',
+      repeatGuidance:
+          'Redose em 4 h se cirurgia prolongada ou hemorragia importante.',
+      additionalNotes:
+          'Administrar antes da incisão; considerar azitromicina conforme contexto e protocolo local.',
     ),
   ];
   static const Map<String, String> _adultOtherMedicationOptions = {
@@ -1012,7 +1037,10 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         .toList();
   }
 
-  String _multilineSummary(String value, {String empty = 'Toque para preencher'}) {
+  String _multilineSummary(
+    String value, {
+    String empty = 'Toque para preencher',
+  }) {
     final items = _lineItems(value);
     if (items.isEmpty) return empty;
     return items.join(' • ');
@@ -1083,9 +1111,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   List<String> _removeMaintenanceEntry(String name) {
-    return _lineItems(_record.maintenanceAgents)
-        .where((item) => item.split('|').first.trim() != name)
-        .toList();
+    return _lineItems(
+      _record.maintenanceAgents,
+    ).where((item) => item.split('|').first.trim() != name).toList();
   }
 
   String _inferSurgicalSizeFromDescription() {
@@ -1121,7 +1149,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   double _estimateInhalationalMlPerHour(_MaintenancePreset preset) {
-    if (!preset.isInhalational || preset.density <= 0 || preset.molecularWeight <= 0) {
+    if (!preset.isInhalational ||
+        preset.density <= 0 ||
+        preset.molecularWeight <= 0) {
       return 0;
     }
     const freshGasFlowLPerMin = 2.0;
@@ -1138,7 +1168,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
 
   String? _findDrugEntry(String name) {
     try {
-      return _record.drugs.firstWhere((item) => item.split('|').first.trim() == name);
+      return _record.drugs.firstWhere(
+        (item) => item.split('|').first.trim() == name,
+      );
     } catch (_) {
       return null;
     }
@@ -1233,7 +1265,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
 
   String? _findAdjunctEntry(String name) {
     try {
-      return _record.adjuncts.firstWhere((item) => item.split('|').first.trim() == name);
+      return _record.adjuncts.firstWhere(
+        (item) => item.split('|').first.trim() == name,
+      );
     } catch (_) {
       return null;
     }
@@ -1539,16 +1573,17 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   DateTime? get _hemodynamicAnesthesiaStartAt => _hemodynamicService
       .markerStartAt(_record.hemodynamicMarkers, 'Início da anestesia');
 
-  DateTime? get _hemodynamicSurgeryStartAt => _hemodynamicService
-      .markerStartAt(_record.hemodynamicMarkers, 'Início da cirurgia');
+  DateTime? get _hemodynamicSurgeryStartAt => _hemodynamicService.markerStartAt(
+    _record.hemodynamicMarkers,
+    'Início da cirurgia',
+  );
 
   bool get _hasAnesthesiaEndMarker => _record.hemodynamicMarkers.any(
-        (item) => item.label == 'Fim da anestesia',
-      );
+    (item) => item.label == 'Fim da anestesia',
+  );
 
-  bool get _hasSurgeryEndMarker => _record.hemodynamicMarkers.any(
-        (item) => item.label == 'Fim da cirurgia',
-      );
+  bool get _hasSurgeryEndMarker =>
+      _record.hemodynamicMarkers.any((item) => item.label == 'Fim da cirurgia');
 
   String get _paiSummary {
     if (_latestPaiPoint != null) {
@@ -1560,12 +1595,12 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   bool get _hasAnesthesiaStartMarker => _record.hemodynamicMarkers.any(
-        (item) => item.label == 'Início da anestesia',
-      );
+    (item) => item.label == 'Início da anestesia',
+  );
 
   bool get _hasSurgeryStartMarker => _record.hemodynamicMarkers.any(
-        (item) => item.label == 'Início da cirurgia',
-      );
+    (item) => item.label == 'Início da cirurgia',
+  );
 
   List<String> get _missingRequiredFields =>
       _validationService.validateRequiredFields(_record);
@@ -1617,8 +1652,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return '$day/$month/$year $hour:$minute';
   }
 
-  String get _displayPreAnestheticDate =>
-      _preAnestheticDate.trim().isEmpty ? 'Toque para informar' : _preAnestheticDate;
+  String get _displayPreAnestheticDate => _preAnestheticDate.trim().isEmpty
+      ? 'Toque para informar'
+      : _preAnestheticDate;
 
   String get _displayAnesthesiaDate =>
       _anesthesiaDate.trim().isEmpty ? 'Toque para informar' : _anesthesiaDate;
@@ -1883,7 +1919,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       status: _persistedCaseStatus,
       caseId: widget.caseId,
     );
-    final subject = 'Ficha de ${_record.patient.name.isNotEmpty ? _record.patient.name : 'paciente'}';
+    final subject =
+        'Ficha de ${_record.patient.name.isNotEmpty ? _record.patient.name : 'paciente'}';
     if (!mounted) return;
     await showDialog<void>(
       context: context,
@@ -2044,8 +2081,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Future<void> _editPatientAge() async {
-    final initialValue =
-        _record.patient.age > 0 ? _record.patient.age.toString() : '';
+    final initialValue = _record.patient.age > 0
+        ? _record.patient.age.toString()
+        : '';
     final result = await showDialog<String>(
       context: context,
       builder: (_) => SingleFieldDialog(
@@ -2128,8 +2166,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   Future<void> _editPatientMallampati() async {
     final currentMallampati =
         _record.preAnestheticAssessment.airway.mallampati.trim().isNotEmpty
-            ? _record.preAnestheticAssessment.airway.mallampati
-            : _record.airway.mallampati;
+        ? _record.preAnestheticAssessment.airway.mallampati
+        : _record.airway.mallampati;
     final result = await showDialog<String>(
       context: context,
       builder: (_) => ChoiceFieldDialog(
@@ -2223,7 +2261,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         title: 'Peso ao nascer',
         label: 'Peso ao nascer (kg)',
         initialValue: _record.patient.birthWeightKg > 0
-            ? _record.patient.birthWeightKg.toStringAsFixed(2).replaceAll('.', ',')
+            ? _record.patient.birthWeightKg
+                  .toStringAsFixed(2)
+                  .replaceAll('.', ',')
             : '',
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         inputFormatters: [
@@ -2289,12 +2329,11 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   Future<void> _editViaAereaSection(AirwayEditSection section) async {
     final result = await showDialog<Airway>(
       context: context,
-      builder: (_) =>
-          AirwayDialog(
-            initialAirway: _record.airway,
-            section: section,
-            patient: _record.patient,
-          ),
+      builder: (_) => AirwayDialog(
+        initialAirway: _record.airway,
+        section: section,
+        patient: _record.patient,
+      ),
     );
 
     if (result == null) return;
@@ -2313,9 +2352,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   Future<void> _editBalancoHidrico() async {
     final result = await showDialog<FluidBalance>(
       context: context,
-      builder: (_) => BalanceOnlyDialog(
-        initialFluidBalance: _record.fluidBalance,
-      ),
+      builder: (_) =>
+          BalanceOnlyDialog(initialFluidBalance: _record.fluidBalance),
     );
 
     if (result == null) return;
@@ -2403,9 +2441,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   Future<void> _editAcessoVenoso() async {
     final result = await showDialog<List<String>>(
       context: context,
-      builder: (_) => VenousAccessDialog(
-        initialItems: _venousAccesses,
-      ),
+      builder: (_) => VenousAccessDialog(initialItems: _venousAccesses),
     );
     if (result == null) return;
     setState(() {
@@ -2418,9 +2454,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   Future<void> _editAcessoArterial() async {
     final result = await showDialog<List<String>>(
       context: context,
-      builder: (_) => ArterialAccessDialog(
-        initialItems: _arterialAccesses,
-      ),
+      builder: (_) => ArterialAccessDialog(initialItems: _arterialAccesses),
     );
     if (result == null) return;
     setState(() {
@@ -2599,24 +2633,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Future<void> _editSurgerySection(SurgeryInfoSection section) async {
-    if (section == SurgeryInfoSection.description) {
-      final result = await showDialog<List<String>>(
-        context: context,
-        builder: (_) => ListFieldDialog(
-          title: 'Cirurgia',
-          label: 'Cirurgia',
-          initialItems: _lineItems(_record.surgeryDescription),
-          hintText: 'Uma cirurgia / procedimento por linha',
-        ),
-      );
-      if (result == null) return;
-      setState(() {
-        _record = _record.copyWith(surgeryDescription: result.join('\n'));
-      });
-      await _persistRecord();
-      return;
-    }
-
     if (section == SurgeryInfoSection.surgeon) {
       final result = await showDialog<List<String>>(
         context: context,
@@ -2715,14 +2731,15 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   Future<void> _editAnesthesiologists() async {
     final result = await showDialog<List<String>>(
       context: context,
-      builder: (_) => AnesthesiologistsDialog(
-        initialItems: _anesthesiologistEntries,
-      ),
+      builder: (_) =>
+          AnesthesiologistsDialog(initialItems: _anesthesiologistEntries),
     );
 
     if (result == null) return;
 
-    final first = result.isEmpty ? ['', '', ''] : [...result.first.split('|'), '', '', ''];
+    final first = result.isEmpty
+        ? ['', '', '']
+        : [...result.first.split('|'), '', '', ''];
     setState(() {
       _record = _record.copyWith(
         anesthesiologists: result,
@@ -2793,11 +2810,13 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                       preAnestheticAssessment: _record.preAnestheticAssessment,
                       mallampati:
                           _usesMallampatiInCase &&
-                                  _record.preAnestheticAssessment.airway.mallampati.trim().isNotEmpty
-                              ? _record.preAnestheticAssessment.airway.mallampati
-                              : _usesMallampatiInCase
-                                  ? _record.airway.mallampati
-                                  : '',
+                              _record.preAnestheticAssessment.airway.mallampati
+                                  .trim()
+                                  .isNotEmpty
+                          ? _record.preAnestheticAssessment.airway.mallampati
+                          : _usesMallampatiInCase
+                          ? _record.airway.mallampati
+                          : '',
                       onNameTap: _editPatientName,
                       onAgeTap: _editPatientAge,
                       onWeightTap: _editPatientWeight,
@@ -2870,13 +2889,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: _buildVenousAccessCard(),
-                  ),
+                  Expanded(child: _buildVenousAccessCard()),
                   const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildArterialAccessCard(),
-                  ),
+                  Expanded(child: _buildArterialAccessCard()),
                 ],
               ),
               const SizedBox(height: 12),
@@ -2927,7 +2942,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             children: [
               _buildSectionHeader(
                 title: 'Registro Intraoperatório',
-                subtitle: 'Área principal de condução do caso e registro hemodinâmico',
+                subtitle:
+                    'Área principal de condução do caso e registro hemodinâmico',
                 accent: const Color(0xFF2B76D2),
               ),
               const SizedBox(height: 10),
@@ -2944,7 +2960,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             children: [
               _buildSectionHeader(
                 title: 'Blocos de Apoio',
-                subtitle: 'Informações clínicas, preparo e documentação complementar',
+                subtitle:
+                    'Informações clínicas, preparo e documentação complementar',
                 accent: const Color(0xFF6B7CF6),
               ),
               const SizedBox(height: 10),
@@ -3377,99 +3394,100 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       child: Column(
         children: [
           PanelCard(
-          key: const Key('airway-card'),
-          title: '15) Via aérea',
-          titleColor: _airwayFluidRowColor,
-          icon: Icons.air,
-          minHeight: 286,
-          isAttention: _hasPendingAirway,
-          isCompleted:
-              _record.airway.device.trim().isNotEmpty ||
-              _record.airway.technique.trim().isNotEmpty ||
-              _record.airway.observation.trim().isNotEmpty ||
-              _record.airway.cormackLehane.trim().isNotEmpty,
-          trailing: const Icon(
-            Icons.keyboard_arrow_up,
-            color: Color(0xFF7D93AA),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Column(
-              children: [
-                _buildAirwayInfoCard(
-                  key: const Key('airway-cormack-field'),
-                  label: 'Cormack-Lehane',
-                  value: _record.airway.cormackLehane.trim().isEmpty
-                      ? 'Toque para preencher após laringoscopia'
-                      : 'Cormack ${_record.airway.cormackLehane}',
-                  onTap: () => _editViaAereaSection(AirwayEditSection.cormack),
-                ),
-                const SizedBox(height: 10),
-                _buildAirwayInfoCard(
-                  key: const Key('airway-device-field'),
-                  label: 'Dispositivo',
-                  value: _record.airway.device.trim().isEmpty
-                      ? 'Toque para preencher'
-                      : '${_record.airway.device} ${_record.airway.tubeNumber}'
-                            .trim(),
-                  onTap: () => _editViaAereaSection(AirwayEditSection.device),
-                ),
-                if (airwaySupport != null) ...[
+            key: const Key('airway-card'),
+            title: '15) Via aérea',
+            titleColor: _airwayFluidRowColor,
+            icon: Icons.air,
+            minHeight: 286,
+            isAttention: _hasPendingAirway,
+            isCompleted:
+                _record.airway.device.trim().isNotEmpty ||
+                _record.airway.technique.trim().isNotEmpty ||
+                _record.airway.observation.trim().isNotEmpty ||
+                _record.airway.cormackLehane.trim().isNotEmpty,
+            trailing: const Icon(
+              Icons.keyboard_arrow_up,
+              color: Color(0xFF7D93AA),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Column(
+                children: [
+                  _buildAirwayInfoCard(
+                    key: const Key('airway-cormack-field'),
+                    label: 'Cormack-Lehane',
+                    value: _record.airway.cormackLehane.trim().isEmpty
+                        ? 'Toque para preencher após laringoscopia'
+                        : 'Cormack ${_record.airway.cormackLehane}',
+                    onTap: () =>
+                        _editViaAereaSection(AirwayEditSection.cormack),
+                  ),
                   const SizedBox(height: 10),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF3F8FF),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFD7E5F5)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          airwaySupport.title,
-                          style: const TextStyle(
-                            color: Color(0xFF2B76D2),
-                            fontWeight: FontWeight.w800,
+                  _buildAirwayInfoCard(
+                    key: const Key('airway-device-field'),
+                    label: 'Dispositivo',
+                    value: _record.airway.device.trim().isEmpty
+                        ? 'Toque para preencher'
+                        : '${_record.airway.device} ${_record.airway.tubeNumber}'
+                              .trim(),
+                    onTap: () => _editViaAereaSection(AirwayEditSection.device),
+                  ),
+                  if (airwaySupport != null) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF3F8FF),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFD7E5F5)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            airwaySupport.title,
+                            style: const TextStyle(
+                              color: Color(0xFF2B76D2),
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 6),
-                        ...airwaySupport.lines.map(
-                          (line) => Padding(
-                            padding: const EdgeInsets.only(bottom: 2),
-                            child: Text(
-                              line,
-                              style: const TextStyle(
-                                color: Color(0xFF5D7288),
-                                fontWeight: FontWeight.w600,
+                          const SizedBox(height: 6),
+                          ...airwaySupport.lines.map(
+                            (line) => Padding(
+                              padding: const EdgeInsets.only(bottom: 2),
+                              child: Text(
+                                line,
+                                style: const TextStyle(
+                                  color: Color(0xFF5D7288),
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
+                  ],
+                  const SizedBox(height: 10),
+                  _buildAirwayInfoCard(
+                    key: const Key('airway-technique-entry'),
+                    label: 'Técnica de intubação',
+                    value: _valueOrPlaceholder(_record.airway.technique),
+                    onTap: () =>
+                        _editViaAereaSection(AirwayEditSection.technique),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildAirwayInfoCard(
+                    key: const Key('airway-observation-entry'),
+                    label: 'Materiais de apoio',
+                    value: _valueOrPlaceholder(_record.airway.observation),
+                    onTap: () =>
+                        _editViaAereaSection(AirwayEditSection.observation),
                   ),
                 ],
-                const SizedBox(height: 10),
-                _buildAirwayInfoCard(
-                  key: const Key('airway-technique-entry'),
-                  label: 'Técnica de intubação',
-                  value: _valueOrPlaceholder(_record.airway.technique),
-                  onTap: () =>
-                      _editViaAereaSection(AirwayEditSection.technique),
-                ),
-                const SizedBox(height: 10),
-                _buildAirwayInfoCard(
-                  key: const Key('airway-observation-entry'),
-                  label: 'Materiais de apoio',
-                  value: _valueOrPlaceholder(_record.airway.observation),
-                  onTap: () =>
-                      _editViaAereaSection(AirwayEditSection.observation),
-                ),
-              ],
+              ),
             ),
-          ),
           ),
         ],
       ),
@@ -3483,8 +3501,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     final summary = _venousAccesses.isEmpty
         ? 'Toque para adicionar'
         : _venousAccesses.length == 1
-            ? '1 acesso registrado'
-            : '${_venousAccesses.length} acessos registrados';
+        ? '1 acesso registrado'
+        : '${_venousAccesses.length} acessos registrados';
     return _buildCompactOperationalCard(
       key: const Key('venous-access-card'),
       tapKey: const Key('venous-access-entry'),
@@ -3506,8 +3524,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     final summary = _arterialAccesses.isEmpty
         ? 'Toque para adicionar'
         : _arterialAccesses.length == 1
-            ? '1 acesso registrado'
-            : '${_arterialAccesses.length} acessos registrados';
+        ? '1 acesso registrado'
+        : '${_arterialAccesses.length} acessos registrados';
     return _buildCompactOperationalCard(
       key: const Key('arterial-access-card'),
       tapKey: const Key('arterial-access-entry'),
@@ -3587,8 +3605,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                       color: _monitoringItems.contains(entry.value)
                           ? const Color(0xFF2B76D2)
                           : recommended.contains(entry.value)
-                              ? const Color(0xFF9CC0EC)
-                              : const Color(0xFFDCE7F3),
+                          ? const Color(0xFF9CC0EC)
+                          : const Color(0xFFDCE7F3),
                     ),
                   ),
                   child: Row(
@@ -3722,20 +3740,18 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         setState(() => _inlineHemodynamicType = type);
       },
       onQuickSpo2: _addInlineHemodynamicPoint,
-      onPointTap:
-          _inlineHemodynamicRemoveMode ? _removeInlineHemodynamicPoint : null,
-      onChartTap:
-          _hasAnesthesiaStartMarker && !_inlineHemodynamicRemoveMode
-              ? _addInlineHemodynamicPoint
-              : null,
-      onPointMoved:
-          _hasAnesthesiaStartMarker && !_inlineHemodynamicRemoveMode
-              ? _applyInlineHemodynamicPointMove
-              : null,
-      onPointDragEnd:
-          _hasAnesthesiaStartMarker && !_inlineHemodynamicRemoveMode
-              ? () => _persistRecord()
-              : null,
+      onPointTap: _inlineHemodynamicRemoveMode
+          ? _removeInlineHemodynamicPoint
+          : null,
+      onChartTap: _hasAnesthesiaStartMarker && !_inlineHemodynamicRemoveMode
+          ? _addInlineHemodynamicPoint
+          : null,
+      onPointMoved: _hasAnesthesiaStartMarker && !_inlineHemodynamicRemoveMode
+          ? _applyInlineHemodynamicPointMove
+          : null,
+      onPointDragEnd: _hasAnesthesiaStartMarker && !_inlineHemodynamicRemoveMode
+          ? () => _persistRecord()
+          : null,
     );
   }
 
@@ -3974,13 +3990,146 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
               ),
             ),
             const SizedBox(width: 12),
-            const Icon(
-              Icons.chevron_right_rounded,
-              color: Color(0xFF8CA0B5),
-            ),
+            const Icon(Icons.chevron_right_rounded, color: Color(0xFF8CA0B5)),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPresetActionCard({
+    Key? key,
+    required String title,
+    String? badge,
+    String? subtitle,
+    required String detail,
+    required bool selected,
+    required Color accentColor,
+    required VoidCallback onConfirm,
+    VoidCallback? onTap,
+    VoidCallback? onEdit,
+    String confirmLabel = 'Confirmar',
+    String selectedLabel = 'Confirmado',
+  }) {
+    final content = Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: selected ? accentColor.withAlpha(16) : const Color(0xFFF8FAFE),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: selected ? accentColor : const Color(0xFFDCE7F3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (badge != null || subtitle != null)
+            Row(
+              children: [
+                if (badge != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? accentColor.withAlpha(24)
+                          : const Color(0xFFEAF2FF),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      badge,
+                      style: TextStyle(
+                        color: selected ? accentColor : const Color(0xFF2B76D2),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                if (badge != null && subtitle != null)
+                  const SizedBox(width: 10),
+                if (subtitle != null)
+                  Expanded(
+                    child: Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: Color(0xFF5D7288),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          if (badge != null || subtitle != null) const SizedBox(height: 12),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Color(0xFF17324D),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            detail,
+            style: const TextStyle(
+              color: Color(0xFF17324D),
+              fontWeight: FontWeight.w600,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.icon(
+                onPressed: onConfirm,
+                icon: Icon(
+                  selected
+                      ? Icons.check_circle_rounded
+                      : Icons.add_task_rounded,
+                ),
+                label: Text(selected ? selectedLabel : confirmLabel),
+                style: FilledButton.styleFrom(
+                  backgroundColor: accentColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
+                ),
+              ),
+              if (onEdit != null)
+                OutlinedButton.icon(
+                  onPressed: onEdit,
+                  icon: const Icon(Icons.edit_outlined),
+                  label: const Text('Editar'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: accentColor,
+                    side: BorderSide(color: accentColor.withAlpha(140)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 14,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    if (onTap == null) {
+      return KeyedSubtree(key: key, child: content);
+    }
+
+    return InkWell(
+      key: key,
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: content,
     );
   }
 
@@ -3994,67 +4143,14 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     final category = parts.length > 1 && parts[1].trim().isNotEmpty
         ? parts[1].trim()
         : preset.category;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: selected
-            ? _medicationsRowColor.withAlpha(16)
-            : const Color(0xFFF8FAFE),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: selected
-              ? _medicationsRowColor
-              : const Color(0xFFDCE7F3),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            preset.name,
-            style: const TextStyle(
-              color: Color(0xFF17324D),
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            category,
-            style: const TextStyle(
-              color: Color(0xFF5D7288),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            detail,
-            style: const TextStyle(
-              color: Color(0xFF17324D),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              FilledButton.icon(
-                onPressed: () => _toggleMaintenancePreset(preset),
-                icon: Icon(
-                  selected ? Icons.check_circle_rounded : Icons.add_task_rounded,
-                ),
-                label: Text(selected ? 'Confirmado' : 'Confirmar'),
-              ),
-              OutlinedButton.icon(
-                onPressed: () => _editMaintenancePreset(preset),
-                icon: const Icon(Icons.edit_outlined),
-                label: const Text('Editar'),
-              ),
-            ],
-          ),
-        ],
-      ),
+    return _buildPresetActionCard(
+      title: preset.name,
+      subtitle: category,
+      detail: detail,
+      selected: selected,
+      accentColor: _medicationsRowColor,
+      onConfirm: () => _toggleMaintenancePreset(preset),
+      onEdit: () => _editMaintenancePreset(preset),
     );
   }
 
@@ -4074,92 +4170,51 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            completed ? 'Time-out finalizado' : 'Time-out pendente',
-            style: TextStyle(
-              color:
-                  completed ? const Color(0xFF169653) : const Color(0xFFF59E0B),
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            summary,
-            style: const TextStyle(
-              color: Color(0xFF5D7288),
-              fontWeight: FontWeight.w600,
+          InkWell(
+            key: const Key('surgery-timeout-entry'),
+            borderRadius: BorderRadius.circular(14),
+            onTap: () => _editSurgerySection(SurgeryInfoSection.timeOut),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  completed ? 'Time-out finalizado' : 'Time-out pendente',
+                  style: TextStyle(
+                    color: completed
+                        ? const Color(0xFF169653)
+                        : const Color(0xFFF59E0B),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  summary,
+                  style: const TextStyle(
+                    color: Color(0xFF5D7288),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 12),
           ..._timeOutOptions.asMap().entries.map(
             (entry) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: InkWell(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _buildPresetActionCard(
                 key: Key('surgery-timeout-item-${entry.key + 1}'),
-                borderRadius: BorderRadius.circular(12),
+                title: entry.value,
+                badge: '${entry.key + 1}',
+                subtitle: 'Item do checklist de seguranca',
+                detail: _record.timeOutChecklist.contains(entry.value)
+                    ? 'Item confirmado no time-out.'
+                    : 'Toque em confirmar para registrar este item.',
+                selected: _record.timeOutChecklist.contains(entry.value),
+                accentColor: const Color(0xFF169653),
+                onConfirm: () => _toggleTimeOutChecklistItem(entry.value),
                 onTap: () => _toggleTimeOutChecklistItem(entry.value),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _record.timeOutChecklist.contains(entry.value)
-                        ? const Color(0xFFEAF6EE)
-                        : const Color(0xFFF8FAFE),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _record.timeOutChecklist.contains(entry.value)
-                          ? const Color(0xFF8DD0A3)
-                          : const Color(0xFFDCE7F3),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 26,
-                        height: 26,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: _record.timeOutChecklist.contains(entry.value)
-                              ? const Color(0xFF169653)
-                              : const Color(0xFFEAF2FF),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          '${entry.key + 1}',
-                          style: TextStyle(
-                            color: _record.timeOutChecklist.contains(entry.value)
-                                ? Colors.white
-                                : const Color(0xFF2B76D2),
-                            fontWeight: FontWeight.w800,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          entry.value,
-                          style: const TextStyle(
-                            color: Color(0xFF17324D),
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        _record.timeOutChecklist.contains(entry.value)
-                            ? Icons.check_circle_rounded
-                            : Icons.radio_button_unchecked_rounded,
-                        color: _record.timeOutChecklist.contains(entry.value)
-                            ? const Color(0xFF169653)
-                            : const Color(0xFF8CA0B5),
-                      ),
-                    ],
-                  ),
-                ),
+                confirmLabel: 'Confirmar',
+                selectedLabel: 'Confirmado',
               ),
             ),
           ),
@@ -4168,7 +4223,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             width: double.infinity,
             child: FilledButton.icon(
               key: const Key('surgery-complete-timeout-button'),
-              onPressed: _record.timeOutChecklist.length == _timeOutOptions.length
+              onPressed:
+                  _record.timeOutChecklist.length == _timeOutOptions.length
                   ? _finalizeTimeOutFromCard
                   : null,
               icon: const Icon(Icons.check_circle_outline),
@@ -4191,31 +4247,31 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     final status = redoseAlerts.isNotEmpty
         ? '${redoseAlerts.first.name}: ${redoseAlerts.first.message}'
         : antibiotics.isEmpty
-            ? suggestedScheme == null
-                ? 'Nenhum antibiótico registrado'
-                : 'Sugestão: ${suggestedScheme.title}'
-            : antibiotics.length == 1
-                ? antibiotics.first.split('|').first
-                : '${antibiotics.length} antibióticos registrados';
+        ? suggestedScheme == null
+              ? 'Nenhum antibiótico registrado'
+              : 'Sugestão: ${suggestedScheme.title}'
+        : antibiotics.length == 1
+        ? antibiotics.first.split('|').first
+        : '${antibiotics.length} antibióticos registrados';
     final summary = redoseAlerts.isNotEmpty
         ? redoseAlerts.first.detail
         : antibiotics.isEmpty
-            ? suggestedScheme == null
-                ? 'Toque para registrar dose e horário'
-                : '${suggestedScheme.medicationName} ${suggestedScheme.dose} • ${suggestedScheme.repeatGuidance}'
-            : () {
-                final first = antibiotics.first.split('|');
-                final dose = _medicationDoseSummary(first);
-                final repeat = first.length > 3 ? first[3].trim() : '';
-                final time = first.length > 2 && first[2].trim().isNotEmpty
-                    ? first[2].trim()
-                    : '--:--';
-                final segments = <String>['$dose • $time'];
-                if (repeat.isNotEmpty) {
-                  segments.add(repeat);
-                }
-                return segments.join(' • ');
-              }();
+        ? suggestedScheme == null
+              ? 'Toque para registrar dose e horário'
+              : '${suggestedScheme.medicationName} ${suggestedScheme.dose} • ${suggestedScheme.repeatGuidance}'
+        : () {
+            final first = antibiotics.first.split('|');
+            final dose = _medicationDoseSummary(first);
+            final repeat = first.length > 3 ? first[3].trim() : '';
+            final time = first.length > 2 && first[2].trim().isNotEmpty
+                ? first[2].trim()
+                : '--:--';
+            final segments = <String>['$dose • $time'];
+            if (repeat.isNotEmpty) {
+              segments.add(repeat);
+            }
+            return segments.join(' • ');
+          }();
     return _buildCompactOperationalCard(
       key: const Key('antibiotic-entry-card'),
       tapKey: const Key('antibiotic-entry'),
@@ -4227,8 +4283,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       status: status,
       statusColor: redoseAlerts.isNotEmpty
           ? (redoseAlerts.first.isOverdue
-              ? const Color(0xFFD64545)
-              : const Color(0xFFF0A11F))
+                ? const Color(0xFFD64545)
+                : const Color(0xFFF0A11F))
           : const Color(0xFF17324D),
       summary: summary,
       onTap: _editProphylacticAntibiotics,
@@ -4244,9 +4300,13 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       icon: Icons.description_outlined,
       fillChild: true,
       isAttention: _hasPendingTechnique || _hasPendingTechniqueDetails,
-      isCompleted: _record.anesthesiaTechnique.trim().isNotEmpty &&
+      isCompleted:
+          _record.anesthesiaTechnique.trim().isNotEmpty &&
           _record.anesthesiaTechniqueDetails.trim().isNotEmpty,
-      trailing: AddButton(label: 'Editar técnica', onTap: _editTecnicaAnestesica),
+      trailing: AddButton(
+        label: 'Editar técnica',
+        onTap: _editTecnicaAnestesica,
+      ),
       child: InkWell(
         key: const Key('events-entry'),
         borderRadius: BorderRadius.circular(18),
@@ -4364,87 +4424,27 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            ..._inductionPresets.map(
-              (preset) {
-                final encodedEntry = _findDrugEntry(preset.name);
-                final selected = encodedEntry != null;
-                final parts = encodedEntry?.split('|') ?? const <String>[];
-                final detail = parts.length > 1 && parts[1].trim().isNotEmpty
-                    ? parts[1].trim()
-                    : _inductionPresetDose(preset);
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? _techniqueRowColor.withAlpha(16)
-                          : const Color(0xFFF8FAFE),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: selected
-                            ? _techniqueRowColor
-                            : const Color(0xFFDCE7F3),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          preset.name,
-                          style: const TextStyle(
-                            color: Color(0xFF17324D),
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          preset.category,
-                          style: const TextStyle(
-                            color: Color(0xFF5D7288),
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          detail,
-                          style: const TextStyle(
-                            color: Color(0xFF17324D),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            FilledButton.icon(
-                              onPressed: () => _toggleInductionPreset(preset),
-                              icon: Icon(
-                                selected
-                                    ? Icons.check_circle_rounded
-                                    : Icons.add_task_rounded,
-                              ),
-                              label: Text(selected ? 'Confirmado' : 'Confirmar'),
-                            ),
-                            OutlinedButton.icon(
-                              onPressed: () => _editInductionPreset(preset),
-                              icon: const Icon(Icons.edit_outlined),
-                              label: const Text('Editar'),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-            AddButton(
-              label: 'Edição avançada',
-              onTap: _editDrogasInfusoes,
-            ),
+            ..._inductionPresets.map((preset) {
+              final encodedEntry = _findDrugEntry(preset.name);
+              final selected = encodedEntry != null;
+              final parts = encodedEntry?.split('|') ?? const <String>[];
+              final detail = parts.length > 1 && parts[1].trim().isNotEmpty
+                  ? parts[1].trim()
+                  : _inductionPresetDose(preset);
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _buildPresetActionCard(
+                  title: preset.name,
+                  subtitle: preset.category,
+                  detail: detail,
+                  selected: selected,
+                  accentColor: _techniqueRowColor,
+                  onConfirm: () => _toggleInductionPreset(preset),
+                  onEdit: () => _editInductionPreset(preset),
+                ),
+              );
+            }),
+            AddButton(label: 'Edição avançada', onTap: _editDrogasInfusoes),
           ],
         ),
       ),
@@ -4483,79 +4483,26 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          ..._adjunctPresets.map(
-            (preset) {
-              final encodedEntry = _findAdjunctEntry(preset.name);
-              final selected = encodedEntry != null;
-              final parts = encodedEntry?.split('|') ?? const <String>[];
-              final detail = parts.length > 1 && parts[1].trim().isNotEmpty
-                  ? parts[1].trim()
-                  : _adjunctPresetDose(preset);
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? _techniqueRowColor.withAlpha(16)
-                        : const Color(0xFFF8FAFE),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: selected
-                          ? _techniqueRowColor
-                          : const Color(0xFFDCE7F3),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        preset.name,
-                        style: const TextStyle(
-                          color: Color(0xFF17324D),
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        detail,
-                        style: const TextStyle(
-                          color: Color(0xFF17324D),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          FilledButton.icon(
-                            onPressed: () => _toggleAdjunctPreset(preset),
-                            icon: Icon(
-                              selected
-                                  ? Icons.check_circle_rounded
-                                  : Icons.add_task_rounded,
-                            ),
-                            label: Text(selected ? 'Confirmado' : 'Confirmar'),
-                          ),
-                          OutlinedButton.icon(
-                            onPressed: () => _editAdjunctPreset(preset),
-                            icon: const Icon(Icons.edit_outlined),
-                            label: const Text('Editar'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-          AddButton(
-            label: 'Edição avançada',
-            onTap: _editAdjuvantes,
-          ),
+          ..._adjunctPresets.map((preset) {
+            final encodedEntry = _findAdjunctEntry(preset.name);
+            final selected = encodedEntry != null;
+            final parts = encodedEntry?.split('|') ?? const <String>[];
+            final detail = parts.length > 1 && parts[1].trim().isNotEmpty
+                ? parts[1].trim()
+                : _adjunctPresetDose(preset);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _buildPresetActionCard(
+                title: preset.name,
+                detail: detail,
+                selected: selected,
+                accentColor: _techniqueRowColor,
+                onConfirm: () => _toggleAdjunctPreset(preset),
+                onEdit: () => _editAdjunctPreset(preset),
+              ),
+            );
+          }),
+          AddButton(label: 'Edição avançada', onTap: _editAdjuvantes),
         ],
       ),
     );
@@ -4591,8 +4538,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         : _record.neuraxialNeedles.first;
     final summary = _record.neuraxialNeedles.isEmpty
         ? (_usesNeuraxialTechnique
-            ? 'Relacionar agulhas usadas na raqui/peridural'
-            : 'Preencha se houver técnica neuraxial')
+              ? 'Relacionar agulhas usadas na raqui/peridural'
+              : 'Preencha se houver técnica neuraxial')
         : '${_record.neuraxialNeedles.length} item(ns) registrados';
     return KeyedSubtree(
       key: _neuraxialNeedlesSectionKey,
@@ -4604,7 +4551,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         status: status,
         summary: summary,
         onTap: _editNeuraxialNeedles,
-        isAttention: _usesNeuraxialTechnique && _record.neuraxialNeedles.isEmpty,
+        isAttention:
+            _usesNeuraxialTechnique && _record.neuraxialNeedles.isEmpty,
         isCompleted: _record.neuraxialNeedles.isNotEmpty,
       ),
     );
@@ -4665,7 +4613,10 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         fallbackDetailIndex: 1,
       ),
       ..._usageLinesFromPlainEntries('Acesso venoso', _record.venousAccesses),
-      ..._usageLinesFromPlainEntries('Acesso arterial', _record.arterialAccesses),
+      ..._usageLinesFromPlainEntries(
+        'Acesso arterial',
+        _record.arterialAccesses,
+      ),
       ..._usageLinesFromPlainEntries(
         'Agulhas neuraxiais',
         _record.neuraxialNeedles,
@@ -4711,11 +4662,17 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     }).toList();
   }
 
-  List<String> _usageLinesFromPlainEntries(String prefix, List<String> entries) {
+  List<String> _usageLinesFromPlainEntries(
+    String prefix,
+    List<String> entries,
+  ) {
     return entries.map((entry) => '$prefix: ${entry.trim()}').toList();
   }
 
-  List<String> _usageLinesFromFluidEntries(String prefix, List<String> entries) {
+  List<String> _usageLinesFromFluidEntries(
+    String prefix,
+    List<String> entries,
+  ) {
     return entries
         .map((entry) => '$prefix: ${entry.replaceAll('|', ' • ').trim()}')
         .toList();
@@ -4740,13 +4697,13 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                 ),
               ]
             : summary
-                .map(
-                  (item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: CheckLine(text: item),
-                  ),
-                )
-                .toList(),
+                  .map(
+                    (item) => Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: CheckLine(text: item),
+                    ),
+                  )
+                  .toList(),
       ),
     );
   }
@@ -4782,81 +4739,83 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return KeyedSubtree(
       key: _fluidSectionKey,
       child: PanelCard(
-      key: const Key('fluid-balance-card'),
-      title: '20) Balanço hídrico',
-      titleColor: _airwayFluidRowColor,
-      icon: Icons.opacity_outlined,
-      minHeight: 286,
-      isAttention: _hasPendingFluidBalance,
-      isCompleted: _record.fluidBalance.isComplete,
-      child: InkWell(
-        key: const Key('fluid-balance-entry'),
-        borderRadius: BorderRadius.circular(18),
-        onTap: _editBalancoHidrico,
-        child: Column(
-          children: [
-            KeyValueLine(
-              label: 'Entradas',
-              value: '${documentedInputs.toStringAsFixed(0)} mL',
-            ),
-            const Divider(height: 18),
-            KeyValueLine(
-              label: 'Saídas',
-              value: '${documentedLosses.toStringAsFixed(0)} mL',
-            ),
-            const Divider(height: 18),
-            KeyValueLine(
-              label: 'Diurese',
-              value: _record.fluidBalance.diuresis.trim().isEmpty
-                  ? '--'
-                  : '${_record.fluidBalance.diuresis} mL',
-            ),
-            const Divider(height: 18),
-            KeyValueLine(
-              label: 'Sangramento',
-              value: (_record.fluidBalance.bleeding.trim().isEmpty &&
-                      _record.fluidBalance.bloodLossEntries.isEmpty)
-                  ? '--'
-                  : '${(_parseFluidField(_record.fluidBalance.bleeding) + _sumFluidEntries(_record.fluidBalance.bloodLossEntries)).toStringAsFixed(0)} mL',
-            ),
-            const Divider(height: 18),
-            KeyValueLine(
-              label: 'Compressas',
-              value: _record.fluidBalance.spongeCount.trim().isEmpty
-                  ? '--'
-                  : '${_record.fluidBalance.spongeCount} un • ${spongeEstimatedLoss.toStringAsFixed(0)} mL',
-            ),
-            const Divider(height: 18),
-            KeyValueLine(
-              label: 'Outras perdas',
-              value: (_record.fluidBalance.otherLosses.trim().isEmpty &&
-                      _record.fluidBalance.otherLossEntries.isEmpty)
-                  ? '--'
-                  : '${(_parseFluidField(_record.fluidBalance.otherLosses) + _sumFluidEntries(_record.fluidBalance.otherLossEntries)).toStringAsFixed(0)} mL',
-            ),
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 12,
+        key: const Key('fluid-balance-card'),
+        title: '20) Balanço hídrico',
+        titleColor: _airwayFluidRowColor,
+        icon: Icons.opacity_outlined,
+        minHeight: 286,
+        isAttention: _hasPendingFluidBalance,
+        isCompleted: _record.fluidBalance.isComplete,
+        child: InkWell(
+          key: const Key('fluid-balance-entry'),
+          borderRadius: BorderRadius.circular(18),
+          onTap: _editBalancoHidrico,
+          child: Column(
+            children: [
+              KeyValueLine(
+                label: 'Entradas',
+                value: '${documentedInputs.toStringAsFixed(0)} mL',
               ),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE9F8EF),
-                borderRadius: BorderRadius.circular(14),
+              const Divider(height: 18),
+              KeyValueLine(
+                label: 'Saídas',
+                value: '${documentedLosses.toStringAsFixed(0)} mL',
               ),
-              child: KeyValueLine(
-                label: 'Balanço total',
-                value: _record.fluidBalance.isComplete
-                    ? _record.fluidBalance.formattedBalance
-                    : '--',
-                labelColor: const Color(0xFF169653),
-                valueColor: const Color(0xFF169653),
+              const Divider(height: 18),
+              KeyValueLine(
+                label: 'Diurese',
+                value: _record.fluidBalance.diuresis.trim().isEmpty
+                    ? '--'
+                    : '${_record.fluidBalance.diuresis} mL',
               ),
-            ),
-          ],
+              const Divider(height: 18),
+              KeyValueLine(
+                label: 'Sangramento',
+                value:
+                    (_record.fluidBalance.bleeding.trim().isEmpty &&
+                        _record.fluidBalance.bloodLossEntries.isEmpty)
+                    ? '--'
+                    : '${(_parseFluidField(_record.fluidBalance.bleeding) + _sumFluidEntries(_record.fluidBalance.bloodLossEntries)).toStringAsFixed(0)} mL',
+              ),
+              const Divider(height: 18),
+              KeyValueLine(
+                label: 'Compressas',
+                value: _record.fluidBalance.spongeCount.trim().isEmpty
+                    ? '--'
+                    : '${_record.fluidBalance.spongeCount} un • ${spongeEstimatedLoss.toStringAsFixed(0)} mL',
+              ),
+              const Divider(height: 18),
+              KeyValueLine(
+                label: 'Outras perdas',
+                value:
+                    (_record.fluidBalance.otherLosses.trim().isEmpty &&
+                        _record.fluidBalance.otherLossEntries.isEmpty)
+                    ? '--'
+                    : '${(_parseFluidField(_record.fluidBalance.otherLosses) + _sumFluidEntries(_record.fluidBalance.otherLossEntries)).toStringAsFixed(0)} mL',
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE9F8EF),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: KeyValueLine(
+                  label: 'Balanço total',
+                  value: _record.fluidBalance.isComplete
+                      ? _record.fluidBalance.formattedBalance
+                      : '--',
+                  labelColor: const Color(0xFF169653),
+                  valueColor: const Color(0xFF169653),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -4929,8 +4888,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
               label: 'Sangue / hemoderivados',
               value: _record.fluidBalance.bloodEntries.isEmpty
                   ? (_record.fluidBalance.blood.trim().isEmpty
-                      ? '--'
-                      : '${_record.fluidBalance.blood} mL')
+                        ? '--'
+                        : '${_record.fluidBalance.blood} mL')
                   : '${_record.fluidBalance.bloodEntries.length} item(ns) • ${_record.fluidBalance.blood} mL',
             ),
             const Divider(height: 18),
@@ -4970,35 +4929,33 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ...categories.map(
-            (category) {
-              final items = _maintenancePresets
-                  .where((item) => item.category == category)
-                  .toList();
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      category,
-                      style: const TextStyle(
-                        color: Color(0xFF17324D),
-                        fontWeight: FontWeight.w800,
-                      ),
+          ...categories.map((category) {
+            final items = _maintenancePresets
+                .where((item) => item.category == category)
+                .toList();
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    category,
+                    style: const TextStyle(
+                      color: Color(0xFF17324D),
+                      fontWeight: FontWeight.w800,
                     ),
-                    const SizedBox(height: 8),
-                    ...items.map(
-                      (item) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: _buildMaintenancePresetTile(item),
-                      ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...items.map(
+                    (item) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _buildMaintenancePresetTile(item),
                     ),
-                  ],
-                ),
-              );
-            },
-          ),
+                  ),
+                ],
+              ),
+            );
+          }),
           const Text(
             'Nos inalatórios, o volume em mL/h é uma estimativa baseada em FGF de 2 L/min.',
             style: TextStyle(
@@ -5007,10 +4964,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          AddButton(
-            label: 'Edição avançada',
-            onTap: _editMaintenanceAgents,
-          ),
+          AddButton(label: 'Edição avançada', onTap: _editMaintenanceAgents),
         ],
       ),
     );
@@ -5046,10 +5000,7 @@ class HemodynamicDialog extends StatefulWidget {
 }
 
 class HemodynamicDialogResult {
-  const HemodynamicDialogResult({
-    required this.points,
-    required this.markers,
-  });
+  const HemodynamicDialogResult({required this.points, required this.markers});
 
   final List<HemodynamicPoint> points;
   final List<HemodynamicMarker> markers;
@@ -5254,10 +5205,8 @@ class _HemodynamicDialogState extends State<HemodynamicDialog> {
                           _anesthesiaStartMarker == null
                               ? 'Início da anestesia ainda não registrado'
                               : 'Tempo decorrido: ${_formatTime(_currentTime)}',
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                  ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w800),
                         ),
                         const SizedBox(height: 6),
                         Text(
@@ -5269,7 +5218,8 @@ class _HemodynamicDialogState extends State<HemodynamicDialog> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        if (_anesthesiaStartMarker != null) const SizedBox(height: 8),
+                        if (_anesthesiaStartMarker != null)
+                          const SizedBox(height: 8),
                         if (_anesthesiaStartMarker != null)
                           OutlinedButton.icon(
                             onPressed: _captureMeasurementTime,
@@ -5310,15 +5260,17 @@ class _HemodynamicDialogState extends State<HemodynamicDialog> {
                     label: const Text('Início da anestesia'),
                   ),
                   FilledButton.icon(
-                    onPressed: _anesthesiaStartMarker == null
-                            || _surgeryStartMarker != null
+                    onPressed:
+                        _anesthesiaStartMarker == null ||
+                            _surgeryStartMarker != null
                         ? null
                         : () => _addMarker('Início da cirurgia'),
                     icon: const Icon(Icons.flag),
                     label: const Text('Início da cirurgia'),
                   ),
                   OutlinedButton.icon(
-                    onPressed: _surgeryStartMarker == null || _hasSurgeryEndMarker
+                    onPressed:
+                        _surgeryStartMarker == null || _hasSurgeryEndMarker
                         ? null
                         : () => _addMarker('Fim da cirurgia'),
                     icon: const Icon(Icons.stop_circle_outlined),
@@ -5326,9 +5278,10 @@ class _HemodynamicDialogState extends State<HemodynamicDialog> {
                   ),
                   OutlinedButton.icon(
                     onPressed:
-                        _anesthesiaStartMarker == null || _hasAnesthesiaEndMarker
-                            ? null
-                            : () => _addMarker('Fim da anestesia'),
+                        _anesthesiaStartMarker == null ||
+                            _hasAnesthesiaEndMarker
+                        ? null
+                        : () => _addMarker('Fim da anestesia'),
                     icon: const Icon(Icons.stop_circle),
                     label: const Text('Fim da anestesia'),
                   ),
@@ -5372,9 +5325,9 @@ class _HemodynamicDialogState extends State<HemodynamicDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(
-            HemodynamicDialogResult(points: _points, markers: _markers),
-          ),
+          onPressed: () => Navigator.of(
+            context,
+          ).pop(HemodynamicDialogResult(points: _points, markers: _markers)),
           child: const Text('Fechar'),
         ),
       ],
@@ -5383,10 +5336,7 @@ class _HemodynamicDialogState extends State<HemodynamicDialog> {
 }
 
 class VenousAccessDialog extends StatefulWidget {
-  const VenousAccessDialog({
-    super.key,
-    required this.initialItems,
-  });
+  const VenousAccessDialog({super.key, required this.initialItems});
 
   final List<String> initialItems;
 
@@ -5596,10 +5546,7 @@ class _VenousAccessDialogState extends State<VenousAccessDialog> {
 }
 
 class ArterialAccessDialog extends StatefulWidget {
-  const ArterialAccessDialog({
-    super.key,
-    required this.initialItems,
-  });
+  const ArterialAccessDialog({super.key, required this.initialItems});
 
   final List<String> initialItems;
 
@@ -5825,11 +5772,15 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
     _selectedSurgicalSize = widget.initialSurgicalSize.trim().isNotEmpty
         ? widget.initialSurgicalSize
         : widget.suggestedSurgicalSize;
-    _crystalloidEntries =
-        List<String>.from(widget.initialFluidBalance.crystalloidEntries);
-    _colloidEntries = List<String>.from(widget.initialFluidBalance.colloidEntries);
+    _crystalloidEntries = List<String>.from(
+      widget.initialFluidBalance.crystalloidEntries,
+    );
+    _colloidEntries = List<String>.from(
+      widget.initialFluidBalance.colloidEntries,
+    );
     _bloodEntries = List<String>.from(widget.initialFluidBalance.bloodEntries);
-    if (_bloodEntries.isEmpty && widget.initialFluidBalance.blood.trim().isNotEmpty) {
+    if (_bloodEntries.isEmpty &&
+        widget.initialFluidBalance.blood.trim().isNotEmpty) {
       _bloodEntries = ['Sangue|${widget.initialFluidBalance.blood}|mL'];
     }
   }
@@ -5872,13 +5823,14 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
   double get _referenceWeightKg {
     return switch (widget.patientPopulation) {
       PatientPopulation.adult => _adultReferenceWeightKg(
-          actualWeightKg: widget.patientWeightKg,
-          heightMeters: widget.patientHeightMeters,
-        ),
+        actualWeightKg: widget.patientWeightKg,
+        heightMeters: widget.patientHeightMeters,
+      ),
       PatientPopulation.pediatric => widget.patientWeightKg,
-      PatientPopulation.neonatal => widget.patientWeightKg > 0
-          ? widget.patientWeightKg
-          : widget.patientBirthWeightKg,
+      PatientPopulation.neonatal =>
+        widget.patientWeightKg > 0
+            ? widget.patientWeightKg
+            : widget.patientBirthWeightKg,
     };
   }
 
@@ -5886,11 +5838,12 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
     return switch (widget.patientPopulation) {
       PatientPopulation.adult => (_referenceWeightKg * 27.5) / 24,
       PatientPopulation.pediatric => _pediatricMaintenanceRateMlPerHour(
-          widget.patientWeightKg,
-        ),
-      PatientPopulation.neonatal => widget.patientWeightKg > 0
-          ? widget.patientWeightKg * 5
-          : widget.patientBirthWeightKg * 5,
+        widget.patientWeightKg,
+      ),
+      PatientPopulation.neonatal =>
+        widget.patientWeightKg > 0
+            ? widget.patientWeightKg * 5
+            : widget.patientBirthWeightKg * 5,
     };
   }
 
@@ -5933,7 +5886,9 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
 
   void _addBloodComponentEntry(_BloodComponentOption option) {
     setState(() {
-      _bloodEntries.add('${option.label}|1 ${option.unitLabel}|${option.averageVolumeMl}');
+      _bloodEntries.add(
+        '${option.label}|1 ${option.unitLabel}|${option.averageVolumeMl}',
+      );
       _addToController(_bloodController, option.averageVolumeMl.toDouble());
     });
   }
@@ -5975,15 +5930,25 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
     });
   }
 
-  double get _documentedLossesMl => widget.initialFluidBalance.diuresis.isEmpty &&
+  double get _documentedLossesMl =>
+      widget.initialFluidBalance.diuresis.isEmpty &&
           widget.initialFluidBalance.bleeding.isEmpty &&
           widget.initialFluidBalance.spongeCount.isEmpty &&
           widget.initialFluidBalance.otherLosses.isEmpty
       ? 0
-      : (double.tryParse(widget.initialFluidBalance.diuresis.replaceAll(',', '.')) ?? 0) +
-          (double.tryParse(widget.initialFluidBalance.bleeding.replaceAll(',', '.')) ?? 0) +
-          widget.initialFluidBalance.estimatedSpongeLoss +
-          (double.tryParse(widget.initialFluidBalance.otherLosses.replaceAll(',', '.')) ?? 0);
+      : (double.tryParse(
+                  widget.initialFluidBalance.diuresis.replaceAll(',', '.'),
+                ) ??
+                0) +
+            (double.tryParse(
+                  widget.initialFluidBalance.bleeding.replaceAll(',', '.'),
+                ) ??
+                0) +
+            widget.initialFluidBalance.estimatedSpongeLoss +
+            (double.tryParse(
+                  widget.initialFluidBalance.otherLosses.replaceAll(',', '.'),
+                ) ??
+                0);
 
   @override
   Widget build(BuildContext context) {
@@ -6036,9 +6001,9 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Porte cirúrgico',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
               ),
               const SizedBox(height: 8),
@@ -6114,7 +6079,9 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
               const SizedBox(height: 16),
               TextField(
                 controller: _fastingHoursController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'[0-9,.><hH -]')),
                 ],
@@ -6129,7 +6096,8 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: _fastingSuggestedMl > 0
-                          ? () => _applySuggestedCrystalloid(_fastingSuggestedMl)
+                          ? () =>
+                                _applySuggestedCrystalloid(_fastingSuggestedMl)
                           : null,
                       child: Text(
                         _fastingSuggestedMl > 0
@@ -6175,9 +6143,9 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Adicionar solução cristaloide',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
               ),
               const SizedBox(height: 8),
@@ -6210,10 +6178,7 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
                 ),
               ],
               const SizedBox(height: 14),
-              FluidField(
-                controller: _colloidsController,
-                label: 'Coloides',
-              ),
+              FluidField(controller: _colloidsController, label: 'Coloides'),
               const SizedBox(height: 8),
               _QuickVolumeChips(
                 values: _commonVolumes,
@@ -6224,9 +6189,9 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Adicionar colóide',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
               ),
               const SizedBox(height: 8),
@@ -6269,9 +6234,9 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Adicionar sangue / derivados por unidade',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
               ),
               const SizedBox(height: 8),
@@ -6350,11 +6315,7 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
 }
 
 class FluidField extends StatelessWidget {
-  const FluidField({
-    super.key,
-    required this.controller,
-    required this.label,
-  });
+  const FluidField({super.key, required this.controller, required this.label});
 
   final TextEditingController controller;
   final String label;
@@ -6365,13 +6326,8 @@ class FluidField extends StatelessWidget {
       key: key,
       controller: controller,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
-      ],
-      decoration: InputDecoration(
-        labelText: label,
-        suffixText: 'mL',
-      ),
+      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]'))],
+      decoration: InputDecoration(labelText: label, suffixText: 'mL'),
     );
   }
 }
@@ -6389,10 +6345,7 @@ class FluidBalanceDialogResult {
 }
 
 class BalanceOnlyDialog extends StatefulWidget {
-  const BalanceOnlyDialog({
-    super.key,
-    required this.initialFluidBalance,
-  });
+  const BalanceOnlyDialog({super.key, required this.initialFluidBalance});
 
   final FluidBalance initialFluidBalance;
 
@@ -6401,7 +6354,12 @@ class BalanceOnlyDialog extends StatefulWidget {
 }
 
 class _BalanceOnlyDialogState extends State<BalanceOnlyDialog> {
-  static const List<String> _partialBloodLossVolumes = ['50', '100', '200', '500'];
+  static const List<String> _partialBloodLossVolumes = [
+    '50',
+    '100',
+    '200',
+    '500',
+  ];
   late final TextEditingController _diuresisController;
   late final TextEditingController _bleedingController;
   late final TextEditingController _spongeCountController;
@@ -6436,31 +6394,35 @@ class _BalanceOnlyDialogState extends State<BalanceOnlyDialog> {
       _sumEntries(_otherLossEntries);
 
   FluidBalance get _preview => widget.initialFluidBalance.copyWith(
-        diuresis: _diuresisController.text.trim(),
-        bleeding: _bleedingController.text.trim(),
-        spongeCount: _spongeCountController.text.trim(),
-        otherLosses: _otherLossesController.text.trim(),
-        bloodLossEntries: _bloodLossEntries,
-        otherLossEntries: _otherLossEntries,
-      );
+    diuresis: _diuresisController.text.trim(),
+    bleeding: _bleedingController.text.trim(),
+    spongeCount: _spongeCountController.text.trim(),
+    otherLosses: _otherLossesController.text.trim(),
+    bloodLossEntries: _bloodLossEntries,
+    otherLossEntries: _otherLossEntries,
+  );
 
   @override
   void initState() {
     super.initState();
-    _diuresisController =
-        TextEditingController(text: widget.initialFluidBalance.diuresis)
-          ..addListener(_onChange);
-    _bleedingController =
-        TextEditingController(text: widget.initialFluidBalance.bleeding)
-          ..addListener(_onChange);
-    _spongeCountController =
-        TextEditingController(text: widget.initialFluidBalance.spongeCount)
-          ..addListener(_onChange);
-    _otherLossesController =
-        TextEditingController(text: widget.initialFluidBalance.otherLosses)
-          ..addListener(_onChange);
-    _bloodLossEntries = List<String>.from(widget.initialFluidBalance.bloodLossEntries);
-    _otherLossEntries = List<String>.from(widget.initialFluidBalance.otherLossEntries);
+    _diuresisController = TextEditingController(
+      text: widget.initialFluidBalance.diuresis,
+    )..addListener(_onChange);
+    _bleedingController = TextEditingController(
+      text: widget.initialFluidBalance.bleeding,
+    )..addListener(_onChange);
+    _spongeCountController = TextEditingController(
+      text: widget.initialFluidBalance.spongeCount,
+    )..addListener(_onChange);
+    _otherLossesController = TextEditingController(
+      text: widget.initialFluidBalance.otherLosses,
+    )..addListener(_onChange);
+    _bloodLossEntries = List<String>.from(
+      widget.initialFluidBalance.bloodLossEntries,
+    );
+    _otherLossEntries = List<String>.from(
+      widget.initialFluidBalance.otherLossEntries,
+    );
   }
 
   void _onChange() {
@@ -6585,9 +6547,9 @@ class _BalanceOnlyDialogState extends State<BalanceOnlyDialog> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Adicionar perdas sanguíneas parciais',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
               ),
               const SizedBox(height: 8),
@@ -6611,7 +6573,8 @@ class _BalanceOnlyDialogState extends State<BalanceOnlyDialog> {
                 decoration: const InputDecoration(
                   labelText: 'Compressas',
                   suffixText: 'un',
-                  helperText: 'Estimativa média: 100 mL por compressa grande saturada',
+                  helperText:
+                      'Estimativa média: 100 mL por compressa grande saturada',
                 ),
               ),
               const SizedBox(height: 12),
@@ -6631,7 +6594,9 @@ class _BalanceOnlyDialogState extends State<BalanceOnlyDialog> {
                     _LossOption('Outras perdas', 100),
                   ])
                     ActionChip(
-                      label: Text('${item.label} +${item.defaultMl.toStringAsFixed(0)} mL'),
+                      label: Text(
+                        '${item.label} +${item.defaultMl.toStringAsFixed(0)} mL',
+                      ),
                       onPressed: () =>
                           _addOtherLossEntry(item.label, item.defaultMl),
                     ),
@@ -6712,10 +6677,7 @@ class _LossOption {
 }
 
 class _QuickVolumeChips extends StatelessWidget {
-  const _QuickVolumeChips({
-    required this.values,
-    required this.onSelected,
-  });
+  const _QuickVolumeChips({required this.values, required this.onSelected});
 
   final List<String> values;
   final ValueChanged<String> onSelected;
@@ -6738,10 +6700,7 @@ class _QuickVolumeChips extends StatelessWidget {
 }
 
 class _FluidEntryList extends StatelessWidget {
-  const _FluidEntryList({
-    required this.entries,
-    required this.onRemove,
-  });
+  const _FluidEntryList({required this.entries, required this.onRemove});
 
   final List<String> entries;
   final ValueChanged<int> onRemove;
@@ -6879,9 +6838,9 @@ class _EditSectionScreenState extends State<EditSectionScreen> {
               Text(
                 widget.title,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF17324D),
-                    ),
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF17324D),
+                ),
               ),
               const SizedBox(height: 8),
               const Text(

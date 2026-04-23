@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../models/hemodynamic_point.dart';
 import 'card_widget.dart';
@@ -75,8 +76,8 @@ class HemodynamicChartCard extends StatelessWidget {
     final instructionText = inlineHemodynamicRemoveMode
         ? 'Modo correção ativo. Toque em um ponto do gráfico para apagar.'
         : (hasAnesthesiaStartMarker
-            ? 'Parâmetro à esquerda; toque no gráfico para lançar ou arraste um ponto para ajustar.'
-            : 'Marque o início da anestesia para liberar os lançamentos.');
+              ? 'Parâmetro à esquerda; toque no gráfico para lançar ou arraste um ponto para ajustar.'
+              : 'Marque o início da anestesia para liberar os lançamentos.');
 
     return PanelCard(
       key: const Key('hemodynamic-chart-section'),
@@ -101,14 +102,14 @@ class HemodynamicChartCard extends StatelessWidget {
                   title: inlineHemodynamicRemoveMode
                       ? 'Modo correção'
                       : (hasAnesthesiaStartMarker
-                          ? 'Modo lançamento'
-                          : 'Aguardando início'),
+                            ? 'Modo lançamento'
+                            : 'Aguardando início'),
                   description: instructionText,
                   accent: inlineHemodynamicRemoveMode
                       ? const Color(0xFFCC3D3D)
                       : (hasAnesthesiaStartMarker
-                          ? const Color(0xFF2B76D2)
-                          : const Color(0xFF7A8EA5)),
+                            ? const Color(0xFF2B76D2)
+                            : const Color(0xFF7A8EA5)),
                 ),
                 const SizedBox(height: 10),
                 Wrap(
@@ -137,9 +138,10 @@ class HemodynamicChartCard extends StatelessWidget {
                           FilledButton.tonalIcon(
                             key: const Key('hemo-start-surgery-button'),
                             onPressed:
-                                !hasAnesthesiaStartMarker || hasSurgeryStartMarker
-                                    ? null
-                                    : onAddSurgeryStart,
+                                !hasAnesthesiaStartMarker ||
+                                    hasSurgeryStartMarker
+                                ? null
+                                : onAddSurgeryStart,
                             style: FilledButton.styleFrom(
                               backgroundColor: const Color(0xFF169653),
                               foregroundColor: Colors.white,
@@ -149,7 +151,8 @@ class HemodynamicChartCard extends StatelessWidget {
                           ),
                           OutlinedButton.icon(
                             key: const Key('hemo-end-surgery-button'),
-                            onPressed: !hasSurgeryStartMarker || hasSurgeryEndMarker
+                            onPressed:
+                                !hasSurgeryStartMarker || hasSurgeryEndMarker
                                 ? null
                                 : onAddSurgeryEnd,
                             icon: const Icon(Icons.stop_circle_outlined),
@@ -157,7 +160,9 @@ class HemodynamicChartCard extends StatelessWidget {
                           ),
                           OutlinedButton.icon(
                             key: const Key('hemo-end-anesthesia-button'),
-                            onPressed: !hasAnesthesiaStartMarker || hasAnesthesiaEndMarker
+                            onPressed:
+                                !hasAnesthesiaStartMarker ||
+                                    hasAnesthesiaEndMarker
                                 ? null
                                 : onAddAnesthesiaEnd,
                             icon: const Icon(Icons.stop_circle),
@@ -192,38 +197,9 @@ class HemodynamicChartCard extends StatelessWidget {
                 if (inlineHemodynamicType == 'SpO2' &&
                     !inlineHemodynamicRemoveMode) ...[
                   const SizedBox(height: 10),
-                  const Text(
-                    'Sat rápida',
-                    style: TextStyle(
-                      color: Color(0xFF17324D),
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final value in const [
-                        85,
-                        88,
-                        90,
-                        92,
-                        94,
-                        95,
-                        96,
-                        97,
-                        98,
-                        99,
-                        100,
-                      ])
-                        ActionChip(
-                          label: Text('$value%'),
-                          onPressed: hasAnesthesiaStartMarker
-                              ? () => onQuickSpo2(value.toDouble())
-                              : null,
-                        ),
-                    ],
+                  _Spo2ManualEntryCard(
+                    enabled: hasAnesthesiaStartMarker,
+                    onSave: onQuickSpo2,
                   ),
                 ],
                 const SizedBox(height: 10),
@@ -402,9 +378,11 @@ class HemodynamicChartCard extends StatelessWidget {
     final markerMax = markers.isEmpty
         ? 0.0
         : markers.map((item) => item.time).reduce((a, b) => a > b ? a : b);
-    final rawMax = [pointMax, markerMax, currentInlineTime].reduce(
-      (a, b) => a > b ? a : b,
-    );
+    final rawMax = [
+      pointMax,
+      markerMax,
+      currentInlineTime,
+    ].reduce((a, b) => a > b ? a : b);
     if (rawMax <= 180) return 180;
     return (rawMax / 15).ceil() * 15.0;
   }
@@ -462,10 +440,9 @@ class _HemodynamicParameterSidebar extends StatelessWidget {
             Center(
               child: OutlinedButton.icon(
                 key: const Key('hemo-toggle-mode-button'),
-                onPressed:
-                    hasPoints || inlineHemodynamicRemoveMode
-                        ? onToggleRemoveMode
-                        : null,
+                onPressed: hasPoints || inlineHemodynamicRemoveMode
+                    ? onToggleRemoveMode
+                    : null,
                 icon: Icon(
                   inlineHemodynamicRemoveMode
                       ? Icons.edit_location_alt
@@ -529,9 +506,7 @@ class _HemodynamicParameterSidebar extends StatelessWidget {
 }
 
 class _HemodynamicEmptyOverlay extends StatelessWidget {
-  const _HemodynamicEmptyOverlay({
-    required this.onAddAnesthesiaStart,
-  });
+  const _HemodynamicEmptyOverlay({required this.onAddAnesthesiaStart});
 
   final VoidCallback onAddAnesthesiaStart;
 
@@ -611,10 +586,108 @@ class _HemodynamicTimerChip extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             '$label: $value',
+            style: TextStyle(color: color, fontWeight: FontWeight.w800),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Spo2ManualEntryCard extends StatefulWidget {
+  const _Spo2ManualEntryCard({required this.enabled, required this.onSave});
+
+  final bool enabled;
+  final ValueChanged<double> onSave;
+
+  @override
+  State<_Spo2ManualEntryCard> createState() => _Spo2ManualEntryCardState();
+}
+
+class _Spo2ManualEntryCardState extends State<_Spo2ManualEntryCard> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final parsed = double.tryParse(
+      _controller.text.trim().replaceAll(',', '.'),
+    );
+    if (parsed == null) return;
+    widget.onSave(parsed.clamp(70, 100).toDouble());
+    _controller.clear();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 320,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFFAF2),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFCBE9D5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Sat manual',
             style: TextStyle(
-              color: color,
+              color: Color(0xFF17324D),
               fontWeight: FontWeight.w800,
             ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Digite a saturação e salve para lançar no gráfico.',
+            style: TextStyle(
+              color: Color(0xFF5D7288),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  key: const Key('hemo-spo2-manual-field'),
+                  controller: _controller,
+                  enabled: widget.enabled,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
+                  ],
+                  decoration: const InputDecoration(
+                    labelText: 'Sat (%)',
+                    hintText: 'Ex: 97',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              FilledButton.icon(
+                key: const Key('hemo-spo2-manual-save-button'),
+                onPressed: widget.enabled ? _submit : null,
+                icon: const Icon(Icons.save_outlined),
+                label: const Text('Salvar'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF169653),
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -648,10 +721,7 @@ class _StatusBanner extends StatelessWidget {
         children: [
           Text(
             title,
-            style: TextStyle(
-              color: accent,
-              fontWeight: FontWeight.w800,
-            ),
+            style: TextStyle(color: accent, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 4),
           Text(
@@ -669,10 +739,7 @@ class _StatusBanner extends StatelessWidget {
 }
 
 class _ControlGroup extends StatelessWidget {
-  const _ControlGroup({
-    required this.title,
-    required this.child,
-  });
+  const _ControlGroup({required this.title, required this.child});
 
   final String title;
   final Widget child;
@@ -706,10 +773,7 @@ class _ControlGroup extends StatelessWidget {
 }
 
 class _ModePill extends StatelessWidget {
-  const _ModePill({
-    required this.label,
-    required this.activeColor,
-  });
+  const _ModePill({required this.label, required this.activeColor});
 
   final String label;
   final Color activeColor;
@@ -725,10 +789,7 @@ class _ModePill extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(
-          color: activeColor,
-          fontWeight: FontWeight.w800,
-        ),
+        style: TextStyle(color: activeColor, fontWeight: FontWeight.w800),
       ),
     );
   }

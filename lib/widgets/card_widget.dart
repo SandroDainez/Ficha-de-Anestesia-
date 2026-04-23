@@ -54,31 +54,31 @@ class _PanelCardState extends State<PanelCard> {
             widget.titleColor.withAlpha(18),
           )
         : isSuccess
-            ? const Color(0xFFE7F6EC)
-            : widget.titleColor.withAlpha(18);
+        ? const Color(0xFFE7F6EC)
+        : widget.titleColor.withAlpha(18);
     final headerDivider = widget.isAttention
         ? Color.alphaBlend(
             const Color(0x40F0A11F),
             widget.titleColor.withAlpha(48),
           )
         : isSuccess
-            ? const Color(0xFF8DD0A3)
-            : widget.titleColor.withAlpha(48);
+        ? const Color(0xFF8DD0A3)
+        : widget.titleColor.withAlpha(48);
     final cardBackground = isSuccess ? const Color(0xFFF4FBF6) : Colors.white;
     final cardBorder = widget.isAttention
         ? const Color(0xFFF2C879)
         : isSuccess
-            ? const Color(0xFF8DD0A3)
-            : const Color(0xFFBCD0E4);
-    final effectiveTitleColor =
-        isSuccess ? const Color(0xFF177245) : widget.titleColor;
+        ? const Color(0xFF8DD0A3)
+        : const Color(0xFFBCD0E4);
+    final effectiveTitleColor = isSuccess
+        ? const Color(0xFF177245)
+        : widget.titleColor;
 
     return Container(
       width: double.infinity,
-      constraints:
-          _isExpanded && widget.minHeight != null
-              ? BoxConstraints(minHeight: widget.minHeight!)
-              : null,
+      constraints: _isExpanded && widget.minHeight != null
+          ? BoxConstraints(minHeight: widget.minHeight!)
+          : null,
       decoration: BoxDecoration(
         color: cardBackground,
         borderRadius: BorderRadius.circular(14),
@@ -157,10 +157,7 @@ class _PanelCardState extends State<PanelCard> {
                 ),
               )
             else
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: widget.child,
-              ),
+              Padding(padding: const EdgeInsets.all(12), child: widget.child),
         ],
       ),
     );
@@ -213,7 +210,8 @@ class DetailLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isPlaceholder = value.trim().isEmpty ||
+    final isPlaceholder =
+        value.trim().isEmpty ||
         value.trim() == '--' ||
         value.toLowerCase().contains('toque para preencher');
     return Column(
@@ -250,11 +248,7 @@ class DetailLine extends StatelessWidget {
 }
 
 class BulletLine extends StatelessWidget {
-  const BulletLine({
-    super.key,
-    required this.text,
-    required this.color,
-  });
+  const BulletLine({super.key, required this.text, required this.color});
 
   final String text;
   final Color color;
@@ -280,10 +274,7 @@ class BulletLine extends StatelessWidget {
 }
 
 class CheckLine extends StatelessWidget {
-  const CheckLine({
-    super.key,
-    required this.text,
-  });
+  const CheckLine({super.key, required this.text});
 
   final String text;
 
@@ -316,11 +307,7 @@ class CheckLine extends StatelessWidget {
 }
 
 class AddButton extends StatelessWidget {
-  const AddButton({
-    super.key,
-    required this.label,
-    this.onTap,
-  });
+  const AddButton({super.key, required this.label, this.onTap});
 
   final String label;
   final VoidCallback? onTap;
@@ -343,11 +330,7 @@ class AddButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.add,
-                size: 14,
-                color: Color(0xFF2B76D2),
-              ),
+              const Icon(Icons.add, size: 14, color: Color(0xFF2B76D2)),
               const SizedBox(width: 4),
               Flexible(
                 child: Text(
@@ -391,11 +374,7 @@ class StatusHint extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 15,
-            color: const Color(0xFF8AA0B5),
-          ),
+          Icon(icon, size: 15, color: const Color(0xFF8AA0B5)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -462,11 +441,7 @@ class LegendRow extends StatelessWidget {
 }
 
 class LegendDot extends StatelessWidget {
-  const LegendDot({
-    super.key,
-    required this.label,
-    required this.color,
-  });
+  const LegendDot({super.key, required this.label, required this.color});
 
   final String label;
   final Color color;
@@ -497,13 +472,14 @@ class LegendDot extends StatelessWidget {
   }
 }
 
-typedef HemodynamicPointDragCallback = void Function(
-  String type,
-  double matchTime,
-  double matchValue,
-  double newValue,
-  double newTime,
-);
+typedef HemodynamicPointDragCallback =
+    void Function(
+      String type,
+      double matchTime,
+      double matchValue,
+      double newValue,
+      double newTime,
+    );
 
 class HemodynamicChart extends StatefulWidget {
   const HemodynamicChart({
@@ -533,6 +509,8 @@ class HemodynamicChart extends StatefulWidget {
 
 class _HemodynamicChartState extends State<HemodynamicChart> {
   static const double _tapSlop = 20;
+  static const double _dragHitRadius = 18;
+  static const double _tapHitRadius = 28;
 
   Offset? _downLocal;
   bool _movedPastSlop = false;
@@ -560,7 +538,10 @@ class _HemodynamicChartState extends State<HemodynamicChart> {
             _downLocal = event.localPosition;
             _movedPastSlop = false;
             _dragUpdated = false;
-            final hit = layout.hitTest(event.localPosition);
+            final hit = layout.hitTest(
+              event.localPosition,
+              radius: _dragHitRadius,
+            );
             if (hit != null &&
                 widget.onPointMoved != null &&
                 widget.onPointTap == null) {
@@ -596,10 +577,7 @@ class _HemodynamicChartState extends State<HemodynamicChart> {
           },
           onPointerUp: (event) => _handlePointerUp(layout, event.localPosition),
           onPointerCancel: (_) => _handlePointerCancel(),
-          child: CustomPaint(
-            painter: _ChartPainter(layout),
-            size: chartSize,
-          ),
+          child: CustomPaint(painter: _ChartPainter(layout), size: chartSize),
         );
 
         if (kIsWeb) {
@@ -617,10 +595,7 @@ class _HemodynamicChartState extends State<HemodynamicChart> {
     _clearPointerState();
   }
 
-  void _handlePointerUp(
-    HemodynamicChartLayout layout,
-    Offset local,
-  ) {
+  void _handlePointerUp(HemodynamicChartLayout layout, Offset local) {
     if (_draggingHit != null) {
       if (_dragUpdated) {
         widget.onPointDragEnd?.call();
@@ -640,13 +615,11 @@ class _HemodynamicChartState extends State<HemodynamicChart> {
       return;
     }
 
-    final hit = layout.hitTest(local);
+    final hit = layout.hitTest(local, radius: _tapHitRadius);
     if (hit != null && widget.onPointTap != null) {
       widget.onPointTap!(hit);
     } else if (hit == null && widget.onChartTap != null) {
-      widget.onChartTap!(
-        layout.valueForY(local.dy, widget.selectedType),
-      );
+      widget.onChartTap!(layout.valueForY(local.dy, widget.selectedType));
     }
 
     _clearPointerState();
@@ -747,11 +720,10 @@ class HemodynamicChartLayout {
     return Offset(xForTime(point.time), yForValue(point.value, point.type));
   }
 
-  HemodynamicPoint? hitTest(Offset position) {
-    const hitRadius = 48.0;
+  HemodynamicPoint? hitTest(Offset position, {double radius = 48.0}) {
     for (final point in points.reversed) {
       final offset = offsetForPoint(point);
-      if ((offset - position).distance <= hitRadius) {
+      if ((offset - position).distance <= radius) {
         return point;
       }
     }
@@ -823,7 +795,10 @@ class _ChartPainter extends CustomPainter {
 
     canvas.drawLine(
       Offset(HemodynamicChartLayout.leftPadding, layout.spo2Bottom + 7),
-      Offset(size.width - HemodynamicChartLayout.rightPadding, layout.spo2Bottom + 7),
+      Offset(
+        size.width - HemodynamicChartLayout.rightPadding,
+        layout.spo2Bottom + 7,
+      ),
       separatorPaint,
     );
 
@@ -928,7 +903,7 @@ class _ChartPainter extends CustomPainter {
     final data = type == 'PAM'
         ? _buildPamPoints()
         : (layout.points.where((item) => item.type == type).toList()
-          ..sort((a, b) => a.time.compareTo(b.time)));
+            ..sort((a, b) => a.time.compareTo(b.time)));
     if (data.isEmpty) return;
 
     const lineStroke = 3.0;
@@ -1059,8 +1034,12 @@ class _ChartPainter extends CustomPainter {
 
   List<HemodynamicPoint> _buildPamPoints() {
     const toleranceMinutes = 1.0;
-    final pasPoints = layout.points.where((item) => item.type == 'PAS').toList();
-    final padPoints = layout.points.where((item) => item.type == 'PAD').toList();
+    final pasPoints = layout.points
+        .where((item) => item.type == 'PAS')
+        .toList();
+    final padPoints = layout.points
+        .where((item) => item.type == 'PAD')
+        .toList();
     final usedPadIndexes = <int>{};
     final pamPoints = <HemodynamicPoint>[];
 
@@ -1161,11 +1140,7 @@ class MetricTile extends StatelessWidget {
 }
 
 class LabeledSurface extends StatelessWidget {
-  const LabeledSurface({
-    super.key,
-    required this.label,
-    required this.child,
-  });
+  const LabeledSurface({super.key, required this.label, required this.child});
 
   final String label;
   final Widget child;
@@ -1274,10 +1249,7 @@ class KeyValueLine extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: TextStyle(
-              color: labelColor,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(color: labelColor, fontWeight: FontWeight.w700),
           ),
         ),
         Text(
