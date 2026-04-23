@@ -134,6 +134,18 @@ class _UsageSummaryItem {
   final int priority;
 }
 
+class _LossEntry {
+  const _LossEntry({
+    required this.material,
+    required this.quantity,
+    required this.reason,
+  });
+
+  final String material;
+  final String quantity;
+  final String reason;
+}
+
 class _AirwaySupportRecommendation {
   const _AirwaySupportRecommendation({
     required this.title,
@@ -4492,14 +4504,16 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Widget _buildVenousAccessCard() {
+    final successfulEntries = _venousAccesses.where((item) => !_isLossEntry(item)).toList();
+    final lossEntries = _venousAccesses.where(_isLossEntry).toList();
     final status = _venousAccesses.isEmpty
         ? 'Nenhum acesso venoso registrado'
-        : _venousAccesses.first;
+        : successfulEntries.isNotEmpty
+        ? successfulEntries.first
+        : _lossEntryLabel(lossEntries.first);
     final summary = _venousAccesses.isEmpty
         ? 'Toque para adicionar'
-        : _venousAccesses.length == 1
-        ? '1 acesso registrado'
-        : '${_venousAccesses.length} acessos registrados';
+        : '${successfulEntries.length} acesso(s) válido(s) • ${lossEntries.length} perda(s)';
     return _buildCompactOperationalCard(
       key: const Key('venous-access-card'),
       tapKey: const Key('venous-access-entry'),
@@ -4515,14 +4529,16 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Widget _buildArterialAccessCard() {
+    final successfulEntries = _arterialAccesses.where((item) => !_isLossEntry(item)).toList();
+    final lossEntries = _arterialAccesses.where(_isLossEntry).toList();
     final status = _arterialAccesses.isEmpty
         ? 'Nenhum acesso arterial registrado'
-        : _arterialAccesses.first;
+        : successfulEntries.isNotEmpty
+        ? successfulEntries.first
+        : _lossEntryLabel(lossEntries.first);
     final summary = _arterialAccesses.isEmpty
         ? 'Toque para adicionar'
-        : _arterialAccesses.length == 1
-        ? '1 acesso registrado'
-        : '${_arterialAccesses.length} acessos registrados';
+        : '${successfulEntries.length} acesso(s) válido(s) • ${lossEntries.length} perda(s)';
     return _buildCompactOperationalCard(
       key: const Key('arterial-access-card'),
       tapKey: const Key('arterial-access-entry'),
@@ -5673,6 +5689,27 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     final normalizedGroup = group.toLowerCase().trim();
     final normalizedName = _usageNormalizedName(name);
     return '$normalizedGroup|$normalizedName';
+  }
+
+  bool _isLossEntry(String entry) => entry.startsWith('__LOSS__|');
+
+  _LossEntry? _decodeLossEntry(String entry) {
+    if (!_isLossEntry(entry)) return null;
+    final parts = entry.split('|');
+    if (parts.length < 4) return null;
+    return _LossEntry(
+      material: parts[1].trim(),
+      quantity: parts[2].trim(),
+      reason: parts.sublist(3).join(' | ').trim(),
+    );
+  }
+
+  String _lossEntryLabel(String entry) {
+    final decoded = _decodeLossEntry(entry);
+    if (decoded == null) return entry;
+    final quantity = decoded.quantity.isEmpty ? 'quantidade não informada' : decoded.quantity;
+    final reason = decoded.reason.isEmpty ? 'motivo não informado' : decoded.reason;
+    return 'Perda: ${decoded.material} • $quantity • $reason';
   }
 
   void _addUsageItem(

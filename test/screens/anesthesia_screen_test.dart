@@ -1257,6 +1257,37 @@ void main() {
     },
   );
 
+  testWidgets('manual additional items keep previously added entries', (
+    WidgetTester tester,
+  ) async {
+    final record = buildRecord().copyWith(anesthesiaMaterials: const []);
+
+    await pumpScreen(tester, record);
+
+    await tester.tap(find.text('ITENS ADICIONAIS / AJUSTE MANUAL'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, 'Seringa 20 mL 2 un');
+    await tester.tap(find.widgetWithText(FilledButton, 'Adicionar item'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, 'Extensor 1 un');
+    await tester.tap(find.widgetWithText(FilledButton, 'Adicionar item'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Seringa 20 mL 2 un'), findsOneWidget);
+    expect(find.text('Extensor 1 un'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Salvar'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('ITENS ADICIONAIS / AJUSTE MANUAL'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Seringa 20 mL 2 un'), findsOneWidget);
+    expect(find.text('Extensor 1 un'), findsOneWidget);
+  });
+
   testWidgets('adds FC through manual hemodynamic entry dialog', (
     WidgetTester tester,
   ) async {

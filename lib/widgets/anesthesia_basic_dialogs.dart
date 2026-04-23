@@ -555,6 +555,7 @@ class ListFieldDialog extends StatefulWidget {
 class _ListFieldDialogState extends State<ListFieldDialog> {
   late final TextEditingController _controller;
   late Set<String> _selectedSuggestions;
+  late List<String> _manualEntries;
 
   @override
   void initState() {
@@ -562,11 +563,12 @@ class _ListFieldDialogState extends State<ListFieldDialog> {
     _selectedSuggestions = widget.initialItems
         .where(widget.suggestions.contains)
         .toSet();
-    _controller = TextEditingController(
-      text: widget.initialItems
-          .where((item) => !widget.suggestions.contains(item))
-          .join('\n'),
-    );
+    _manualEntries = widget.initialItems
+        .where((item) => !widget.suggestions.contains(item))
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+    _controller = TextEditingController();
   }
 
   @override
@@ -575,12 +577,21 @@ class _ListFieldDialogState extends State<ListFieldDialog> {
     super.dispose();
   }
 
-  List<String> _manualItems() {
+  List<String> _draftItems() {
     return _controller.text
         .split('\n')
         .map((item) => item.trim())
         .where((item) => item.isNotEmpty)
         .toList();
+  }
+
+  void _addManualItems() {
+    final draftItems = _draftItems();
+    if (draftItems.isEmpty) return;
+    setState(() {
+      _manualEntries = [..._manualEntries, ...draftItems];
+      _controller.clear();
+    });
   }
 
   @override
@@ -620,12 +631,36 @@ class _ListFieldDialogState extends State<ListFieldDialog> {
               ],
               TextField(
                 controller: _controller,
-                maxLines: 5,
+                maxLines: 4,
                 decoration: InputDecoration(
                   labelText: widget.label,
                   hintText: widget.hintText ?? 'Um item por linha',
                 ),
               ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton.icon(
+                  onPressed: _addManualItems,
+                  style: _dialogPrimaryButtonStyle(),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Adicionar item'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (_manualEntries.isEmpty)
+                _dialogEmptyState('Nenhum item manual adicionado.')
+              else
+                ..._manualEntries.asMap().entries.map(
+                  (entry) => _dialogListTile(
+                    title: entry.value,
+                    onDelete: () {
+                      setState(() {
+                        _manualEntries.removeAt(entry.key);
+                      });
+                    },
+                  ),
+                ),
             ],
           ),
         ),
@@ -642,7 +677,7 @@ class _ListFieldDialogState extends State<ListFieldDialog> {
         FilledButton(
           onPressed: () => Navigator.of(
             context,
-          ).pop([..._selectedSuggestions, ..._manualItems()]),
+          ).pop([..._selectedSuggestions, ..._manualEntries, ..._draftItems()]),
           child: const Text('Salvar'),
         ),
       ],
