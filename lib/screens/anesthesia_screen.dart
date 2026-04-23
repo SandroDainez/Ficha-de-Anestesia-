@@ -2810,6 +2810,10 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                       onBirthWeightTap: _editPatientBirthWeight,
                       onAsaTap: _editPatientAsa,
                       onInformedConsentTap: _editPatientInformedConsentStatus,
+                      onFunctionalCapacityTap: _showPreAnestheticDialog,
+                      onDifficultAirwayTap: _showPreAnestheticDialog,
+                      onDifficultVentilationTap: _showPreAnestheticDialog,
+                      onFastingTap: _showPreAnestheticDialog,
                       onMallampatiTap: _usesMallampatiInCase
                           ? _editPatientMallampati
                           : null,

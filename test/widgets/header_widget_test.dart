@@ -88,4 +88,60 @@ void main() {
     expect(ventilationChip.color, UiColors.danger);
     expect(fastingChip.color, UiColors.danger);
   });
+
+  testWidgets('allows tapping derived pre-anesthetic chips for editing', (
+    WidgetTester tester,
+  ) async {
+    var metsTapped = false;
+    var airwayTapped = false;
+    var ventilationTapped = false;
+    var fastingTapped = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AnesthesiaHeaderWidget(
+            patient: const Patient(
+              name: 'Paciente teste',
+              age: 54,
+              weightKg: 78,
+              heightMeters: 1.7,
+              asa: '',
+              allergies: [],
+              restrictions: [],
+              medications: [],
+            ),
+            mallampati: '',
+            preAnestheticAssessment: const PreAnestheticAssessment.empty(),
+            onFunctionalCapacityTap: () {
+              metsTapped = true;
+            },
+            onDifficultAirwayTap: () {
+              airwayTapped = true;
+            },
+            onDifficultVentilationTap: () {
+              ventilationTapped = true;
+            },
+            onFastingTap: () {
+              fastingTapped = true;
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('METS / FUNCIONAL'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('VIA AÉREA DIFÍCIL'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('VENTILAÇÃO DIFÍCIL'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('JEJUM'));
+    await tester.pumpAndSettle();
+
+    expect(metsTapped, isTrue);
+    expect(airwayTapped, isTrue);
+    expect(ventilationTapped, isTrue);
+    expect(fastingTapped, isTrue);
+  });
 }

@@ -243,6 +243,10 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
     this.onBirthWeightTap,
     this.onAsaTap,
     this.onInformedConsentTap,
+    this.onFunctionalCapacityTap,
+    this.onDifficultAirwayTap,
+    this.onDifficultVentilationTap,
+    this.onFastingTap,
     this.onMallampatiTap,
     this.onAllergiesTap,
     this.onRestrictionsTap,
@@ -263,6 +267,10 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
   final VoidCallback? onBirthWeightTap;
   final VoidCallback? onAsaTap;
   final VoidCallback? onInformedConsentTap;
+  final VoidCallback? onFunctionalCapacityTap;
+  final VoidCallback? onDifficultAirwayTap;
+  final VoidCallback? onDifficultVentilationTap;
+  final VoidCallback? onFastingTap;
   final VoidCallback? onMallampatiTap;
   final VoidCallback? onAllergiesTap;
   final VoidCallback? onRestrictionsTap;
@@ -423,21 +431,25 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
                   label: 'METS / funcional',
                   value: functionalCapacityLabel,
                   color: _functionalCapacityColor(preAnestheticAssessment),
+                  onTap: onFunctionalCapacityTap,
                 ),
                 ClinicalChip(
                   label: 'Via aérea difícil',
                   value: difficultAirwayLabel,
                   color: _airwayRiskColor(preAnestheticAssessment),
+                  onTap: onDifficultAirwayTap,
                 ),
                 ClinicalChip(
                   label: 'Ventilação difícil',
                   value: difficultVentilationLabel,
                   color: _ventilationRiskColor(preAnestheticAssessment),
+                  onTap: onDifficultVentilationTap,
                 ),
                 ClinicalChip(
                   label: 'Jejum',
                   value: fastingLabel,
                   color: _fastingColor(preAnestheticAssessment, patient.population),
+                  onTap: onFastingTap,
                 ),
                 if (patient.population == PatientPopulation.adult)
                   ClinicalChip(
