@@ -6283,7 +6283,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Widget _buildPreparationCard() {
-    final checklist = _record.safeSurgeryChecklist;
     final completedCount = _preAnesthesiaChecklistOptions
         .where(_hasPreparationChecklistItem)
         .length;
@@ -10545,37 +10544,70 @@ class _ExportCaseDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Exportar ficha completa'),
-      content: const Text(
-        'O arquivo reúne a ficha de anestesia e, abaixo dela, o pré-anestésico completo.',
+      content: SizedBox(
+        width: 420,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'O arquivo reúne a ficha de anestesia e, abaixo dela, o pré-anestésico completo.',
+            ),
+            const SizedBox(height: 18),
+            OutlinedButton.icon(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await onPreviewPressed();
+              },
+              icon: const Icon(Icons.picture_as_pdf_outlined),
+              label: const Text('Visualizar PDF'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                alignment: Alignment.centerLeft,
+              ),
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await onPrintPressed();
+              },
+              icon: const Icon(Icons.print_outlined),
+              label: const Text('Imprimir'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                alignment: Alignment.centerLeft,
+              ),
+            ),
+            const SizedBox(height: 10),
+            FilledButton.icon(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await onSharePressed();
+              },
+              icon: const Icon(Icons.share_outlined),
+              label: const Text('Compartilhar / salvar'),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                alignment: Alignment.centerLeft,
+              ),
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
-        ),
-        OutlinedButton.icon(
-          onPressed: () async {
-            Navigator.of(context).pop();
-            await onPreviewPressed();
-          },
-          icon: const Icon(Icons.picture_as_pdf_outlined),
-          label: const Text('Visualizar'),
-        ),
-        OutlinedButton.icon(
-          onPressed: () async {
-            Navigator.of(context).pop();
-            await onPrintPressed();
-          },
-          icon: const Icon(Icons.print_outlined),
-          label: const Text('Imprimir'),
-        ),
-        FilledButton.icon(
-          onPressed: () async {
-            Navigator.of(context).pop();
-            await onSharePressed();
-          },
-          icon: const Icon(Icons.share_outlined),
-          label: const Text('Compartilhar / salvar'),
         ),
       ],
     );
