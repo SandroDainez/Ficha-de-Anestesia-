@@ -716,7 +716,7 @@ class ReportExportService {
   String _hemodynamicChartSvg(AnesthesiaRecord record) {
     const width = 960.0;
     const height = 240.0;
-    const left = 52.0;
+    const left = 76.0;
     const right = 24.0;
     const top = 24.0;
     const bottom = 28.0;
@@ -910,7 +910,21 @@ class ReportExportService {
           "<text x='${x.toStringAsFixed(1)}' y='${(height - 8).toStringAsFixed(1)}' font-size='10' fill='#7a8ea4'>${hour}h</text>",
         );
       }
-      buffer.writeln("<text x='38' y='18' font-size='11' font-weight='700' fill='#16a96b'>Sat</text>");
+      for (var value = 70; value <= 100; value += 10) {
+        final y = yForSpo2(value.toDouble());
+        buffer.writeln(
+          "<text x='10' y='${(y + 4).toStringAsFixed(1)}' font-size='10' font-weight='700' fill='#16a96b'>$value</text>",
+        );
+      }
+      for (var value = 0; value <= 200; value += 10) {
+        final y = yForHemo(value.toDouble());
+        buffer.writeln(
+          "<text x='10' y='${(y + 4).toStringAsFixed(1)}' font-size='10' font-weight='700' fill='#5f7896'>$value</text>",
+        );
+      }
+      buffer.writeln(
+        "<text x='44' y='18' font-size='11' font-weight='700' fill='#16a96b'>SpO₂</text>",
+      );
       return buffer.toString();
     }
 
