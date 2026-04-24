@@ -8,6 +8,7 @@ import 'package:printing/printing.dart';
 import '../models/anesthesia_case.dart';
 import '../models/anesthesia_record.dart';
 import '../models/patient.dart';
+import '../utils/team_member_entry.dart';
 
 class ReportExportService {
   const ReportExportService();
@@ -35,16 +36,20 @@ class ReportExportService {
   }
 
   String _formatAnesthesiologistEntry(String rawEntry) {
-    final parts = [...rawEntry.split('|'), '', ''];
-    final name = parts[0].trim();
-    final crm = parts[1].trim();
-    final details = parts[2].trim();
-    final segments = <String>[
-      if (name.isNotEmpty) name,
-      if (crm.isNotEmpty) 'CRM $crm',
-      if (details.isNotEmpty) details,
-    ];
-    return segments.join(' • ');
+    return TeamMemberEntry.parse(rawEntry).formatted;
+  }
+
+  String _patientListValue(List<String> items, {required bool markedNone}) {
+    if (items.isNotEmpty) return items.join(', ');
+    return markedNone ? 'Nenhuma registrada' : 'Não informado';
+  }
+
+  String _formatTeamEntries(Iterable<String> items) {
+    final formatted = items
+        .map(_formatAnesthesiologistEntry)
+        .where((item) => item.trim().isNotEmpty)
+        .toList();
+    return formatted.isEmpty ? '--' : formatted.join(' | ');
   }
 
   Future<Uint8List> buildCasePdf({
@@ -71,10 +76,7 @@ class ReportExportService {
       pw.MultiPage(
         pageTheme: pw.PageTheme(
           margin: const pw.EdgeInsets.all(28),
-          theme: pw.ThemeData.withFont(
-            base: regularFont,
-            bold: boldFont,
-          ),
+          theme: pw.ThemeData.withFont(base: regularFont, bold: boldFont),
         ),
         build: (context) => [
           _buildHeader(
@@ -84,208 +86,290 @@ class ReportExportService {
             generatedAt: generatedAt,
           ),
           _buildPatientSummary(record),
-          _section(
-            'Identificação do paciente',
-            [
-              _field('Nome', patientName),
-              _field('Perfil', record.patient.population.label),
-              _field('Idade', _orDash(record.patient.age > 0 ? '${record.patient.age} anos' : '')),
-              _field('Peso', _orDash(record.patient.weightKg > 0 ? '${record.patient.weightKg.toStringAsFixed(0)} kg' : '')),
-              _field('Altura', _orDash(record.patient.heightMeters > 0 ? '${record.patient.heightMeters.toStringAsFixed(2).replaceAll('.', ',')} m' : '')),
-              _field('ASA', _orDash(record.patient.asa)),
-              _field(
-                'Termo de Consentimento Informado para Anestesia',
-                _orDash(record.patient.informedConsentStatus),
+          _section('Identificação do paciente', [
+            _field('Nome', patientName),
+            _field('Perfil', record.patient.population.label),
+            _field(
+              'Idade',
+              _orDash(
+                record.patient.age > 0 ? '${record.patient.age} anos' : '',
               ),
-              _field('Alergias', _joinList(record.patient.allergies)),
-              _field('Restrições', _joinList(record.patient.restrictions)),
-              _field('Medicações em uso', _joinList(record.patient.medications)),
-            ],
-          ),
-          _section(
-            'Ficha de anestesia',
-            [
-              _field('Cirurgia', _orDash(record.surgeryDescription)),
-              _field('Prioridade', _orDash(record.surgeryPriority)),
-              _field('Cirurgião', _orDash(record.surgeonName)),
-              _field('Auxiliares', _joinList(record.assistantNames)),
-              _field('Destino pós-operatório', _orDash(record.patientDestination)),
-              _field('Outro destino', _orDash(record.otherPatientDestination)),
-              _field('Anotações operacionais', _orDash(record.operationalNotes)),
-              _field('Porte cirúrgico', _orDash(record.surgicalSize)),
-              _field('Time-out', record.timeOutCompleted ? 'Concluído' : 'Pendente'),
-              _field('Checklist seguro', _joinList(record.safeSurgeryChecklist)),
-              _field('Checklist de time-out', _joinList(record.timeOutChecklist)),
-              _field('Jejum informado', _orDash(record.fastingHours)),
-              _field('Antibioticoprofilaxia', _joinList(record.prophylacticAntibiotics)),
-            ],
-          ),
-          _section(
-            'Via aérea e monitorização',
-            [
-              _field('Mallampati', _orDash(record.airway.mallampati)),
-              _field('Cormack-Lehane', _orDash(record.airway.cormackLehane)),
-              _field('Dispositivo', _orDash(_joinParts([record.airway.device, record.airway.tubeNumber]))),
-              _field('Técnica', _orDash(record.airway.technique)),
-              _field('Observações', _orDash(record.airway.observation)),
-              _field('Acessos venosos', _joinList(record.venousAccesses)),
-              _field('Acessos arteriais', _joinList(record.arterialAccesses)),
-              _field('Agulhas neuraxiais', _joinList(record.neuraxialNeedles)),
-              _field('Monitorização', _joinList(record.monitoringItems)),
-            ],
-          ),
-          _section(
-            'Técnica e medicações',
-            [
-              _field('Técnica anestésica', _orDash(record.anesthesiaTechnique)),
-              _field(
-                'Descrição da técnica',
-                _orDash(record.anesthesiaTechniqueDetails),
+            ),
+            _field(
+              'Peso',
+              _orDash(
+                record.patient.weightKg > 0
+                    ? '${record.patient.weightKg.toStringAsFixed(0)} kg'
+                    : '',
               ),
-              _field('Indução / drogas', _joinList(record.drugs)),
-              _field('Adjuvantes', _joinList(record.adjuncts)),
-              _field(
-                'Sedação associada',
-                _joinList(record.sedationMedications),
+            ),
+            _field(
+              'Altura',
+              _orDash(
+                record.patient.heightMeters > 0
+                    ? '${record.patient.heightMeters.toStringAsFixed(2).replaceAll('.', ',')} m'
+                    : '',
               ),
-              _field('Outras medicações', _joinList(record.otherMedications)),
-              _field('Drogas vasoativas', _joinList(record.vasoactiveDrugs)),
-              _field('Materiais e consumos', _joinList(record.anesthesiaMaterials)),
-            ],
-          ),
-          _section(
-            'Saída da anestesia',
-            [
-              _field('Status de extubação / saída', _orDash(record.emergenceStatus)),
-              _field('Condições e observações', _orDash(record.emergenceNotes)),
-              _field('Destino pós-operatório', _orDash(record.patientDestination)),
-            ],
-          ),
-          _section(
-            'Balanço hídrico',
-            [
-              _field('Cristaloides', _volume(record.fluidBalance.crystalloids)),
-              _field('Coloides', _volume(record.fluidBalance.colloids)),
-              _field('Sangue / derivados', _volume(record.fluidBalance.blood)),
-              _field('Diurese', _volume(record.fluidBalance.diuresis)),
-              _field('Sangramento', _volume(record.fluidBalance.bleeding)),
-              _field(
-                'Compressas',
-                record.fluidBalance.spongeCount.trim().isEmpty
-                    ? '--'
-                    : '${record.fluidBalance.spongeCount} un (~${record.fluidBalance.estimatedSpongeLoss.toStringAsFixed(0)} mL)',
+            ),
+            _field('ASA', _orDash(record.patient.asa)),
+            _field(
+              'Termo de Consentimento Informado para Anestesia',
+              _orDash(record.patient.informedConsentStatus),
+            ),
+            _field(
+              'Alergias',
+              _patientListValue(
+                record.patient.allergies,
+                markedNone: record.patient.allergiesMarkedNone,
               ),
-              _field('Outras perdas', _volume(record.fluidBalance.otherLosses)),
-              _field('Balanço total', record.fluidBalance.formattedBalance),
-            ],
-          ),
-          _section(
-            'Eventos e hemodinâmica',
-            [
-              _field('Marcadores hemodinâmicos', _joinHemodynamicMarkers(record)),
-            ],
-          ),
-          if (shouldIncludeHemodynamicChart(record))
-            _hemodynamicChart(record),
-          if (record.hemodynamicPoints.isNotEmpty)
-            _hemodynamicTable(record),
-          _section(
-            'Recuperação pós-anestésica / pós-cirúrgica',
-            [
-              _field(
-                'Horário de admissão',
-                _orDash(record.postAnesthesiaRecovery.admissionTime),
+            ),
+            _field(
+              'Restrições',
+              _patientListValue(
+                record.patient.restrictions,
+                markedNone: record.patient.restrictionsMarkedNone,
               ),
-              _field(
-                'Critérios de admissão',
-                _joinList(record.postAnesthesiaRecovery.admissionCriteria),
+            ),
+            _field(
+              'Medicações em uso',
+              _patientListValue(
+                record.patient.medications,
+                markedNone: record.patient.medicationsMarkedNone,
               ),
-              _field(
-                'Monitorização',
-                _joinList(record.postAnesthesiaRecovery.monitoringItems),
+            ),
+          ]),
+          _section('Ficha de anestesia', [
+            _field('Cirurgia', _orDash(record.surgeryDescription)),
+            _field('Prioridade', _orDash(record.surgeryPriority)),
+            _field(
+              'Cirurgião',
+              _formatTeamEntries(
+                record.surgeonName
+                    .split('\n')
+                    .map((item) => item.trim())
+                    .where((item) => item.isNotEmpty),
               ),
-              _field(
-                'Dor',
-                _orDash(record.postAnesthesiaRecovery.painScore),
+            ),
+            _field('Auxiliares', _formatTeamEntries(record.assistantNames)),
+            _field(
+              'Destino pós-operatório',
+              _orDash(record.patientDestination),
+            ),
+            _field('Outro destino', _orDash(record.otherPatientDestination)),
+            _field('Anotações operacionais', _orDash(record.operationalNotes)),
+            _field('Porte cirúrgico', _orDash(record.surgicalSize)),
+            _field(
+              'Time-out',
+              record.timeOutCompleted ? 'Concluído' : 'Pendente',
+            ),
+            _field('Checklist seguro', _joinList(record.safeSurgeryChecklist)),
+            _field('Checklist de time-out', _joinList(record.timeOutChecklist)),
+            _field('Jejum informado', _orDash(record.fastingHours)),
+            _field(
+              'Antibioticoprofilaxia',
+              _joinList(record.prophylacticAntibiotics),
+            ),
+          ]),
+          _section('Via aérea e monitorização', [
+            _field('Mallampati', _orDash(record.airway.mallampati)),
+            _field('Cormack-Lehane', _orDash(record.airway.cormackLehane)),
+            _field(
+              'Dispositivo',
+              _orDash(
+                _joinParts([record.airway.device, record.airway.tubeNumber]),
               ),
-              _field(
-                'Náusea / vômito',
-                _orDash(record.postAnesthesiaRecovery.nauseaScore),
+            ),
+            _field('Técnica', _orDash(record.airway.technique)),
+            _field('Observações', _orDash(record.airway.observation)),
+            _field('Acessos venosos', _joinList(record.venousAccesses)),
+            _field('Acessos arteriais', _joinList(record.arterialAccesses)),
+            _field('Agulhas neuraxiais', _joinList(record.neuraxialNeedles)),
+            _field('Monitorização', _joinList(record.monitoringItems)),
+          ]),
+          _section('Técnica e medicações', [
+            _field('Técnica anestésica', _orDash(record.anesthesiaTechnique)),
+            _field(
+              'Descrição da técnica',
+              _orDash(record.anesthesiaTechniqueDetails),
+            ),
+            _field('Indução / drogas', _joinList(record.drugs)),
+            _field('Adjuvantes', _joinList(record.adjuncts)),
+            _field('Sedação associada', _joinList(record.sedationMedications)),
+            _field('Outras medicações', _joinList(record.otherMedications)),
+            _field('Drogas vasoativas', _joinList(record.vasoactiveDrugs)),
+            _field(
+              'Materiais e consumos',
+              _joinList(record.anesthesiaMaterials),
+            ),
+          ]),
+          _section('Saída da anestesia', [
+            _field(
+              'Status de extubação / saída',
+              _orDash(record.emergenceStatus),
+            ),
+            _field('Condições e observações', _orDash(record.emergenceNotes)),
+            _field(
+              'Destino pós-operatório',
+              _orDash(record.patientDestination),
+            ),
+          ]),
+          _section('Balanço hídrico', [
+            _field('Cristaloides', _volume(record.fluidBalance.crystalloids)),
+            _field('Coloides', _volume(record.fluidBalance.colloids)),
+            _field('Sangue / derivados', _volume(record.fluidBalance.blood)),
+            _field('Diurese', _volume(record.fluidBalance.diuresis)),
+            _field('Sangramento', _volume(record.fluidBalance.bleeding)),
+            _field(
+              'Compressas',
+              record.fluidBalance.spongeCount.trim().isEmpty
+                  ? '--'
+                  : '${record.fluidBalance.spongeCount} un (~${record.fluidBalance.estimatedSpongeLoss.toStringAsFixed(0)} mL)',
+            ),
+            _field('Outras perdas', _volume(record.fluidBalance.otherLosses)),
+            _field('Balanço total', record.fluidBalance.formattedBalance),
+          ]),
+          _section('Eventos e hemodinâmica', [
+            _field('Marcadores hemodinâmicos', _joinHemodynamicMarkers(record)),
+          ]),
+          if (shouldIncludeHemodynamicChart(record)) _hemodynamicChart(record),
+          if (record.hemodynamicPoints.isNotEmpty) _hemodynamicTable(record),
+          _section('Recuperação pós-anestésica / pós-cirúrgica', [
+            _field(
+              'Horário de admissão',
+              _orDash(record.postAnesthesiaRecovery.admissionTime),
+            ),
+            _field(
+              'Critérios de admissão',
+              _joinList(record.postAnesthesiaRecovery.admissionCriteria),
+            ),
+            _field(
+              'Monitorização',
+              _joinList(record.postAnesthesiaRecovery.monitoringItems),
+            ),
+            _field('Dor', _orDash(record.postAnesthesiaRecovery.painScore)),
+            _field(
+              'Náusea / vômito',
+              _orDash(record.postAnesthesiaRecovery.nauseaScore),
+            ),
+            _field(
+              'Sedação',
+              _orDash(record.postAnesthesiaRecovery.sedationScale),
+            ),
+            _field(
+              'Temperatura',
+              _orDash(record.postAnesthesiaRecovery.temperature),
+            ),
+            _field(
+              'Aldrete',
+              record.postAnesthesiaRecovery.aldreteTotal == 0
+                  ? '--'
+                  : '${record.postAnesthesiaRecovery.aldreteTotal}/10',
+            ),
+            _field(
+              'Complicações na recuperação',
+              _joinList(record.postAnesthesiaRecovery.complications),
+            ),
+            _field(
+              'Intervenções',
+              _joinList(record.postAnesthesiaRecovery.interventions),
+            ),
+            _field(
+              'Critérios de alta',
+              _joinList(record.postAnesthesiaRecovery.dischargeCriteria),
+            ),
+            _field(
+              'Horário de alta',
+              _orDash(record.postAnesthesiaRecovery.dischargeTime),
+            ),
+            _field(
+              'Destino após recuperação',
+              _orDash(record.postAnesthesiaRecovery.destinationAfterRecovery),
+            ),
+            _field(
+              'Admissão / handoff',
+              _orDash(record.postAnesthesiaRecovery.admissionNotes),
+            ),
+            _field(
+              'Condições de alta / orientações',
+              _orDash(record.postAnesthesiaRecovery.dischargeNotes),
+            ),
+          ]),
+          _section('Responsável', [
+            _field(
+              'Anestesiologistas',
+              anesthesiologists.isEmpty ? '--' : anesthesiologists.join(' | '),
+            ),
+          ]),
+          _section('Pré-anestésico', [
+            _field(
+              'Comorbidades',
+              _joinList(record.preAnestheticAssessment.comorbidities),
+            ),
+            _field(
+              'Outras comorbidades',
+              _orDash(record.preAnestheticAssessment.otherComorbidities),
+            ),
+            _field(
+              'Capacidade funcional / reserva',
+              _orDash(record.preAnestheticAssessment.mets),
+            ),
+            _field(
+              'Exame físico',
+              _orDash(record.preAnestheticAssessment.physicalExam),
+            ),
+            _field(
+              'Prioridade do caso',
+              _orDash(record.preAnestheticAssessment.surgeryPriority),
+            ),
+            _field(
+              'Plano anestésico',
+              _orDash(record.preAnestheticAssessment.anestheticPlan),
+            ),
+            _field(
+              'Outros detalhes do plano',
+              _orDash(record.preAnestheticAssessment.otherAnestheticPlan),
+            ),
+            _field(
+              'Planejamento pós-operatório',
+              _joinList(
+                record.preAnestheticAssessment.postoperativePlanningItems,
               ),
-              _field(
-                'Sedação',
-                _orDash(record.postAnesthesiaRecovery.sedationScale),
+            ),
+            _field(
+              'Outras medidas pós-operatórias',
+              _orDash(
+                record.preAnestheticAssessment.otherPostoperativePlanning,
               ),
-              _field(
-                'Temperatura',
-                _orDash(record.postAnesthesiaRecovery.temperature),
-              ),
-              _field(
-                'Aldrete',
-                record.postAnesthesiaRecovery.aldreteTotal == 0
-                    ? '--'
-                    : '${record.postAnesthesiaRecovery.aldreteTotal}/10',
-              ),
-              _field(
-                'Complicações na recuperação',
-                _joinList(record.postAnesthesiaRecovery.complications),
-              ),
-              _field(
-                'Intervenções',
-                _joinList(record.postAnesthesiaRecovery.interventions),
-              ),
-              _field(
-                'Critérios de alta',
-                _joinList(record.postAnesthesiaRecovery.dischargeCriteria),
-              ),
-              _field(
-                'Horário de alta',
-                _orDash(record.postAnesthesiaRecovery.dischargeTime),
-              ),
-              _field(
-                'Destino após recuperação',
-                _orDash(record.postAnesthesiaRecovery.destinationAfterRecovery),
-              ),
-              _field(
-                'Admissão / handoff',
-                _orDash(record.postAnesthesiaRecovery.admissionNotes),
-              ),
-              _field(
-                'Condições de alta / orientações',
-                _orDash(record.postAnesthesiaRecovery.dischargeNotes),
-              ),
-            ],
-          ),
-          _section(
-            'Responsável',
-            [
-              _field(
-                'Anestesiologistas',
-                anesthesiologists.isEmpty ? '--' : anesthesiologists.join(' | '),
-              ),
-            ],
-          ),
-          _section(
-            'Pré-anestésico',
-            [
-              _field('Comorbidades', _joinList(record.preAnestheticAssessment.comorbidities)),
-              _field('Outras comorbidades', _orDash(record.preAnestheticAssessment.otherComorbidities)),
-              _field('Capacidade funcional / reserva', _orDash(record.preAnestheticAssessment.mets)),
-              _field('Exame físico', _orDash(record.preAnestheticAssessment.physicalExam)),
-              _field('Prioridade do caso', _orDash(record.preAnestheticAssessment.surgeryPriority)),
-              _field('Plano anestésico', _orDash(record.preAnestheticAssessment.anestheticPlan)),
-              _field('Outros detalhes do plano', _orDash(record.preAnestheticAssessment.otherAnestheticPlan)),
-              _field('Planejamento pós-operatório', _joinList(record.preAnestheticAssessment.postoperativePlanningItems)),
-              _field('Outras medidas pós-operatórias', _orDash(record.preAnestheticAssessment.otherPostoperativePlanning)),
-              _field('Anotações livres', _orDash(record.preAnestheticAssessment.planningNotes)),
-              _field('Jejum sólidos / fórmula / refeição', _orDash(record.preAnestheticAssessment.fastingSolids)),
-              _field('Jejum líquidos claros', _orDash(record.preAnestheticAssessment.fastingLiquids)),
-              _field('Jejum leite materno', _orDash(record.preAnestheticAssessment.fastingBreastMilk)),
-              _field('Observações do jejum', _orDash(record.preAnestheticAssessment.fastingNotes)),
-              _field('Exames complementares', _joinList(record.preAnestheticAssessment.complementaryExamItems)),
-              _field('Outros exames', _orDash(record.preAnestheticAssessment.complementaryExams)),
-            ],
-          ),
+            ),
+            _field(
+              'Anotações livres',
+              _orDash(record.preAnestheticAssessment.planningNotes),
+            ),
+            _field(
+              'Jejum sólidos / fórmula / refeição',
+              _orDash(record.preAnestheticAssessment.fastingSolids),
+            ),
+            _field(
+              'Jejum líquidos claros',
+              _orDash(record.preAnestheticAssessment.fastingLiquids),
+            ),
+            _field(
+              'Jejum leite materno',
+              _orDash(record.preAnestheticAssessment.fastingBreastMilk),
+            ),
+            _field(
+              'Observações do jejum',
+              _orDash(record.preAnestheticAssessment.fastingNotes),
+            ),
+            _field(
+              'Exames complementares',
+              _joinList(record.preAnestheticAssessment.complementaryExamItems),
+            ),
+            _field(
+              'Outros exames',
+              _orDash(record.preAnestheticAssessment.complementaryExams),
+            ),
+          ]),
         ],
       ),
     );
@@ -297,11 +381,11 @@ class ReportExportService {
     final baseName = record.patient.name.trim().isEmpty
         ? 'ficha_anestesia'
         : record.patient.name
-            .trim()
-            .toLowerCase()
-            .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
-            .replaceAll(RegExp(r'_+'), '_')
-            .replaceAll(RegExp(r'^_|_$'), '');
+              .trim()
+              .toLowerCase()
+              .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+              .replaceAll(RegExp(r'_+'), '_')
+              .replaceAll(RegExp(r'^_|_$'), '');
     final date = DateTime.now().toIso8601String().split('T').first;
     return '${baseName.isEmpty ? 'ficha_anestesia' : baseName}_$date.pdf';
   }
@@ -316,57 +400,103 @@ class ReportExportService {
       'identificacao': {
         'caso': caseId ?? 'Sem identificador',
         'status': status.label,
-        'paciente': record.patient.name.trim().isEmpty ? 'Sem identificação' : record.patient.name.trim(),
+        'paciente': record.patient.name.trim().isEmpty
+            ? 'Sem identificação'
+            : record.patient.name.trim(),
         'perfil': record.patient.population.label,
-        'idade': record.patient.age > 0 ? '${record.patient.age} anos' : 'Não informada',
-        'peso': record.patient.weightKg > 0 ? '${record.patient.weightKg.toStringAsFixed(0)} kg' : 'Não informado',
-        'altura': record.patient.heightMeters > 0 ? '${record.patient.heightMeters.toStringAsFixed(2).replaceAll('.', ',')} m' : 'Não informada',
+        'idade': record.patient.age > 0
+            ? '${record.patient.age} anos'
+            : 'Não informada',
+        'peso': record.patient.weightKg > 0
+            ? '${record.patient.weightKg.toStringAsFixed(0)} kg'
+            : 'Não informado',
+        'altura': record.patient.heightMeters > 0
+            ? '${record.patient.heightMeters.toStringAsFixed(2).replaceAll('.', ',')} m'
+            : 'Não informada',
         'asa': _orDash(record.patient.asa),
-        'termo_de_consentimento_informado_para_anestesia':
-            _orDash(record.patient.informedConsentStatus),
-        'alergias': record.patient.allergies.isEmpty ? 'Nenhuma registrada' : record.patient.allergies.join(', '),
-        'restricoes': record.patient.restrictions.isEmpty ? 'Nenhuma registrada' : record.patient.restrictions.join(', '),
-        'medicacoes_em_uso': record.patient.medications.isEmpty ? 'Nenhuma registrada' : record.patient.medications.join(', '),
+        'termo_de_consentimento_informado_para_anestesia': _orDash(
+          record.patient.informedConsentStatus,
+        ),
+        'alergias': _patientListValue(
+          record.patient.allergies,
+          markedNone: record.patient.allergiesMarkedNone,
+        ),
+        'restricoes': _patientListValue(
+          record.patient.restrictions,
+          markedNone: record.patient.restrictionsMarkedNone,
+        ),
+        'medicacoes_em_uso': _patientListValue(
+          record.patient.medications,
+          markedNone: record.patient.medicationsMarkedNone,
+        ),
       },
       'ficha_de_anestesia': {
         'cirurgia': _orDash(record.surgeryDescription),
         'prioridade': _orDash(record.surgeryPriority),
-        'cirurgiao': _orDash(record.surgeonName),
-        'auxiliares': record.assistantNames.isEmpty ? 'Não informados' : record.assistantNames.join(', '),
+        'cirurgiao': _formatTeamEntries(
+          record.surgeonName
+              .split('\n')
+              .map((item) => item.trim())
+              .where((item) => item.isNotEmpty),
+        ),
+        'auxiliares': _formatTeamEntries(record.assistantNames),
         'destino_pos_operatorio': _orDash(record.patientDestination),
         'outro_destino': _orDash(record.otherPatientDestination),
-        'chegada_ao_centro_cirurgico_e_anotacoes': _orDash(record.operationalNotes),
+        'chegada_ao_centro_cirurgico_e_anotacoes': _orDash(
+          record.operationalNotes,
+        ),
         'porte_cirurgico': _orDash(record.surgicalSize),
         'tecnica_anestesica': _orDash(record.anesthesiaTechnique),
-        'descricao_da_tecnica_anestesica':
-            _orDash(record.anesthesiaTechniqueDetails),
+        'descricao_da_tecnica_anestesica': _orDash(
+          record.anesthesiaTechniqueDetails,
+        ),
         'saida_da_anestesia': {
           'status': _orDash(record.emergenceStatus),
           'observacoes': _orDash(record.emergenceNotes),
         },
-        'antibioticoprofilaxia': record.prophylacticAntibiotics.isEmpty ? 'Não registrada' : record.prophylacticAntibiotics.join(' | '),
+        'antibioticoprofilaxia': record.prophylacticAntibiotics.isEmpty
+            ? 'Não registrada'
+            : record.prophylacticAntibiotics.join(' | '),
         'jejum_informado': _orDash(record.fastingHours),
         'via_aerea': {
           'mallampati': _orDash(record.airway.mallampati),
           'cormack_lehane': _orDash(record.airway.cormackLehane),
-          'dispositivo': _orDash(_joinParts([record.airway.device, record.airway.tubeNumber])),
+          'dispositivo': _orDash(
+            _joinParts([record.airway.device, record.airway.tubeNumber]),
+          ),
           'tecnica': _orDash(record.airway.technique),
           'observacoes': _orDash(record.airway.observation),
         },
         'acessos_e_monitorizacao': {
-          'acessos_venosos': record.venousAccesses.isEmpty ? 'Nenhum registrado' : record.venousAccesses.join(', '),
-          'acessos_arteriais': record.arterialAccesses.isEmpty ? 'Nenhum registrado' : record.arterialAccesses.join(', '),
-          'agulhas_neuraxiais': record.neuraxialNeedles.isEmpty ? 'Nenhuma registrada' : record.neuraxialNeedles.join(', '),
-          'monitorizacao': record.monitoringItems.isEmpty ? 'Nenhuma registrada' : record.monitoringItems.join(', '),
+          'acessos_venosos': record.venousAccesses.isEmpty
+              ? 'Nenhum registrado'
+              : record.venousAccesses.join(', '),
+          'acessos_arteriais': record.arterialAccesses.isEmpty
+              ? 'Nenhum registrado'
+              : record.arterialAccesses.join(', '),
+          'agulhas_neuraxiais': record.neuraxialNeedles.isEmpty
+              ? 'Nenhuma registrada'
+              : record.neuraxialNeedles.join(', '),
+          'monitorizacao': record.monitoringItems.isEmpty
+              ? 'Nenhuma registrada'
+              : record.monitoringItems.join(', '),
         },
         'medicacoes_intraoperatorias': {
-          'inducao': record.drugs.isEmpty ? 'Não registrada' : record.drugs.join(' | '),
-          'adjuvantes': record.adjuncts.isEmpty ? 'Não registrados' : record.adjuncts.join(' | '),
+          'inducao': record.drugs.isEmpty
+              ? 'Não registrada'
+              : record.drugs.join(' | '),
+          'adjuvantes': record.adjuncts.isEmpty
+              ? 'Não registrados'
+              : record.adjuncts.join(' | '),
           'sedacao_associada': record.sedationMedications.isEmpty
               ? 'Não registrada'
               : record.sedationMedications.join(' | '),
-          'outras_medicacoes': record.otherMedications.isEmpty ? 'Não registradas' : record.otherMedications.join(' | '),
-          'drogas_vasoativas': record.vasoactiveDrugs.isEmpty ? 'Não registradas' : record.vasoactiveDrugs.join(' | '),
+          'outras_medicacoes': record.otherMedications.isEmpty
+              ? 'Não registradas'
+              : record.otherMedications.join(' | '),
+          'drogas_vasoativas': record.vasoactiveDrugs.isEmpty
+              ? 'Não registradas'
+              : record.vasoactiveDrugs.join(' | '),
           'materiais_e_consumos': record.anesthesiaMaterials.isEmpty
               ? 'Não registrados'
               : record.anesthesiaMaterials.join(' | '),
@@ -381,10 +511,11 @@ class ReportExportService {
           'balanco_total': record.fluidBalance.formattedBalance,
         },
         'recuperacao_pos_anestesica': {
-          'horario_de_admissao':
-              _orDash(record.postAnesthesiaRecovery.admissionTime),
-          'criterios_de_admissao': record
-                  .postAnesthesiaRecovery.admissionCriteria.isEmpty
+          'horario_de_admissao': _orDash(
+            record.postAnesthesiaRecovery.admissionTime,
+          ),
+          'criterios_de_admissao':
+              record.postAnesthesiaRecovery.admissionCriteria.isEmpty
               ? 'Não registrados'
               : record.postAnesthesiaRecovery.admissionCriteria.join(', '),
           'monitorizacao': record.postAnesthesiaRecovery.monitoringItems.isEmpty
@@ -403,40 +534,76 @@ class ReportExportService {
           'intervencoes': record.postAnesthesiaRecovery.interventions.isEmpty
               ? 'Nenhuma registrada'
               : record.postAnesthesiaRecovery.interventions.join(', '),
-          'criterios_de_alta': record
-                  .postAnesthesiaRecovery.dischargeCriteria.isEmpty
+          'criterios_de_alta':
+              record.postAnesthesiaRecovery.dischargeCriteria.isEmpty
               ? 'Não registrados'
               : record.postAnesthesiaRecovery.dischargeCriteria.join(', '),
-          'horario_de_alta':
-              _orDash(record.postAnesthesiaRecovery.dischargeTime),
-          'destino_apos_recuperacao':
-              _orDash(record.postAnesthesiaRecovery.destinationAfterRecovery),
-          'anotacoes_de_admissao':
-              _orDash(record.postAnesthesiaRecovery.admissionNotes),
-          'anotacoes_de_alta':
-              _orDash(record.postAnesthesiaRecovery.dischargeNotes),
+          'horario_de_alta': _orDash(
+            record.postAnesthesiaRecovery.dischargeTime,
+          ),
+          'destino_apos_recuperacao': _orDash(
+            record.postAnesthesiaRecovery.destinationAfterRecovery,
+          ),
+          'anotacoes_de_admissao': _orDash(
+            record.postAnesthesiaRecovery.admissionNotes,
+          ),
+          'anotacoes_de_alta': _orDash(
+            record.postAnesthesiaRecovery.dischargeNotes,
+          ),
         },
         'time_out': record.timeOutCompleted ? 'Concluído' : 'Pendente',
       },
       'pre_anestesico': {
-        'comorbidades': record.preAnestheticAssessment.comorbidities.isEmpty ? 'Nenhuma registrada' : record.preAnestheticAssessment.comorbidities.join(', '),
-        'outras_comorbidades': _orDash(record.preAnestheticAssessment.otherComorbidities),
-        'capacidade_funcional_ou_reserva': _orDash(record.preAnestheticAssessment.mets),
+        'comorbidades': record.preAnestheticAssessment.comorbidities.isEmpty
+            ? 'Nenhuma registrada'
+            : record.preAnestheticAssessment.comorbidities.join(', '),
+        'outras_comorbidades': _orDash(
+          record.preAnestheticAssessment.otherComorbidities,
+        ),
+        'capacidade_funcional_ou_reserva': _orDash(
+          record.preAnestheticAssessment.mets,
+        ),
         'exame_fisico': _orDash(record.preAnestheticAssessment.physicalExam),
-        'prioridade_do_caso': _orDash(record.preAnestheticAssessment.surgeryPriority),
-        'plano_anestesico': _orDash(record.preAnestheticAssessment.anestheticPlan),
-        'outros_detalhes_do_plano': _orDash(record.preAnestheticAssessment.otherAnestheticPlan),
-        'planejamento_pos_operatorio': record.preAnestheticAssessment.postoperativePlanningItems.isEmpty ? 'Não registrado' : record.preAnestheticAssessment.postoperativePlanningItems.join(', '),
-        'outras_medidas_pos_operatorias': _orDash(record.preAnestheticAssessment.otherPostoperativePlanning),
-        'anotacoes_livres': _orDash(record.preAnestheticAssessment.planningNotes),
+        'prioridade_do_caso': _orDash(
+          record.preAnestheticAssessment.surgeryPriority,
+        ),
+        'plano_anestesico': _orDash(
+          record.preAnestheticAssessment.anestheticPlan,
+        ),
+        'outros_detalhes_do_plano': _orDash(
+          record.preAnestheticAssessment.otherAnestheticPlan,
+        ),
+        'planejamento_pos_operatorio':
+            record.preAnestheticAssessment.postoperativePlanningItems.isEmpty
+            ? 'Não registrado'
+            : record.preAnestheticAssessment.postoperativePlanningItems.join(
+                ', ',
+              ),
+        'outras_medidas_pos_operatorias': _orDash(
+          record.preAnestheticAssessment.otherPostoperativePlanning,
+        ),
+        'anotacoes_livres': _orDash(
+          record.preAnestheticAssessment.planningNotes,
+        ),
         'jejum': {
-          'solidos_formula_refeicao': _orDash(record.preAnestheticAssessment.fastingSolids),
-          'liquidos_claros': _orDash(record.preAnestheticAssessment.fastingLiquids),
-          'leite_materno': _orDash(record.preAnestheticAssessment.fastingBreastMilk),
+          'solidos_formula_refeicao': _orDash(
+            record.preAnestheticAssessment.fastingSolids,
+          ),
+          'liquidos_claros': _orDash(
+            record.preAnestheticAssessment.fastingLiquids,
+          ),
+          'leite_materno': _orDash(
+            record.preAnestheticAssessment.fastingBreastMilk,
+          ),
           'observacoes': _orDash(record.preAnestheticAssessment.fastingNotes),
         },
-        'exames_complementares': record.preAnestheticAssessment.complementaryExamItems.isEmpty ? 'Nenhum registrado' : record.preAnestheticAssessment.complementaryExamItems.join(', '),
-        'outros_exames': _orDash(record.preAnestheticAssessment.complementaryExams),
+        'exames_complementares':
+            record.preAnestheticAssessment.complementaryExamItems.isEmpty
+            ? 'Nenhum registrado'
+            : record.preAnestheticAssessment.complementaryExamItems.join(', '),
+        'outros_exames': _orDash(
+          record.preAnestheticAssessment.complementaryExams,
+        ),
       },
       'responsavel': {
         'anestesiologistas': anesthesiologists.isEmpty
@@ -475,17 +642,12 @@ class ReportExportService {
           pw.SizedBox(height: 6),
           pw.Text(
             patientName,
-            style: pw.TextStyle(
-              fontSize: 15,
-              fontWeight: pw.FontWeight.bold,
-            ),
+            style: pw.TextStyle(fontSize: 15, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 4),
           pw.Text('Status: $status'),
           if (caseId != null && caseId.isNotEmpty) pw.Text('Caso: $caseId'),
-          pw.Text(
-            'Gerado em ${_formatDateTime(generatedAt)}',
-          ),
+          pw.Text('Gerado em ${_formatDateTime(generatedAt)}'),
         ],
       ),
     );
@@ -496,10 +658,34 @@ class ReportExportService {
       ['ASA', _orDash(record.patient.asa)],
       ['Consentimento', _orDash(record.patient.informedConsentStatus)],
       ['Perfil', record.patient.population.label],
-      ['Idade', _orDash(record.patient.age > 0 ? '${record.patient.age} anos' : '')],
-      ['Peso', _orDash(record.patient.weightKg > 0 ? '${record.patient.weightKg.toStringAsFixed(0)} kg' : '')],
-      ['Altura', _orDash(record.patient.heightMeters > 0 ? '${record.patient.heightMeters.toStringAsFixed(2).replaceAll('.', ',')} m' : '')],
-      ['Status', _orDash(record.surgeryDescription.isNotEmpty ? 'Caso cirúrgico aberto' : 'Sem cirurgia informada')],
+      [
+        'Idade',
+        _orDash(record.patient.age > 0 ? '${record.patient.age} anos' : ''),
+      ],
+      [
+        'Peso',
+        _orDash(
+          record.patient.weightKg > 0
+              ? '${record.patient.weightKg.toStringAsFixed(0)} kg'
+              : '',
+        ),
+      ],
+      [
+        'Altura',
+        _orDash(
+          record.patient.heightMeters > 0
+              ? '${record.patient.heightMeters.toStringAsFixed(2).replaceAll('.', ',')} m'
+              : '',
+        ),
+      ],
+      [
+        'Status',
+        _orDash(
+          record.surgeryDescription.isNotEmpty
+              ? 'Caso cirúrgico aberto'
+              : 'Sem cirurgia informada',
+        ),
+      ],
     ];
 
     return pw.Container(
@@ -738,14 +924,20 @@ class ReportExportService {
       return hemoTop + hemoHeight - (clamped / 200) * hemoHeight;
     }
 
-    String pathFor(List<Map<String, double>> data, double Function(double) yMap) {
+    String pathFor(
+      List<Map<String, double>> data,
+      double Function(double) yMap,
+    ) {
       if (data.isEmpty) return '';
-      final sorted = [...data]..sort((a, b) => a['time']!.compareTo(b['time']!));
+      final sorted = [...data]
+        ..sort((a, b) => a['time']!.compareTo(b['time']!));
       final buffer = StringBuffer();
       for (var index = 0; index < sorted.length; index++) {
         final x = xForTime(sorted[index]['time']!);
         final y = yMap(sorted[index]['value']!);
-        buffer.write('${index == 0 ? 'M' : 'L'} ${x.toStringAsFixed(1)} ${y.toStringAsFixed(1)} ');
+        buffer.write(
+          '${index == 0 ? 'M' : 'L'} ${x.toStringAsFixed(1)} ${y.toStringAsFixed(1)} ',
+        );
       }
       return buffer.toString().trim();
     }
@@ -766,7 +958,8 @@ class ReportExportService {
       String color,
     ) {
       if (data.isEmpty) return '';
-      final sorted = [...data]..sort((a, b) => a['time']!.compareTo(b['time']!));
+      final sorted = [...data]
+        ..sort((a, b) => a['time']!.compareTo(b['time']!));
       final buffer = StringBuffer();
       for (final point in sorted) {
         final x = xForTime(point['time']!);
@@ -887,7 +1080,9 @@ class ReportExportService {
     final markers = StringBuffer();
     for (final marker in record.hemodynamicMarkers) {
       final x = xForTime(marker.time);
-      final color = marker.label == 'Início da anestesia' ? '#2b76d2' : '#169653';
+      final color = marker.label == 'Início da anestesia'
+          ? '#2b76d2'
+          : '#169653';
       final label = escapeSvgText(
         marker.clockTime.trim().isEmpty
             ? marker.label
@@ -953,13 +1148,19 @@ class ReportExportService {
   }
 
   static String _joinList(List<String> items) {
-    final cleaned = items.map((item) => item.trim()).where((item) => item.isNotEmpty).toList();
+    final cleaned = items
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
     if (cleaned.isEmpty) return '--';
     return cleaned.join(', ');
   }
 
   static String _joinParts(List<String> parts) {
-    final cleaned = parts.map((item) => item.trim()).where((item) => item.isNotEmpty).toList();
+    final cleaned = parts
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
     if (cleaned.isEmpty) return '';
     return cleaned.join(' ');
   }
@@ -994,13 +1195,13 @@ class ReportExportService {
     final pointMax = record.hemodynamicPoints.isEmpty
         ? 0.0
         : record.hemodynamicPoints
-            .map((item) => item.time)
-            .reduce((a, b) => a > b ? a : b);
+              .map((item) => item.time)
+              .reduce((a, b) => a > b ? a : b);
     final markerMax = record.hemodynamicMarkers.isEmpty
         ? 0.0
         : record.hemodynamicMarkers
-            .map((item) => item.time)
-            .reduce((a, b) => a > b ? a : b);
+              .map((item) => item.time)
+              .reduce((a, b) => a > b ? a : b);
     final maxValue = pointMax > markerMax ? pointMax : markerMax;
     if (maxValue <= 180) return 180;
     return (maxValue / 15).ceil() * 15.0;

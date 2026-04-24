@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../models/patient.dart';
+import '../utils/team_member_entry.dart';
 
 const _dialogSurfaceColor = Color(0xFFF3F6FC);
 const _dialogFieldBorderColor = Color(0xFFD5E4F7);
@@ -329,13 +330,42 @@ class _SelectionGridSectionState extends State<SelectionGridSection> {
 }
 
 class AnesthesiologistsDialog extends StatefulWidget {
-  const AnesthesiologistsDialog({super.key, required this.initialItems});
+  const AnesthesiologistsDialog({super.key, required this.initialItems})
+    : title = 'Anestesiologistas',
+      addButtonLabel = 'Adicionar anestesiologista',
+      emptyStateText = 'Nenhum anestesiologista adicionado.';
 
   final List<String> initialItems;
+  final String title;
+  final String addButtonLabel;
+  final String emptyStateText;
 
   @override
   State<AnesthesiologistsDialog> createState() =>
       _AnesthesiologistsDialogState();
+}
+
+class StructuredTeamMembersDialog extends AnesthesiologistsDialog {
+  const StructuredTeamMembersDialog({
+    super.key,
+    required super.initialItems,
+    required this.dialogTitle,
+    required this.dialogAddButtonLabel,
+    required this.dialogEmptyStateText,
+  });
+
+  final String dialogTitle;
+  final String dialogAddButtonLabel;
+  final String dialogEmptyStateText;
+
+  @override
+  String get title => dialogTitle;
+
+  @override
+  String get addButtonLabel => dialogAddButtonLabel;
+
+  @override
+  String get emptyStateText => dialogEmptyStateText;
 }
 
 class _AnesthesiologistsDialogState extends State<AnesthesiologistsDialog> {
@@ -367,7 +397,7 @@ class _AnesthesiologistsDialogState extends State<AnesthesiologistsDialog> {
     final details = _detailsController.text.trim();
     if (name.isEmpty && crm.isEmpty && details.isEmpty) return null;
     if (name.isEmpty) return null;
-    return '$name|$crm|$details';
+    return TeamMemberEntry(name: name, crm: crm, details: details).encode();
   }
 
   void _addDraft() {
@@ -389,7 +419,7 @@ class _AnesthesiologistsDialogState extends State<AnesthesiologistsDialog> {
       titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
       contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
       actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
-      title: const Text('Anestesiologistas', style: _dialogTitleStyle),
+      title: Text(widget.title, style: _dialogTitleStyle),
       content: SizedBox(
         width: 1120,
         child: SingleChildScrollView(
@@ -427,21 +457,15 @@ class _AnesthesiologistsDialogState extends State<AnesthesiologistsDialog> {
                   onPressed: _addDraft,
                   style: _dialogPrimaryButtonStyle(),
                   icon: const Icon(Icons.add),
-                  label: const Text('Adicionar anestesiologista'),
+                  label: Text(widget.addButtonLabel),
                 ),
               ),
               const SizedBox(height: 16),
-              if (_items.isEmpty)
-                _dialogEmptyState('Nenhum anestesiologista adicionado.'),
+              if (_items.isEmpty) _dialogEmptyState(widget.emptyStateText),
               ..._items.asMap().entries.map((entry) {
-                final parts = entry.value.split('|');
-                final title = parts.isNotEmpty ? parts.first : '';
-                final subtitle = [
-                  if (parts.length > 1 && parts[1].trim().isNotEmpty)
-                    'CRM ${parts[1].trim()}',
-                  if (parts.length > 2 && parts[2].trim().isNotEmpty)
-                    parts[2].trim(),
-                ].join(' • ');
+                final member = TeamMemberEntry.parse(entry.value);
+                final title = member.name;
+                final subtitle = member.subtitle;
                 return _dialogListTile(
                   title: title,
                   subtitle: subtitle.isEmpty ? null : subtitle,
@@ -808,6 +832,8 @@ class ListFieldDialog extends StatefulWidget {
     this.suggestions = const [],
     this.hintText,
     this.clearButtonLabel = 'Limpar',
+    this.initialMarkedNone = false,
+    this.supportsMarkedNone = false,
   });
 
   final String title;
@@ -816,6 +842,8 @@ class ListFieldDialog extends StatefulWidget {
   final List<String> suggestions;
   final String? hintText;
   final String clearButtonLabel;
+  final bool initialMarkedNone;
+  final bool supportsMarkedNone;
 
   @override
   State<ListFieldDialog> createState() => _ListFieldDialogState();
@@ -826,6 +854,7 @@ class _ListFieldDialogState extends State<ListFieldDialog> {
   late final TextEditingController _searchController;
   late Set<String> _selectedSuggestions;
   late List<String> _manualEntries;
+  late bool _markedNone;
   String _query = '';
 
   @override
@@ -839,6 +868,10 @@ class _ListFieldDialogState extends State<ListFieldDialog> {
         .map((item) => item.trim())
         .where((item) => item.isNotEmpty)
         .toList();
+    _markedNone =
+        widget.supportsMarkedNone &&
+        widget.initialMarkedNone &&
+        widget.initialItems.isEmpty;
     _controller = TextEditingController();
     _searchController = TextEditingController();
   }
@@ -863,6 +896,7 @@ class _ListFieldDialogState extends State<ListFieldDialog> {
     if (draftItems.isEmpty) return;
     setState(() {
       _manualEntries = [..._manualEntries, ...draftItems];
+      _markedNone = false;
       _controller.clear();
     });
   }
@@ -929,6 +963,7 @@ class _ListFieldDialogState extends State<ListFieldDialog> {
                                       _selectedSuggestions.remove(item);
                                     } else {
                                       _selectedSuggestions.add(item);
+                                      _markedNone = false;
                                     }
                                   });
                                 },
@@ -999,21 +1034,53 @@ class _ListFieldDialogState extends State<ListFieldDialog> {
         ),
         TextButton(
           style: _dialogSecondaryButtonStyle(),
-          onPressed: () => Navigator.of(context).pop(const <String>[]),
+          onPressed: () {
+            if (widget.supportsMarkedNone) {
+              Navigator.of(context).pop(
+                const ListFieldDialogResult(
+                  items: <String>[],
+                  markedNone: true,
+                ),
+              );
+              return;
+            }
+            Navigator.of(context).pop(const <String>[]);
+          },
           child: Text(widget.clearButtonLabel),
         ),
         FilledButton(
           style: _dialogPrimaryButtonStyle(
             padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
           ),
-          onPressed: () => Navigator.of(
-            context,
-          ).pop([..._selectedSuggestions, ..._manualEntries, ..._draftItems()]),
+          onPressed: () {
+            final items = [
+              ..._selectedSuggestions,
+              ..._manualEntries,
+              ..._draftItems(),
+            ];
+            if (widget.supportsMarkedNone) {
+              Navigator.of(context).pop(
+                ListFieldDialogResult(
+                  items: items,
+                  markedNone: _markedNone && items.isEmpty,
+                ),
+              );
+              return;
+            }
+            Navigator.of(context).pop(items);
+          },
           child: const Text('Salvar'),
         ),
       ],
     );
   }
+}
+
+class ListFieldDialogResult {
+  const ListFieldDialogResult({required this.items, required this.markedNone});
+
+  final List<String> items;
+  final bool markedNone;
 }
 
 class PatientIdentificationDialog extends StatefulWidget {
@@ -1067,6 +1134,9 @@ class _PatientIdentificationDialogState
   late Set<String> _selectedAllergies;
   late Set<String> _selectedRestrictions;
   late Set<String> _selectedMedications;
+  late bool _allergiesMarkedNone;
+  late bool _restrictionsMarkedNone;
+  late bool _medicationsMarkedNone;
   late String _selectedAsa;
   late PatientPopulation _selectedPopulation;
 
@@ -1137,6 +1207,9 @@ class _PatientIdentificationDialogState
     _selectedMedications = widget.initialPatient.medications
         .where(_commonMedications.contains)
         .toSet();
+    _allergiesMarkedNone = widget.initialPatient.allergiesMarkedNone;
+    _restrictionsMarkedNone = widget.initialPatient.restrictionsMarkedNone;
+    _medicationsMarkedNone = widget.initialPatient.medicationsMarkedNone;
     _selectedAsa = _asaOptions.contains(widget.initialPatient.asa)
         ? widget.initialPatient.asa
         : '';
@@ -1185,6 +1258,18 @@ class _PatientIdentificationDialogState
     if (items.isEmpty) return emptyLabel;
     if (items.length <= 2) return items.join(' • ');
     return '${items.take(2).join(' • ')} +${items.length - 2}';
+  }
+
+  String _statusSummaryForSelection(
+    List<String> items, {
+    required bool markedNone,
+    required String noneLabel,
+    required String unsetLabel,
+  }) {
+    if (items.isNotEmpty) {
+      return _summaryForSelection(items, emptyLabel: unsetLabel);
+    }
+    return markedNone ? noneLabel : unsetLabel;
   }
 
   Future<void> _editPopulation() async {
@@ -1238,9 +1323,12 @@ class _PatientIdentificationDialogState
     required List<String> suggestions,
     required Set<String> selectedItems,
     required TextEditingController controller,
+    required bool markedNone,
+    required ValueChanged<bool> onMarkedNoneChanged,
     String? hintText,
+    String clearButtonLabel = 'Limpar',
   }) async {
-    final result = await showDialog<List<String>>(
+    final result = await showDialog<ListFieldDialogResult>(
       context: context,
       builder: (_) => ListFieldDialog(
         title: title,
@@ -1248,7 +1336,9 @@ class _PatientIdentificationDialogState
         initialItems: _combinedItems(selectedItems, controller),
         suggestions: suggestions,
         hintText: hintText,
-        clearButtonLabel: title == 'Alergias' ? 'Sem alergias' : 'Limpar',
+        clearButtonLabel: clearButtonLabel,
+        initialMarkedNone: markedNone,
+        supportsMarkedNone: true,
       ),
     );
 
@@ -1256,10 +1346,11 @@ class _PatientIdentificationDialogState
     setState(() {
       selectedItems
         ..clear()
-        ..addAll(result.where(suggestions.contains));
-      controller.text = result
+        ..addAll(result.items.where(suggestions.contains));
+      controller.text = result.items
           .where((item) => !suggestions.contains(item))
           .join('\n');
+      onMarkedNoneChanged(result.markedNone);
     });
   }
 
@@ -1467,9 +1558,11 @@ class _PatientIdentificationDialogState
               const SizedBox(height: 12),
               _selectionButton(
                 label: 'Alergias',
-                value: _summaryForSelection(
+                value: _statusSummaryForSelection(
                   _combinedItems(_selectedAllergies, _allergiesController),
-                  emptyLabel: 'Nenhuma alergia registrada',
+                  markedNone: _allergiesMarkedNone,
+                  noneLabel: 'Nenhuma alergia registrada',
+                  unsetLabel: 'Não informado',
                 ),
                 onTap: () => _editListSelection(
                   title: 'Alergias',
@@ -1477,18 +1570,23 @@ class _PatientIdentificationDialogState
                   suggestions: _commonAllergies,
                   selectedItems: _selectedAllergies,
                   controller: _allergiesController,
+                  markedNone: _allergiesMarkedNone,
+                  onMarkedNoneChanged: (value) => _allergiesMarkedNone = value,
                   hintText: 'Uma alergia por linha',
+                  clearButtonLabel: 'Sem alergias',
                 ),
               ),
               const SizedBox(height: 12),
               _selectionButton(
                 label: 'Restrições',
-                value: _summaryForSelection(
+                value: _statusSummaryForSelection(
                   _combinedItems(
                     _selectedRestrictions,
                     _restrictionsController,
                   ),
-                  emptyLabel: 'Nenhuma restrição registrada',
+                  markedNone: _restrictionsMarkedNone,
+                  noneLabel: 'Nenhuma restrição registrada',
+                  unsetLabel: 'Não informado',
                 ),
                 onTap: () => _editListSelection(
                   title: 'Restrições',
@@ -1496,15 +1594,21 @@ class _PatientIdentificationDialogState
                   suggestions: _commonRestrictions,
                   selectedItems: _selectedRestrictions,
                   controller: _restrictionsController,
+                  markedNone: _restrictionsMarkedNone,
+                  onMarkedNoneChanged: (value) =>
+                      _restrictionsMarkedNone = value,
                   hintText: 'Uma restrição por linha',
+                  clearButtonLabel: 'Sem restrições',
                 ),
               ),
               const SizedBox(height: 12),
               _selectionButton(
                 label: 'Medicações em uso',
-                value: _summaryForSelection(
+                value: _statusSummaryForSelection(
                   _combinedItems(_selectedMedications, _medicationsController),
-                  emptyLabel: 'Nenhuma medicação registrada',
+                  markedNone: _medicationsMarkedNone,
+                  noneLabel: 'Nenhuma medicação registrada',
+                  unsetLabel: 'Não informado',
                 ),
                 onTap: () => _editListSelection(
                   title: 'Medicações em uso',
@@ -1512,7 +1616,11 @@ class _PatientIdentificationDialogState
                   suggestions: _commonMedications,
                   selectedItems: _selectedMedications,
                   controller: _medicationsController,
+                  markedNone: _medicationsMarkedNone,
+                  onMarkedNoneChanged: (value) =>
+                      _medicationsMarkedNone = value,
                   hintText: 'Uma medicação por linha',
+                  clearButtonLabel: 'Sem medicações',
                 ),
               ),
             ],
@@ -1560,14 +1668,32 @@ class _PatientIdentificationDialogState
                 ..._selectedAllergies,
                 ..._lines(_allergiesController.text),
               ],
+              allergiesMarkedNone:
+                  _allergiesMarkedNone &&
+                  _combinedItems(
+                    _selectedAllergies,
+                    _allergiesController,
+                  ).isEmpty,
               restrictions: [
                 ..._selectedRestrictions,
                 ..._lines(_restrictionsController.text),
               ],
+              restrictionsMarkedNone:
+                  _restrictionsMarkedNone &&
+                  _combinedItems(
+                    _selectedRestrictions,
+                    _restrictionsController,
+                  ).isEmpty,
               medications: [
                 ..._selectedMedications,
                 ..._lines(_medicationsController.text),
               ],
+              medicationsMarkedNone:
+                  _medicationsMarkedNone &&
+                  _combinedItems(
+                    _selectedMedications,
+                    _medicationsController,
+                  ).isEmpty,
               informedConsentStatus: _selectedInformedConsentStatus,
             ),
           ),

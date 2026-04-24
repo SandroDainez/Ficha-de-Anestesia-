@@ -281,4 +281,52 @@ void main() {
     expect(allergiesChip.color, UiColors.danger);
     expect(restrictionsChip.color, UiColors.danger);
   });
+
+  testWidgets(
+    'marks explicit none states in green for allergies restrictions and medications',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: AnesthesiaHeaderWidget(
+              patient: Patient(
+                name: 'Paciente teste',
+                age: 54,
+                weightKg: 78,
+                heightMeters: 1.7,
+                asa: 'II',
+                informedConsentStatus: 'Assinado',
+                allergies: [],
+                restrictions: [],
+                medications: [],
+                allergiesMarkedNone: true,
+                restrictionsMarkedNone: true,
+                medicationsMarkedNone: true,
+              ),
+              mallampati: 'II',
+              preAnestheticAssessment: PreAnestheticAssessment.empty(),
+            ),
+          ),
+        ),
+      );
+
+      final chips = tester.widgetList<ClinicalChip>(find.byType(ClinicalChip));
+      final allergiesChip = chips.firstWhere(
+        (chip) => chip.label == 'Alergias',
+      );
+      final restrictionsChip = chips.firstWhere(
+        (chip) => chip.label == 'Restrições',
+      );
+      final medicationsChip = chips.firstWhere(
+        (chip) => chip.label == 'Medicações',
+      );
+
+      expect(allergiesChip.color, UiColors.success);
+      expect(restrictionsChip.color, UiColors.success);
+      expect(medicationsChip.color, UiColors.success);
+      expect(allergiesChip.value, 'Nenhuma');
+      expect(restrictionsChip.value, 'Nenhuma');
+      expect(medicationsChip.value, 'Nenhuma');
+    },
+  );
 }

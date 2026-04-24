@@ -18,6 +18,7 @@ import '../services/hemodynamic_record_service.dart';
 import '../services/record_validation_service.dart';
 import '../services/record_storage_service.dart';
 import '../services/report_export_service.dart';
+import '../utils/team_member_entry.dart';
 import 'post_anesthesia_recovery_screen.dart';
 import 'pre_anesthetic_screen.dart';
 import '../widgets/anesthesia_basic_dialogs.dart';
@@ -2006,11 +2007,20 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   String get _displayAnesthesiologists {
-    if (_anesthesiologistEntries.isEmpty) return 'Toque para preencher';
-    return _anesthesiologistEntries
-        .map((item) => item.split('|').first.trim())
-        .where((item) => item.isNotEmpty)
-        .join(', ');
+    return _displayStructuredEntries(_anesthesiologistEntries);
+  }
+
+  String _displayStructuredEntries(
+    Iterable<String> items, {
+    String empty = 'Toque para preencher',
+  }) {
+    final normalized = items
+        .map(TeamMemberEntry.parse)
+        .map((item) => item.name)
+        .where((item) => item.trim().isNotEmpty)
+        .toList();
+    if (normalized.isEmpty) return empty;
+    return normalized.join(', ');
   }
 
   String _displayLineEntries(
@@ -2022,16 +2032,18 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return items.join(', ');
   }
 
+  String _displayStructuredLineEntries(
+    String value, {
+    String empty = 'Toque para preencher',
+  }) {
+    return _displayStructuredEntries(_lineItems(value), empty: empty);
+  }
+
   String _displayListEntries(
     List<String> items, {
     String empty = 'Toque para preencher',
   }) {
-    final normalized = items
-        .map((item) => item.trim())
-        .where((item) => item.isNotEmpty)
-        .toList();
-    if (normalized.isEmpty) return empty;
-    return normalized.join(', ');
+    return _displayStructuredEntries(items, empty: empty);
   }
 
   String? _findMaintenanceEntry(String name) {
@@ -3083,6 +3095,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     List<String>? allergies,
     List<String>? restrictions,
     List<String>? medications,
+    bool? allergiesMarkedNone,
+    bool? restrictionsMarkedNone,
+    bool? medicationsMarkedNone,
     String? informedConsentStatus,
     String? mallampati,
     PatientPopulation? population,
@@ -3101,6 +3116,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         allergies: allergies,
         restrictions: restrictions,
         medications: medications,
+        allergiesMarkedNone: allergiesMarkedNone,
+        restrictionsMarkedNone: restrictionsMarkedNone,
+        medicationsMarkedNone: medicationsMarkedNone,
         informedConsentStatus: informedConsentStatus,
         population: population,
         postnatalAgeDays: postnatalAgeDays,
@@ -4044,7 +4062,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Future<void> _editPatientAllergies() async {
-    final result = await showDialog<List<String>>(
+    final result = await showDialog<ListFieldDialogResult>(
       context: context,
       builder: (_) => ListFieldDialog(
         title: 'Alergias',
@@ -4053,15 +4071,20 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         suggestions: _commonAllergies,
         hintText: 'Uma alergia por linha',
         clearButtonLabel: 'Sem alergias',
+        initialMarkedNone: _record.patient.allergiesMarkedNone,
+        supportsMarkedNone: true,
       ),
     );
 
     if (result == null) return;
-    await _updatePatient(allergies: result);
+    await _updatePatient(
+      allergies: result.items,
+      allergiesMarkedNone: result.markedNone,
+    );
   }
 
   Future<void> _editPatientRestrictions() async {
-    final result = await showDialog<List<String>>(
+    final result = await showDialog<ListFieldDialogResult>(
       context: context,
       builder: (_) => ListFieldDialog(
         title: 'Restrições',
@@ -4069,15 +4092,21 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         initialItems: _record.patient.restrictions,
         suggestions: _profileRestrictionSuggestions,
         hintText: 'Uma restrição por linha',
+        clearButtonLabel: 'Sem restrições',
+        initialMarkedNone: _record.patient.restrictionsMarkedNone,
+        supportsMarkedNone: true,
       ),
     );
 
     if (result == null) return;
-    await _updatePatient(restrictions: result);
+    await _updatePatient(
+      restrictions: result.items,
+      restrictionsMarkedNone: result.markedNone,
+    );
   }
 
   Future<void> _editPatientMedications() async {
-    final result = await showDialog<List<String>>(
+    final result = await showDialog<ListFieldDialogResult>(
       context: context,
       builder: (_) => ListFieldDialog(
         title: 'Medicações em uso',
@@ -4085,11 +4114,17 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         initialItems: _record.patient.medications,
         suggestions: _profileMedicationSuggestions,
         hintText: 'Uma medicação por linha',
+        clearButtonLabel: 'Sem medicações',
+        initialMarkedNone: _record.patient.medicationsMarkedNone,
+        supportsMarkedNone: true,
       ),
     );
 
     if (result == null) return;
-    await _updatePatient(medications: result);
+    await _updatePatient(
+      medications: result.items,
+      medicationsMarkedNone: result.markedNone,
+    );
   }
 
   Future<void> _editViaAereaSection(AirwayEditSection section) async {
@@ -4443,11 +4478,10 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     if (section == SurgeryInfoSection.surgeon) {
       final result = await showDialog<List<String>>(
         context: context,
-        builder: (_) => NamedItemsDialog(
-          title: 'Cirurgiões',
-          label: 'Nome',
-          addButtonLabel: 'Adicionar cirurgião',
-          emptyStateText: 'Nenhum cirurgião adicionado.',
+        builder: (_) => StructuredTeamMembersDialog(
+          dialogTitle: 'Cirurgiões',
+          dialogAddButtonLabel: 'Adicionar cirurgião',
+          dialogEmptyStateText: 'Nenhum cirurgião adicionado.',
           initialItems: _lineItems(_record.surgeonName),
         ),
       );
@@ -4462,11 +4496,10 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     if (section == SurgeryInfoSection.assistants) {
       final result = await showDialog<List<String>>(
         context: context,
-        builder: (_) => NamedItemsDialog(
-          title: 'Auxiliares',
-          label: 'Nome',
-          addButtonLabel: 'Adicionar auxiliar',
-          emptyStateText: 'Nenhum auxiliar adicionado.',
+        builder: (_) => StructuredTeamMembersDialog(
+          dialogTitle: 'Auxiliares',
+          dialogAddButtonLabel: 'Adicionar auxiliar',
+          dialogEmptyStateText: 'Nenhum auxiliar adicionado.',
           initialItems: _record.assistantNames,
         ),
       );
@@ -4889,7 +4922,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             tapKey: const Key('surgery-surgeon-entry'),
             title: '3) Cirurgião',
             icon: Icons.person_outline,
-            value: _displayLineEntries(_record.surgeonName),
+            value: _displayStructuredLineEntries(_record.surgeonName),
             section: SurgeryInfoSection.surgeon,
             isCompleted: _record.surgeonName.trim().isNotEmpty,
           ),
@@ -5106,7 +5139,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         tapKey: const Key('surgery-surgeon-entry'),
         title: 'Cirurgião',
         icon: Icons.person_outline,
-        value: _valueOrPlaceholder(_record.surgeonName),
+        value: _displayStructuredLineEntries(_record.surgeonName),
         section: SurgeryInfoSection.surgeon,
         isCompleted: _record.surgeonName.trim().isNotEmpty,
       ),
@@ -5139,9 +5172,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         tapKey: const Key('surgery-assistants-entry'),
         title: 'Auxiliares',
         icon: Icons.groups_outlined,
-        value: _record.assistantNames.isEmpty
-            ? 'Toque para preencher'
-            : _record.assistantNames.join(', '),
+        value: _displayListEntries(_record.assistantNames),
         section: SurgeryInfoSection.assistants,
         isCompleted: _record.assistantNames.isNotEmpty,
       ),
@@ -5202,7 +5233,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           tapKey: const Key('surgery-surgeon-entry'),
           title: '3) Cirurgião',
           icon: Icons.person_outline,
-          value: _displayLineEntries(_record.surgeonName),
+          value: _displayStructuredLineEntries(_record.surgeonName),
           section: SurgeryInfoSection.surgeon,
           isCompleted: _record.surgeonName.trim().isNotEmpty,
         ),
@@ -5955,7 +5986,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         tapKey: const Key('surgery-surgeon-entry'),
         title: 'Cirurgião',
         icon: Icons.person_outline,
-        value: _multilineSummary(_record.surgeonName),
+        value: _displayStructuredLineEntries(_record.surgeonName),
         section: SurgeryInfoSection.surgeon,
         isCompleted: _record.surgeonName.trim().isNotEmpty,
       ),
@@ -5973,9 +6004,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         tapKey: const Key('surgery-assistants-entry'),
         title: 'Auxiliares',
         icon: Icons.groups_outlined,
-        value: _record.assistantNames.isEmpty
-            ? 'Toque para preencher'
-            : _record.assistantNames.join(', '),
+        value: _displayListEntries(_record.assistantNames),
         section: SurgeryInfoSection.assistants,
         isCompleted: _record.assistantNames.isNotEmpty,
       ),

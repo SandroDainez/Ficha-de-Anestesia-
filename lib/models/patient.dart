@@ -2,22 +2,22 @@ enum PatientPopulation { adult, pediatric, neonatal }
 
 extension PatientPopulationX on PatientPopulation {
   String get code => switch (this) {
-        PatientPopulation.adult => 'adult',
-        PatientPopulation.pediatric => 'pediatric',
-        PatientPopulation.neonatal => 'neonatal',
-      };
+    PatientPopulation.adult => 'adult',
+    PatientPopulation.pediatric => 'pediatric',
+    PatientPopulation.neonatal => 'neonatal',
+  };
 
   String get label => switch (this) {
-        PatientPopulation.adult => 'Adulto',
-        PatientPopulation.pediatric => 'Pediátrico',
-        PatientPopulation.neonatal => 'Neonatal',
-      };
+    PatientPopulation.adult => 'Adulto',
+    PatientPopulation.pediatric => 'Pediátrico',
+    PatientPopulation.neonatal => 'Neonatal',
+  };
 
   static PatientPopulation fromCode(String? code) => switch (code) {
-        'pediatric' => PatientPopulation.pediatric,
-        'neonatal' => PatientPopulation.neonatal,
-        _ => PatientPopulation.adult,
-      };
+    'pediatric' => PatientPopulation.pediatric,
+    'neonatal' => PatientPopulation.neonatal,
+    _ => PatientPopulation.adult,
+  };
 }
 
 class Patient {
@@ -36,23 +36,29 @@ class Patient {
     this.gestationalAgeWeeks = 0,
     this.correctedGestationalAgeWeeks = 0,
     this.birthWeightKg = 0,
+    this.allergiesMarkedNone = false,
+    this.restrictionsMarkedNone = false,
+    this.medicationsMarkedNone = false,
   });
 
   const Patient.empty()
-      : name = '',
-        age = 0,
-        weightKg = 0,
-        heightMeters = 0,
-        asa = '',
-        allergies = const [],
-        restrictions = const [],
-        medications = const [],
-        informedConsentStatus = '',
-        population = PatientPopulation.adult,
-        postnatalAgeDays = 0,
-        gestationalAgeWeeks = 0,
-        correctedGestationalAgeWeeks = 0,
-        birthWeightKg = 0;
+    : name = '',
+      age = 0,
+      weightKg = 0,
+      heightMeters = 0,
+      asa = '',
+      allergies = const [],
+      restrictions = const [],
+      medications = const [],
+      informedConsentStatus = '',
+      population = PatientPopulation.adult,
+      postnatalAgeDays = 0,
+      gestationalAgeWeeks = 0,
+      correctedGestationalAgeWeeks = 0,
+      birthWeightKg = 0,
+      allergiesMarkedNone = false,
+      restrictionsMarkedNone = false,
+      medicationsMarkedNone = false;
 
   final String name;
   final int age;
@@ -68,6 +74,9 @@ class Patient {
   final int gestationalAgeWeeks;
   final int correctedGestationalAgeWeeks;
   final double birthWeightKg;
+  final bool allergiesMarkedNone;
+  final bool restrictionsMarkedNone;
+  final bool medicationsMarkedNone;
 
   Patient copyWith({
     String? name,
@@ -84,6 +93,9 @@ class Patient {
     int? gestationalAgeWeeks,
     int? correctedGestationalAgeWeeks,
     double? birthWeightKg,
+    bool? allergiesMarkedNone,
+    bool? restrictionsMarkedNone,
+    bool? medicationsMarkedNone,
   }) {
     return Patient(
       name: name ?? this.name,
@@ -102,6 +114,11 @@ class Patient {
       correctedGestationalAgeWeeks:
           correctedGestationalAgeWeeks ?? this.correctedGestationalAgeWeeks,
       birthWeightKg: birthWeightKg ?? this.birthWeightKg,
+      allergiesMarkedNone: allergiesMarkedNone ?? this.allergiesMarkedNone,
+      restrictionsMarkedNone:
+          restrictionsMarkedNone ?? this.restrictionsMarkedNone,
+      medicationsMarkedNone:
+          medicationsMarkedNone ?? this.medicationsMarkedNone,
     );
   }
 
@@ -121,6 +138,9 @@ class Patient {
       'gestationalAgeWeeks': gestationalAgeWeeks,
       'correctedGestationalAgeWeeks': correctedGestationalAgeWeeks,
       'birthWeightKg': birthWeightKg,
+      'allergiesMarkedNone': allergiesMarkedNone,
+      'restrictionsMarkedNone': restrictionsMarkedNone,
+      'medicationsMarkedNone': medicationsMarkedNone,
     };
   }
 
@@ -147,6 +167,9 @@ class Patient {
       correctedGestationalAgeWeeks:
           json['correctedGestationalAgeWeeks'] as int? ?? 0,
       birthWeightKg: (json['birthWeightKg'] as num? ?? 0).toDouble(),
+      allergiesMarkedNone: json['allergiesMarkedNone'] as bool? ?? false,
+      restrictionsMarkedNone: json['restrictionsMarkedNone'] as bool? ?? false,
+      medicationsMarkedNone: json['medicationsMarkedNone'] as bool? ?? false,
     );
   }
 }

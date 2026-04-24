@@ -472,25 +472,28 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
                   ),
                 ClinicalChip(
                   label: 'Alergias',
-                  value: patient.allergies.isEmpty
-                      ? 'Nenhuma'
-                      : patient.allergies.join(', '),
+                  value: _patientListValue(
+                    patient.allergies,
+                    markedNone: patient.allergiesMarkedNone,
+                  ),
                   color: _allergiesColor(patient),
                   onTap: onAllergiesTap,
                 ),
                 ClinicalChip(
                   label: 'Restrições',
-                  value: patient.restrictions.isEmpty
-                      ? 'Nenhuma'
-                      : patient.restrictions.join(', '),
+                  value: _patientListValue(
+                    patient.restrictions,
+                    markedNone: patient.restrictionsMarkedNone,
+                  ),
                   color: _restrictionsColor(patient),
                   onTap: onRestrictionsTap,
                 ),
                 ClinicalChip(
                   label: 'Medicações',
-                  value: patient.medications.isEmpty
-                      ? 'Nenhuma'
-                      : patient.medications.join(', '),
+                  value: _patientListValue(
+                    patient.medications,
+                    markedNone: patient.medicationsMarkedNone,
+                  ),
                   color: _medicationsColor(patient),
                   onTap: onMedicationsTap,
                 ),
@@ -689,15 +692,28 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
   }
 
   static Color _allergiesColor(Patient patient) {
-    return patient.allergies.isEmpty ? UiColors.info : UiColors.danger;
+    if (patient.allergies.isNotEmpty) return UiColors.danger;
+    return patient.allergiesMarkedNone ? UiColors.success : UiColors.info;
   }
 
   static Color _restrictionsColor(Patient patient) {
-    return patient.restrictions.isEmpty ? UiColors.info : UiColors.danger;
+    if (patient.restrictions.isNotEmpty) return UiColors.danger;
+    return patient.restrictionsMarkedNone ? UiColors.success : UiColors.info;
   }
 
   static Color _medicationsColor(Patient patient) {
-    return patient.medications.isEmpty ? UiColors.warning : UiColors.success;
+    if (patient.medications.isNotEmpty || patient.medicationsMarkedNone) {
+      return UiColors.success;
+    }
+    return UiColors.warning;
+  }
+
+  static String _patientListValue(
+    List<String> items, {
+    required bool markedNone,
+  }) {
+    if (items.isNotEmpty) return items.join(', ');
+    return markedNone ? 'Nenhuma' : 'Não informado';
   }
 }
 

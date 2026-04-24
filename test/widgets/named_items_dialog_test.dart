@@ -114,11 +114,10 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: NamedItemsDialog(
-            title: 'Auxiliares',
-            label: 'Nome',
-            addButtonLabel: 'Adicionar auxiliar',
-            emptyStateText: 'Nenhum auxiliar adicionado.',
+          body: StructuredTeamMembersDialog(
+            dialogTitle: 'Auxiliares',
+            dialogAddButtonLabel: 'Adicionar auxiliar',
+            dialogEmptyStateText: 'Nenhum auxiliar adicionado.',
             initialItems: [],
           ),
         ),
@@ -126,6 +125,8 @@ void main() {
     );
 
     expect(find.text('Nome'), findsOneWidget);
+    expect(find.text('CRM'), findsOneWidget);
+    expect(find.text('Dados complementares'), findsOneWidget);
     expect(find.text('Nenhum auxiliar adicionado.'), findsOneWidget);
   });
 }
