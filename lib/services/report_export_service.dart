@@ -771,8 +771,27 @@ class ReportExportService {
       for (final point in sorted) {
         final x = xForTime(point['time']!);
         final y = yMap(point['value']!);
+        final valueLabel = point['value']!.round().toString();
         final xText = x.toStringAsFixed(1);
         final yText = y.toStringAsFixed(1);
+        final labelDx = switch (type) {
+          'PAS' => 12.0,
+          'PAD' => 12.0,
+          'FC' => 10.0,
+          'PAM' => 12.0,
+          'SpO2' => 16.0,
+          'PAI' => 16.0,
+          _ => 10.0,
+        };
+        final labelDy = switch (type) {
+          'PAS' => -10.0,
+          'PAD' => 14.0,
+          'FC' => -10.0,
+          'PAM' => -12.0,
+          'SpO2' => -8.0,
+          'PAI' => -16.0,
+          _ => -10.0,
+        };
         switch (type) {
           case 'PAS':
             buffer.writeln(
@@ -808,6 +827,9 @@ class ReportExportService {
             );
             break;
         }
+        buffer.writeln(
+          "<text x='${(x + labelDx).toStringAsFixed(1)}' y='${(y + labelDy).toStringAsFixed(1)}' font-size='10' font-weight='700' fill='$color'>$valueLabel</text>",
+        );
       }
       return buffer.toString();
     }
