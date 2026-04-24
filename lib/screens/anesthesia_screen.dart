@@ -193,6 +193,24 @@ class _VentilationSuggestion {
   final MechanicalVentilationSettings settings;
 }
 
+class _EmergenceDialogResult {
+  const _EmergenceDialogResult({
+    required this.status,
+    required this.notes,
+  });
+
+  final String status;
+  final String notes;
+}
+
+double _bodyMassIndex({
+  required double weightKg,
+  required double heightMeters,
+}) {
+  if (weightKg <= 0 || heightMeters <= 0) return 0;
+  return weightKg / (heightMeters * heightMeters);
+}
+
 bool _isEncodedLossEntry(String entry) => entry.startsWith('__LOSS__|');
 
 _LossEntry? _decodeEncodedLossEntry(String entry) {
@@ -936,11 +954,15 @@ class AnesthesiaScreen extends StatefulWidget {
 
 class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   static const Color _surgeryRowColor = Color(0xFF5A6F86);
-  static const Color _timeoutRowColor = Color(0xFFB07A1E);
-  static const Color _accessRowColor = Color(0xFF2B76D2);
-  static const Color _techniqueRowColor = Color(0xFF8A5DD3);
-  static const Color _medicationsRowColor = Color(0xFFAF5A7A);
-  static const Color _airwayFluidRowColor = Color(0xFF168B79);
+  static const Color _preInductionPhaseColor = Color(0xFF2B76D2);
+  static const Color _inductionPhaseColor = Color(0xFF8A5DD3);
+  static const Color _maintenancePhaseColor = Color(0xFF168B79);
+  static const Color _emergencePhaseColor = Color(0xFF5A6F86);
+  static const Color _timeoutRowColor = _preInductionPhaseColor;
+  static const Color _accessRowColor = _preInductionPhaseColor;
+  static const Color _techniqueRowColor = _inductionPhaseColor;
+  static const Color _medicationsRowColor = _maintenancePhaseColor;
+  static const Color _airwayFluidRowColor = _inductionPhaseColor;
   static const List<_QuickChoiceOption> _adultFunctionalOptions = [
     _QuickChoiceOption(
       value: '1 MET',
@@ -2030,10 +2052,31 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     }
   }
 
+  String _formatHeightCentimeters(double heightMeters) {
+    if (heightMeters <= 0) return '';
+    return (heightMeters * 100).toStringAsFixed(0);
+  }
+
+  double _adultVentilationReferenceWeightKg() {
+    final patient = _record.patient;
+    if (patient.weightKg > 0 && patient.heightMeters > 0) {
+      return _adultReferenceWeightKg(
+        actualWeightKg: patient.weightKg,
+        heightMeters: patient.heightMeters,
+      );
+    }
+    if (patient.weightKg > 0) return patient.weightKg;
+    if (patient.heightMeters > 0) {
+      return 25 * patient.heightMeters * patient.heightMeters;
+    }
+    return 70;
+  }
+
   _VentilationSuggestion get _suggestedMechanicalVentilation {
-    final weightKg = _record.patient.weightKg > 0
-        ? _record.patient.weightKg
-        : _record.patient.birthWeightKg;
+    final patient = _record.patient;
+    final weightKg = patient.weightKg > 0
+        ? patient.weightKg
+        : patient.birthWeightKg;
     final hasLaparoscopy = _record.surgeryDescription.toLowerCase().contains(
       'lapar',
     );
@@ -2045,59 +2088,104 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         _record.preAnestheticAssessment.otherDifficultVentilationPredictors
             .trim()
             .isNotEmpty;
+    final bodyMassIndex = _bodyMassIndex(
+      weightKg: patient.weightKg,
+      heightMeters: patient.heightMeters,
+    );
+    final hasObesity = bodyMassIndex >= 30;
+    final hasSevereObesity = bodyMassIndex >= 35;
 
-    switch (_record.patient.population) {
+    switch (patient.population) {
       case PatientPopulation.adult:
-        final mode = hasLaparoscopy || hasDifficultVentilationRisk
+        final referenceWeightKg = _adultVentilationReferenceWeightKg();
+        final vtPerKg = hasSevereObesity || hasLaparoscopy ? 6.0 : 6.5;
+        final vtMl = _roundedPositiveInt(referenceWeightKg * vtPerKg);
+        final mode = hasLaparoscopy || hasDifficultVentilationRisk || hasObesity
             ? 'PCV-VG'
             : 'VCV';
-        final vtPerKg = 7.0;
-        final vtMl = weightKg > 0 ? _roundedPositiveInt(weightKg * vtPerKg) : 0;
+        final respiratoryRate =
+            _suggestedRespiratoryRate() +
+            (hasLaparoscopy ? 2 : 0) +
+            (hasSevereObesity ? 2 : 0);
+        final peep = hasSevereObesity
+            ? '8'
+            : hasLaparoscopy || hasObesity
+            ? '6'
+            : '5';
+        final fio2 = hasSevereObesity
+            ? '60'
+            : hasLaparoscopy || hasDifficultVentilationRisk
+            ? '50'
+            : '40';
+        final basis = <String>[
+          if (patient.weightKg > 0)
+            'peso ${_formatVentilationNumber(patient.weightKg)} kg',
+          if (patient.heightMeters > 0)
+            'altura ${_formatHeightCentimeters(patient.heightMeters)} cm',
+          if (hasObesity && patient.heightMeters > 0)
+            'VT calculado pelo peso de referência ${_formatVentilationNumber(referenceWeightKg)} kg',
+        ];
         return _VentilationSuggestion(
-          reason: _suggestsControlledVentilation
-              ? 'Via aérea avançada ou bloqueador neuromuscular sugerem ventilação controlada protetora.'
-              : 'Na anestesia geral, deixar um plano ventilatório explícito ajuda a condução e revisão do caso.',
+          reason: [
+            if (_suggestsControlledVentilation)
+              'Via aérea avançada ou bloqueador neuromuscular favorecem ventilação controlada protetora.'
+            else
+              'Plano ventilatório inicial ajustado ao biotipo e ao contexto do caso.',
+            if (basis.isNotEmpty) 'Base: ${basis.join(' • ')}.',
+            if (hasLaparoscopy)
+              'Laparoscopia pede PEEP e FR um pouco mais altas para manter recrutamento e ETCO₂.',
+          ].join(' '),
           settings: MechanicalVentilationSettings(
             mode: mode,
-            fio2Percent: '50',
+            fio2Percent: fio2,
             tidalVolumeMl: vtMl > 0 ? '$vtMl' : '',
             tidalVolumePerKg: _formatVentilationNumber(vtPerKg),
-            respiratoryRate: '${_suggestedRespiratoryRate()}',
-            peep: '5',
+            respiratoryRate: '$respiratoryRate',
+            peep: peep,
             ieRatio: '1:2',
             targetEtco2: '35-40',
             notes: mode == 'PCV-VG'
-                ? 'Ajustar para manter VT ~6-8 mL/kg, pressão de platô baixa e ETCO₂ alvo.'
-                : 'Estratégia protetora intraoperatória: VT ~6-8 mL/kg e PEEP basal.',
+                ? 'Ajustar pressão/volume para manter VT protetor, driving pressure baixa e ETCO₂ na meta.'
+                : 'Estratégia protetora intraoperatória com VT baixo, PEEP titulada e revisão seriada da complacência.',
           ),
         );
       case PatientPopulation.pediatric:
         final mode = hasLaparoscopy ? 'PCV-VG' : 'PCV';
-        final vtPerKg = 7.0;
+        final vtPerKg = patient.weightKg >= 30 ? 6.0 : 6.5;
         final vtMl = weightKg > 0 ? _roundedPositiveInt(weightKg * vtPerKg) : 0;
+        final peep = hasLaparoscopy ? '6' : '5';
+        final fio2 = hasLaparoscopy ? '50' : '40';
         return _VentilationSuggestion(
-          reason:
-              'Em pediatria, costuma ser útil começar com estratégia protetora e ajuste fino por complacência, escape e ETCO₂.',
+          reason: [
+            'Em pediatria, o plano inicial deve acompanhar peso, complacência, escape e ETCO₂.',
+            if (weightKg > 0)
+              'Base: peso ${_formatVentilationNumber(weightKg)} kg.',
+            if (hasLaparoscopy)
+              'Laparoscopia pede um pouco mais de PEEP e vigilância maior do CO₂.',
+          ].join(' '),
           settings: MechanicalVentilationSettings(
             mode: mode,
-            fio2Percent: '50',
+            fio2Percent: fio2,
             tidalVolumeMl: vtMl > 0 ? '$vtMl' : '',
             tidalVolumePerKg: _formatVentilationNumber(vtPerKg),
             respiratoryRate: '${_suggestedRespiratoryRate()}',
-            peep: '5',
+            peep: peep,
             inspiratoryPressure: '14',
             ieRatio: '1:2',
             targetEtco2: '35-40',
             notes:
-                'Titular pressão e FR para manter VT ~6-8 mL/kg e ETCO₂ adequado.',
+                'Titular pressão e FR para manter VT protetor, menor escape possível e ETCO₂ adequado à idade.',
           ),
         );
       case PatientPopulation.neonatal:
         final vtPerKg = 5.0;
         final vtMl = weightKg > 0 ? _roundedPositiveInt(weightKg * vtPerKg) : 0;
         return _VentilationSuggestion(
-          reason:
-              'No neonato, preferir ventilação com pressões e volumes baixos, com atenção ao escape, complacência e ETCO₂.',
+          reason: [
+            'No neonato, priorizar pressões e volumes baixos, com atenção a escape, complacência e ETCO₂.',
+            if (weightKg > 0)
+              'Base: peso ${_formatVentilationNumber(weightKg)} kg.',
+          ].join(' '),
           settings: MechanicalVentilationSettings(
             mode: 'PCV',
             fio2Percent: '30',
@@ -3914,6 +4002,25 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     await _persistRecord();
   }
 
+  Future<void> _editEmergence() async {
+    final result = await showDialog<_EmergenceDialogResult>(
+      context: context,
+      builder: (_) => _EmergenceDialog(
+        initialStatus: _record.emergenceStatus,
+        initialNotes: _record.emergenceNotes,
+        patientDestination: _displayPatientDestination,
+      ),
+    );
+    if (result == null) return;
+    setState(() {
+      _record = _record.copyWith(
+        emergenceStatus: result.status,
+        emergenceNotes: result.notes,
+      );
+    });
+    await _persistRecord();
+  }
+
   Future<void> _editReposicaoVolemica() async {
     final inferredSurgicalSize = _inferSurgicalSizeFromDescription();
     final result = await showDialog<FluidBalanceDialogResult>(
@@ -4609,20 +4716,42 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        _buildEqualWidthTripletRow(
-          first: _buildAntibioticProphylaxisCard(),
-          second: _buildVenousAccessCard(),
-          third: _buildArterialAccessCard(),
+        _buildPhaseGroup(
+          title: 'Antes De Anestesiar',
+          subtitle:
+              'Preparação da sala, profilaxia, monitorização, acessos e time-out antes de iniciar a anestesia',
+          accent: _preInductionPhaseColor,
+          cards: _buildPreInductionCards(),
         ),
         const SizedBox(height: 14),
-        _buildOperationalCardGrid(
-          _buildTechniqueAwareOperationalCards().skip(3).toList(),
+        _buildPhaseGroup(
+          title: 'Anestesia Em Curso',
+          subtitle:
+              'Técnica, bloqueios, via aérea, ventilação e passos iniciais da anestesia conforme o contexto clínico',
+          accent: _inductionPhaseColor,
+          cards: _buildInductionAndConductionCards(),
+        ),
+        const SizedBox(height: 14),
+        _buildPhaseGroup(
+          title: 'Suporte Intraoperatório',
+          subtitle:
+              'Manutenção anestésica, vasoativos, medicações, balanço e materiais durante o procedimento',
+          accent: _maintenancePhaseColor,
+          cards: _buildMaintenanceCards(),
+        ),
+        const SizedBox(height: 14),
+        _buildPhaseGroup(
+          title: 'Despertar E Encaminhamento',
+          subtitle:
+              'Extubação ou saída ventilada, encaminhamento pós-operatório e consolidado final do caso',
+          accent: _emergencePhaseColor,
+          cards: _buildEmergenceAndDispositionCards(),
         ),
         const SizedBox(height: 14),
         _buildSectionHeader(
           title: 'Registro Intraoperatório',
           subtitle: 'Área principal fixa para condução hemodinâmica e eventos',
-          accent: const Color(0xFF2B76D2),
+          accent: _maintenancePhaseColor,
         ),
         const SizedBox(height: 10),
         _buildChartSection(dominant: true),
@@ -4658,23 +4787,25 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
 
   List<Widget> _buildTechniqueAwareOperationalCards() {
     return [
+      _buildPreparationCard(),
       _buildAntibioticProphylaxisCard(),
+      _buildMonitoringCard(),
       _buildVenousAccessCard(),
       _buildArterialAccessCard(),
-      _buildMonitoringCard(),
       _buildTimeOutCard(),
       if (_showsSedationWorkflowCard) _buildTechniqueCard(),
+      if (_showsNeuraxialWorkflowCard) _buildNeuraxialNeedlesCard(),
       if (_showsGeneralWorkflowCards) _buildDrugsCard(),
       _buildAdjunctsCard(),
-      if (_showsNeuraxialWorkflowCard) _buildNeuraxialNeedlesCard(),
       if (_showsGeneralWorkflowCards) _buildAirwayCard(),
       if (_showsMechanicalVentilationCard) _buildMechanicalVentilationCard(),
       if (_showsGeneralWorkflowCards) _buildMaintenanceCard(),
       _buildVasoactiveDrugsCard(),
       _buildOtherMedicationsCard(),
-      _buildAnesthesiaMaterialsCard(),
       _buildVolumeReplacementCard(),
       _buildFluidBalanceCard(),
+      _buildAnesthesiaMaterialsCard(),
+      _buildEmergenceCard(),
       _buildSurgerySummaryCard(
         key: const Key('surgery-destination-card'),
         tapKey: const Key('surgery-destination-entry'),
@@ -4686,6 +4817,75 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       ),
       _buildUsageSummaryCard(),
     ];
+  }
+
+  List<Widget> _buildPreInductionCards() {
+    return [
+      _buildPreparationCard(),
+      _buildAntibioticProphylaxisCard(),
+      _buildMonitoringCard(),
+      _buildVenousAccessCard(),
+      _buildArterialAccessCard(),
+      _buildTimeOutCard(),
+    ];
+  }
+
+  List<Widget> _buildInductionAndConductionCards() {
+    return [
+      if (_showsSedationWorkflowCard) _buildTechniqueCard(),
+      if (_showsNeuraxialWorkflowCard) _buildNeuraxialNeedlesCard(),
+      if (_showsGeneralWorkflowCards) _buildDrugsCard(),
+      _buildAdjunctsCard(),
+      if (_showsGeneralWorkflowCards) _buildAirwayCard(),
+      if (_showsMechanicalVentilationCard) _buildMechanicalVentilationCard(),
+    ];
+  }
+
+  List<Widget> _buildMaintenanceCards() {
+    return [
+      if (_showsGeneralWorkflowCards) _buildMaintenanceCard(),
+      _buildVasoactiveDrugsCard(),
+      _buildOtherMedicationsCard(),
+      _buildVolumeReplacementCard(),
+      _buildFluidBalanceCard(),
+      _buildAnesthesiaMaterialsCard(),
+    ];
+  }
+
+  List<Widget> _buildEmergenceAndDispositionCards() {
+    return [
+      _buildEmergenceCard(),
+      _buildSurgerySummaryCard(
+        key: const Key('surgery-destination-card'),
+        tapKey: const Key('surgery-destination-entry'),
+        title: '22) Destino pós-operatório',
+        icon: Icons.local_hospital_outlined,
+        value: _displayPatientDestination,
+        section: SurgeryInfoSection.destination,
+        isCompleted: _record.patientDestination.trim().isNotEmpty,
+      ),
+      _buildUsageSummaryCard(),
+    ];
+  }
+
+  Widget _buildPhaseGroup({
+    required String title,
+    required String subtitle,
+    required Color accent,
+    required List<Widget> cards,
+  }) {
+    if (cards.isEmpty) return const SizedBox.shrink();
+    return Column(
+      children: [
+        _buildSectionHeader(
+          title: title,
+          subtitle: subtitle,
+          accent: accent,
+        ),
+        const SizedBox(height: 10),
+        _buildOperationalCardGrid(cards),
+      ],
+    );
   }
 
   Widget _buildOperationalCardGrid(List<Widget> cards) {
@@ -4804,8 +5004,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Widget _buildMobileOverview() {
-    final operationalCards = _buildTechniqueAwareOperationalCards();
-
     return Column(
       children: [
         _buildSurgerySummaryCard(
@@ -4867,7 +5065,38 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           section: SurgeryInfoSection.notes,
           isCompleted: _record.operationalNotes.trim().isNotEmpty,
         ),
-        ..._withVerticalSpacing(operationalCards),
+        const SizedBox(height: 12),
+        _buildSectionHeader(
+          title: 'Antes De Anestesiar',
+          subtitle:
+              'Checklist inicial, profilaxia, monitorização, acessos e time-out antes do início da anestesia',
+          accent: _preInductionPhaseColor,
+        ),
+        ..._withVerticalSpacing(_buildPreInductionCards()),
+        const SizedBox(height: 12),
+        _buildSectionHeader(
+          title: 'Anestesia Em Curso',
+          subtitle:
+              'Técnica, bloqueios, via aérea, ventilação e primeiros passos da condução anestésica',
+          accent: _inductionPhaseColor,
+        ),
+        ..._withVerticalSpacing(_buildInductionAndConductionCards()),
+        const SizedBox(height: 12),
+        _buildSectionHeader(
+          title: 'Suporte Intraoperatório',
+          subtitle:
+              'Manutenção, medicações de suporte, balanço e materiais usados durante o procedimento',
+          accent: _maintenancePhaseColor,
+        ),
+        ..._withVerticalSpacing(_buildMaintenanceCards()),
+        const SizedBox(height: 12),
+        _buildSectionHeader(
+          title: 'Despertar E Encaminhamento',
+          subtitle:
+              'Extubação ou saída ventilada, destino pós-operatório e consolidado final',
+          accent: _emergencePhaseColor,
+        ),
+        ..._withVerticalSpacing(_buildEmergenceAndDispositionCards()),
       ],
     );
   }
@@ -5250,7 +5479,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return _buildCompactOperationalCard(
       key: const Key('arterial-access-card'),
       tapKey: const Key('arterial-access-entry'),
-      title: '9) Cateter de PAI',
+      title: '9) Acesso arterial',
       titleColor: _accessRowColor,
       icon: Icons.timeline_outlined,
       minHeight: 92,
@@ -5955,6 +6184,31 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return summaries;
   }
 
+  Widget _buildPreparationCard() {
+    final checklist = _record.safeSurgeryChecklist;
+    final status = checklist.isEmpty
+        ? 'Preparação da sala pendente'
+        : checklist.contains('Aparelho de anestesia checado')
+        ? 'Sala e equipamento conferidos'
+        : '${checklist.length} item(ns) confirmados';
+    final summary = checklist.isEmpty
+        ? 'Confirmar aparelho, O₂, aspiração, materiais de via aérea e itens de bloqueio antes da chegada do paciente.'
+        : checklist.take(2).join(' • ');
+    return _buildCompactOperationalCard(
+      key: const Key('preparation-card'),
+      tapKey: const Key('preparation-entry'),
+      title: 'Sala e equipamento',
+      titleColor: _timeoutRowColor,
+      icon: Icons.fact_check_outlined,
+      minHeight: 92,
+      isAttention: checklist.isEmpty,
+      status: status,
+      summary: summary,
+      onTap: () => _editSurgerySection(SurgeryInfoSection.checklist),
+      isCompleted: checklist.isNotEmpty,
+    );
+  }
+
   Widget _buildTimeOutCard() {
     final completed = _record.timeOutCompleted;
     final summary = _record.timeOutChecklist.isEmpty
@@ -6098,7 +6352,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return _buildCompactOperationalCard(
       key: const Key('antibiotic-entry-card'),
       tapKey: const Key('antibiotic-entry'),
-      title: '7) Antibiótico profilaxia',
+      title: '7) Antibioticoprofilaxia',
       titleColor: _timeoutRowColor,
       icon: Icons.medical_services_outlined,
       minHeight: 92,
@@ -6116,6 +6370,25 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Widget _buildEventsCard() {
+    final selectedTechniques = _record.anesthesiaTechnique
+        .split('\n')
+        .where((item) => item.trim().isNotEmpty)
+        .toList();
+    final hasTechniques = selectedTechniques.isNotEmpty;
+    final hasDetails = _record.anesthesiaTechniqueDetails.trim().isNotEmpty;
+    final collapsedStatus = hasTechniques
+        ? selectedTechniques.length == 1
+              ? selectedTechniques.first
+              : '${selectedTechniques.first} +${selectedTechniques.length - 1}'
+        : 'Nenhuma técnica selecionada';
+    final detailsPreview = _record.anesthesiaTechniqueDetails
+        .trim()
+        .replaceAll('\n', ' ');
+    final collapsedSummary = hasDetails
+        ? detailsPreview.length > 88
+              ? '${detailsPreview.substring(0, 88).trimRight()}...'
+              : detailsPreview
+        : 'Use o botão "Editar técnica" para definir a técnica principal e a descrição breve.';
     return KeyedSubtree(
       key: _eventsSectionKey,
       child: PanelCard(
@@ -6128,75 +6401,83 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         isCompleted:
             _record.anesthesiaTechnique.trim().isNotEmpty &&
             _record.anesthesiaTechniqueDetails.trim().isNotEmpty,
+        collapsedChild: _buildCollapsedPanelSummary(
+          status: collapsedStatus,
+          summary: collapsedSummary,
+          statusColor: hasTechniques
+              ? _techniqueRowColor
+              : const Color(0xFF7A8EA5),
+        ),
         trailing: AddButton(
           label: 'Editar técnica',
           onTap: _editTecnicaAnestesica,
         ),
-        child: InkWell(
+        child: SingleChildScrollView(
           key: const Key('events-entry'),
-          borderRadius: BorderRadius.circular(18),
-          onTap: _editTecnicaAnestesica,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                LabeledSurface(
-                  label: 'Técnicas selecionadas',
-                  child: _record.anesthesiaTechnique.trim().isEmpty
-                      ? const Text(
-                          'Toque para selecionar a técnica.',
-                          style: TextStyle(
-                            color: Color(0xFF7A8EA5),
-                            fontWeight: FontWeight.w700,
-                          ),
-                        )
-                      : Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _record.anesthesiaTechnique
-                              .split('\n')
-                              .where((item) => item.trim().isNotEmpty)
-                              .map(
-                                (item) => SoftTag(
-                                  text: item,
-                                  color: const Color(0xFFF1EAFE),
-                                  textColor: _techniqueRowColor,
-                                ),
-                              )
-                              .toList(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (hasTechniques)
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: selectedTechniques
+                      .map(
+                        (item) => SoftTag(
+                          text: item,
+                          color: const Color(0xFFF1EAFE),
+                          textColor: _techniqueRowColor,
                         ),
+                      )
+                      .toList(),
+                )
+              else
+                const StatusHint(
+                  text:
+                      'Nenhuma técnica definida. Use "Editar técnica" para configurar o plano anestésico.',
                 ),
-                const SizedBox(height: 12),
-                LabeledSurface(
-                  label: 'Descrição breve',
-                  child: Text(
-                    _record.anesthesiaTechniqueDetails.trim().isEmpty
-                        ? 'Toque para descrever fases da técnica, bloqueios, peridural, raqui, anestesia geral e sedação conforme o contexto do prontuário.'
-                        : _record.anesthesiaTechniqueDetails.trim(),
-                    style: TextStyle(
-                      color: _record.anesthesiaTechniqueDetails.trim().isEmpty
-                          ? const Color(0xFF7A8EA5)
-                          : const Color(0xFF17324D),
-                      fontWeight: FontWeight.w600,
-                      height: 1.45,
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FBFF),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFDDE7F3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      hasDetails
+                          ? _record.anesthesiaTechniqueDetails.trim()
+                          : 'Resumo ainda não preenchido.',
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: hasDetails
+                            ? const Color(0xFF17324D)
+                            : const Color(0xFF7A8EA5),
+                        fontWeight: FontWeight.w600,
+                        height: 1.45,
+                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                LabeledSurface(
-                  label: 'Fluxo guiado pelos cards abaixo',
-                  child: Text(
-                    key: const Key('technique-workflow-summary'),
-                    _techniqueWorkflowSummary,
-                    style: const TextStyle(
-                      color: Color(0xFF17324D),
-                      fontWeight: FontWeight.w600,
-                      height: 1.45,
+                    const SizedBox(height: 8),
+                    Text(
+                      key: const Key('technique-workflow-summary'),
+                      _techniqueWorkflowSummary,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF5D7288),
+                        fontWeight: FontWeight.w600,
+                        height: 1.35,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -6215,7 +6496,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       child: _buildCompactOperationalCard(
         key: const Key('technique-card'),
         tapKey: const Key('technique-entry'),
-        title: '12) Sedação associada',
+        title: '12) Sedação complementar',
         titleColor: _techniqueRowColor,
         icon: Icons.air_outlined,
         minHeight: 92,
@@ -6302,7 +6583,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         ? 'Toque para registrar adjuvantes e doses'
         : '${_record.adjuncts.length} item(ns) registrados';
     return PanelCard(
-      title: '14) Adjuvantes',
+      title: '14) Adjuvantes anestésicos',
       titleColor: _techniqueRowColor,
       icon: Icons.auto_awesome_outlined,
       minHeight: 280,
@@ -6367,7 +6648,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       child: _buildCompactOperationalCard(
         key: const Key('other-medications-card'),
         tapKey: const Key('other-medications-entry'),
-        title: '18) Outras medicações',
+        title: '18) Medicações complementares',
         titleColor: _medicationsRowColor,
         icon: Icons.healing_outlined,
         minHeight: 92,
@@ -6835,8 +7116,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     final summary = _buildUsageSummaryItems();
 
     return PanelCard(
-      title: 'Resumo de uso',
-      titleColor: _medicationsRowColor,
+      title: 'Consolidado de uso',
+      titleColor: _emergencePhaseColor,
       icon: Icons.summarize_outlined,
       minHeight: 168,
       isCompleted: summary.isNotEmpty,
@@ -7097,6 +7378,29 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     );
   }
 
+  Widget _buildEmergenceCard() {
+    final status = _record.emergenceStatus.trim().isEmpty
+        ? 'Saída da anestesia pendente'
+        : _record.emergenceStatus.trim();
+    final summary = _record.emergenceNotes.trim().isEmpty
+        ? 'Registrar reversão, aspiração, extubação ou encaminhamento ventilado conforme o desfecho.'
+        : _record.emergenceNotes.trim();
+    return _buildCompactOperationalCard(
+      key: const Key('emergence-card'),
+      tapKey: const Key('emergence-entry'),
+      title: 'Despertar / extubação',
+      titleColor: _emergencePhaseColor,
+      icon: Icons.logout_outlined,
+      minHeight: 92,
+      status: status,
+      summary: summary,
+      onTap: _editEmergence,
+      isCompleted:
+          _record.emergenceStatus.trim().isNotEmpty ||
+          _record.emergenceNotes.trim().isNotEmpty,
+    );
+  }
+
   Widget _buildMaintenanceCard() {
     final categories = _maintenancePresets
         .map(_maintenanceCategoryForPreset)
@@ -7202,6 +7506,139 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           AddButton(label: 'Edição avançada', onTap: _editMaintenanceAgents),
         ],
       ),
+    );
+  }
+}
+
+class _EmergenceDialog extends StatefulWidget {
+  const _EmergenceDialog({
+    required this.initialStatus,
+    required this.initialNotes,
+    required this.patientDestination,
+  });
+
+  final String initialStatus;
+  final String initialNotes;
+  final String patientDestination;
+
+  @override
+  State<_EmergenceDialog> createState() => _EmergenceDialogState();
+}
+
+class _EmergenceDialogState extends State<_EmergenceDialog> {
+  static const List<String> _statusOptions = [
+    'Extubado em sala',
+    'Mantido intubado para UTI',
+    'Mantido em dispositivo supraglótico / máscara',
+    'Sem via aérea avançada',
+  ];
+
+  late String _selectedStatus;
+  late final TextEditingController _notesController;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedStatus = _statusOptions.contains(widget.initialStatus)
+        ? widget.initialStatus
+        : '';
+    _notesController = TextEditingController(text: widget.initialNotes);
+  }
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Despertar / extubação'),
+      content: SizedBox(
+        width: 520,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Desfecho imediato da via aérea / extubação',
+                style: TextStyle(
+                  color: Color(0xFF17324D),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _statusOptions
+                    .map(
+                      (option) => ChoiceChip(
+                        label: Text(option),
+                        selected: _selectedStatus == option,
+                        onSelected: (_) {
+                          setState(() {
+                            _selectedStatus =
+                                _selectedStatus == option ? '' : option;
+                          });
+                        },
+                      ),
+                    )
+                    .toList(),
+              ),
+              const SizedBox(height: 14),
+              if (widget.patientDestination.trim().isNotEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F8FF),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFD7E5F5)),
+                  ),
+                  child: Text(
+                    'Destino planejado: ${widget.patientDestination}',
+                    style: const TextStyle(
+                      color: Color(0xFF2B76D2),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              if (widget.patientDestination.trim().isNotEmpty)
+                const SizedBox(height: 14),
+              TextField(
+                key: const Key('emergence-notes-field'),
+                controller: _notesController,
+                minLines: 4,
+                maxLines: 7,
+                decoration: const InputDecoration(
+                  labelText: 'Condições pós-extubação / observações',
+                  hintText:
+                      'Ex: TOF > 90%, aspiradas secreções, desperto, ventilando adequadamente, sem broncoespasmo, segue para RPA/UTI.',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          key: const Key('emergence-save-button'),
+          onPressed: () => Navigator.of(context).pop(
+            _EmergenceDialogResult(
+              status: _selectedStatus,
+              notes: _notesController.text.trim(),
+            ),
+          ),
+          child: const Text('Salvar'),
+        ),
+      ],
     );
   }
 }

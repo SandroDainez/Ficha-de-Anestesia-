@@ -34,6 +34,8 @@ class AnesthesiaRecord {
     this.anesthesiaMaterials = const [],
     required this.monitoringItems,
     this.postAnesthesiaRecovery = const PostAnesthesiaRecovery.empty(),
+    this.emergenceStatus = '',
+    this.emergenceNotes = '',
     required this.surgicalSize,
     required this.surgeryDescription,
     this.surgeryPriority = '',
@@ -77,6 +79,8 @@ class AnesthesiaRecord {
       anesthesiaMaterials = const [],
       monitoringItems = const [],
       postAnesthesiaRecovery = const PostAnesthesiaRecovery.empty(),
+      emergenceStatus = '',
+      emergenceNotes = '',
       surgicalSize = '',
       surgeryDescription = '',
       surgeryPriority = '',
@@ -118,6 +122,8 @@ class AnesthesiaRecord {
   final List<String> anesthesiaMaterials;
   final List<String> monitoringItems;
   final PostAnesthesiaRecovery postAnesthesiaRecovery;
+  final String emergenceStatus;
+  final String emergenceNotes;
   final String surgicalSize;
   final String surgeryDescription;
   final String surgeryPriority;
@@ -160,6 +166,8 @@ class AnesthesiaRecord {
     List<String>? anesthesiaMaterials,
     List<String>? monitoringItems,
     PostAnesthesiaRecovery? postAnesthesiaRecovery,
+    String? emergenceStatus,
+    String? emergenceNotes,
     String? surgicalSize,
     String? surgeryDescription,
     String? surgeryPriority,
@@ -207,6 +215,8 @@ class AnesthesiaRecord {
       monitoringItems: monitoringItems ?? this.monitoringItems,
       postAnesthesiaRecovery:
           postAnesthesiaRecovery ?? this.postAnesthesiaRecovery,
+      emergenceStatus: emergenceStatus ?? this.emergenceStatus,
+      emergenceNotes: emergenceNotes ?? this.emergenceNotes,
       surgicalSize: surgicalSize ?? this.surgicalSize,
       surgeryDescription: surgeryDescription ?? this.surgeryDescription,
       surgeryPriority: surgeryPriority ?? this.surgeryPriority,
@@ -260,6 +270,8 @@ class AnesthesiaRecord {
       'anesthesiaMaterials': anesthesiaMaterials,
       'monitoringItems': monitoringItems,
       'postAnesthesiaRecovery': postAnesthesiaRecovery.toJson(),
+      'emergenceStatus': emergenceStatus,
+      'emergenceNotes': emergenceNotes,
       'surgicalSize': surgicalSize,
       'surgeryDescription': surgeryDescription,
       'surgeryPriority': surgeryPriority,
@@ -366,6 +378,8 @@ class AnesthesiaRecord {
       postAnesthesiaRecovery: PostAnesthesiaRecovery.fromJson(
         json['postAnesthesiaRecovery'] as Map<dynamic, dynamic>? ?? const {},
       ),
+      emergenceStatus: json['emergenceStatus'] as String? ?? '',
+      emergenceNotes: json['emergenceNotes'] as String? ?? '',
       surgicalSize: json['surgicalSize'] as String? ?? '',
       surgeryDescription: json['surgeryDescription'] as String? ?? '',
       surgeryPriority: json['surgeryPriority'] as String? ?? '',

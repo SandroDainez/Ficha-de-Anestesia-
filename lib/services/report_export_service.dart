@@ -154,6 +154,14 @@ class ReportExportService {
             ],
           ),
           _section(
+            'Saída da anestesia',
+            [
+              _field('Status de extubação / saída', _orDash(record.emergenceStatus)),
+              _field('Condições e observações', _orDash(record.emergenceNotes)),
+              _field('Destino pós-operatório', _orDash(record.patientDestination)),
+            ],
+          ),
+          _section(
             'Balanço hídrico',
             [
               _field('Cristaloides', _volume(record.fluidBalance.crystalloids)),
@@ -332,6 +340,10 @@ class ReportExportService {
         'tecnica_anestesica': _orDash(record.anesthesiaTechnique),
         'descricao_da_tecnica_anestesica':
             _orDash(record.anesthesiaTechniqueDetails),
+        'saida_da_anestesia': {
+          'status': _orDash(record.emergenceStatus),
+          'observacoes': _orDash(record.emergenceNotes),
+        },
         'antibioticoprofilaxia': record.prophylacticAntibiotics.isEmpty ? 'Não registrada' : record.prophylacticAntibiotics.join(' | '),
         'jejum_informado': _orDash(record.fastingHours),
         'via_aerea': {
