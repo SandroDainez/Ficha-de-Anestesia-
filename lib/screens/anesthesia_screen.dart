@@ -3516,23 +3516,35 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       ),
     );
 
-    final bytes = await _reportExportService.buildCasePdf(
-      record: _record,
-      status: _persistedCaseStatus,
-      caseId: widget.caseId,
-    );
-    if (!mounted) return;
-    messenger.clearSnackBars();
+    try {
+      final bytes = await _reportExportService.buildCasePdf(
+        record: _record,
+        status: _persistedCaseStatus,
+        caseId: widget.caseId,
+      );
+      if (!mounted) return;
+      messenger.clearSnackBars();
 
-    final filename = _reportExportService.buildFileName(_record);
-    await showDialog<void>(
-      context: context,
-      builder: (_) => _ExportCaseDialog(
-        onPreviewPressed: () => _previewPdf(bytes),
-        onPrintPressed: () => _previewPdf(bytes),
-        onSharePressed: () => _sharePdf(bytes, filename),
-      ),
-    );
+      final filename = _reportExportService.buildFileName(_record);
+      await showDialog<void>(
+        context: context,
+        builder: (_) => _ExportCaseDialog(
+          onPreviewPressed: () => _previewPdf(bytes),
+          onPrintPressed: () => _previewPdf(bytes),
+          onSharePressed: () => _sharePdf(bytes, filename),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      messenger.clearSnackBars();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Falha ao gerar o PDF da ficha: $error'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
   }
 
   Future<void> _exportCaseJson() async {

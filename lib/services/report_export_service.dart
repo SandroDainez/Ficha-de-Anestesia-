@@ -923,7 +923,7 @@ class ReportExportService {
         );
       }
       buffer.writeln(
-        "<text x='44' y='18' font-size='11' font-weight='700' fill='#16a96b'>SpO₂</text>",
+        "<text x='44' y='18' font-size='11' font-weight='700' fill='#16a96b'>SpO2</text>",
       );
       return buffer.toString();
     }
