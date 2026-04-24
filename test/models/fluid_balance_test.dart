@@ -32,4 +32,24 @@ void main() {
     expect(incomplete.isComplete, isFalse);
     expect(complete.isComplete, isTrue);
   });
+
+  test(
+    'includes partial blood loss and other encoded losses in total balance',
+    () {
+      const balance = FluidBalance(
+        crystalloids: '1000',
+        colloids: '0',
+        blood: '0',
+        diuresis: '300',
+        bleeding: '200',
+        spongeCount: '1',
+        otherLosses: '50',
+        bloodLossEntries: ['Perda parcial|100'],
+        otherLossEntries: ['Perdas insensíveis|50 mL/h|100'],
+      );
+
+      expect(balance.totalBalance, 150);
+      expect(balance.formattedBalance, '+150 mL');
+    },
+  );
 }

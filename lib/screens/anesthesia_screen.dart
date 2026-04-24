@@ -194,10 +194,7 @@ class _VentilationSuggestion {
 }
 
 class _EmergenceDialogResult {
-  const _EmergenceDialogResult({
-    required this.status,
-    required this.notes,
-  });
+  const _EmergenceDialogResult({required this.status, required this.notes});
 
   final String status;
   final String notes;
@@ -757,6 +754,12 @@ double _pediatricMaintenanceRateMlPerHour(double weightKg) {
   return ((weightKg * lowerPerDay) / 24, (weightKg * upperPerDay) / 24);
 }
 
+String _formatHoursReferenceLabel(double hours) {
+  if (hours <= 0) return '--';
+  if (hours < 1) return '${(hours * 60).round()} min';
+  return '${hours.toStringAsFixed(1).replaceAll('.', ',')} h';
+}
+
 _FluidSupportRecommendation _buildFluidSupportRecommendation({
   required Patient patient,
   required double documentedLossesMl,
@@ -779,18 +782,17 @@ _FluidSupportRecommendation _buildFluidSupportRecommendation({
       );
       final lower = (referenceWeight * 25) / 24;
       final upper = (referenceWeight * 30) / 24;
-      final intraopRate = referenceWeight * sizeFactor;
 
       return _FluidSupportRecommendation(
         title: 'Apoio clínico adulto',
         lines: [
-          'Manutenção: ${lower.toStringAsFixed(0)}-${upper.toStringAsFixed(0)} mL/h',
-          if (intraopRate > 0)
-            'Intraoperatória sugerida: ${intraopRate.toStringAsFixed(0)} mL/h pelo porte $surgicalSize',
-          'Manutenção inicial por 25-30 mL/kg/dia; usar peso de referência se obesidade.',
+          'Manutenção basal: 25-30 mL/kg/dia (~${lower.toStringAsFixed(0)}-${upper.toStringAsFixed(0)} mL/h).',
+          'Preferir peso de referência se obesidade.',
+          'Jejum: não repor déficit fixo automaticamente; considerar só se prolongado, com hipovolemia ou conforme protocolo local.',
+          'Reposição intraoperatória: individualizar por perdas mensuráveis, sangramento, diurese, exposição cirúrgica e resposta hemodinâmica.',
+          'Evitar regra fixa de terceiro espaço.',
           'Perdas registradas: ${documentedLossesMl.toStringAsFixed(0)} mL',
-          if (fasting.isNotEmpty)
-            'Jejum informado: $fasting h; não repor déficit fixo automaticamente.',
+          if (fasting.isNotEmpty) 'Jejum informado: $fasting h',
         ],
       );
 
@@ -3989,8 +3991,10 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   Future<void> _editBalancoHidrico() async {
     final result = await showDialog<FluidBalance>(
       context: context,
-      builder: (_) =>
-          BalanceOnlyDialog(initialFluidBalance: _record.fluidBalance),
+      builder: (_) => BalanceOnlyDialog(
+        initialFluidBalance: _record.fluidBalance,
+        anesthesiaElapsedHours: _anesthesiaElapsedHours,
+      ),
     );
 
     if (result == null) return;
@@ -4057,6 +4061,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         patientPostnatalAgeDays: _record.patient.postnatalAgeDays,
         patientGestationalAgeWeeks: _record.patient.gestationalAgeWeeks,
         patientBirthWeightKg: _record.patient.birthWeightKg,
+        anesthesiaElapsedHours: _anesthesiaElapsedHours,
       ),
     );
 
@@ -4461,15 +4466,11 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         'Termo de consentimento assinado',
         'Consentimento confirmado',
       ],
-      'Pré-anestésico realizado': [
-        'Pré-anestésico realizado',
-      ],
+      'Pré-anestésico realizado': ['Pré-anestésico realizado'],
       'Monitorização instalada e funcionando': [
         'Monitorização instalada e funcionando',
       ],
-      'Acesso venoso pérvio': [
-        'Acesso venoso pérvio',
-      ],
+      'Acesso venoso pérvio': ['Acesso venoso pérvio'],
     };
     return aliases[item]!.any(_record.safeSurgeryChecklist.contains);
   }
@@ -4490,15 +4491,11 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         'Termo de consentimento assinado',
         'Consentimento confirmado',
       ],
-      'Pré-anestésico realizado': [
-        'Pré-anestésico realizado',
-      ],
+      'Pré-anestésico realizado': ['Pré-anestésico realizado'],
       'Monitorização instalada e funcionando': [
         'Monitorização instalada e funcionando',
       ],
-      'Acesso venoso pérvio': [
-        'Acesso venoso pérvio',
-      ],
+      'Acesso venoso pérvio': ['Acesso venoso pérvio'],
     };
     final next = List<String>.from(_record.safeSurgeryChecklist)
       ..removeWhere((entry) => aliases[item]!.contains(entry));
@@ -4964,11 +4961,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     if (cards.isEmpty) return const SizedBox.shrink();
     return Column(
       children: [
-        _buildSectionHeader(
-          title: title,
-          subtitle: subtitle,
-          accent: accent,
-        ),
+        _buildSectionHeader(title: title, subtitle: subtitle, accent: accent),
         const SizedBox(height: 10),
         _buildOperationalCardGrid(cards),
       ],
@@ -6352,7 +6345,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                 Text(
                   status,
                   style: TextStyle(
-                    color: completedCount == _preAnesthesiaChecklistOptions.length
+                    color:
+                        completedCount == _preAnesthesiaChecklistOptions.length
                         ? const Color(0xFF169653)
                         : const Color(0xFFF59E0B),
                     fontWeight: FontWeight.w800,
@@ -6567,9 +6561,10 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
               ? selectedTechniques.first
               : '${selectedTechniques.first} +${selectedTechniques.length - 1}'
         : 'Nenhuma técnica selecionada';
-    final detailsPreview = _record.anesthesiaTechniqueDetails
-        .trim()
-        .replaceAll('\n', ' ');
+    final detailsPreview = _record.anesthesiaTechniqueDetails.trim().replaceAll(
+      '\n',
+      ' ',
+    );
     final collapsedSummary = hasDetails
         ? detailsPreview.length > 88
               ? '${detailsPreview.substring(0, 88).trimRight()}...'
@@ -7767,8 +7762,9 @@ class _EmergenceDialogState extends State<_EmergenceDialog> {
                         selected: _selectedStatus == option,
                         onSelected: (_) {
                           setState(() {
-                            _selectedStatus =
-                                _selectedStatus == option ? '' : option;
+                            _selectedStatus = _selectedStatus == option
+                                ? ''
+                                : option;
                           });
                         },
                       ),
@@ -9496,6 +9492,7 @@ class FluidBalanceDialog extends StatefulWidget {
     required this.patientPostnatalAgeDays,
     required this.patientGestationalAgeWeeks,
     required this.patientBirthWeightKg,
+    required this.anesthesiaElapsedHours,
   });
 
   final FluidBalance initialFluidBalance;
@@ -9509,6 +9506,7 @@ class FluidBalanceDialog extends StatefulWidget {
   final int patientPostnatalAgeDays;
   final int patientGestationalAgeWeeks;
   final double patientBirthWeightKg;
+  final double anesthesiaElapsedHours;
 
   @override
   State<FluidBalanceDialog> createState() => _FluidBalanceDialogState();
@@ -9645,21 +9643,39 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
   }
 
   double get _intraoperativeSuggestedMlPerHour {
-    final weight = _referenceWeightKg;
-    final factor = switch (_selectedSurgicalSize) {
-      'Pequeno' => 2.0,
-      'Medio' => 4.0,
-      'Grande' => 6.0,
-      _ => 0.0,
+    return switch (widget.patientPopulation) {
+      PatientPopulation.adult => 0,
+      PatientPopulation.pediatric =>
+        _referenceWeightKg *
+            switch (_selectedSurgicalSize) {
+              'Pequeno' => 2.0,
+              'Medio' => 4.0,
+              'Grande' => 6.0,
+              _ => 0.0,
+            },
+      PatientPopulation.neonatal =>
+        _referenceWeightKg *
+            switch (_selectedSurgicalSize) {
+              'Pequeno' => 4.0,
+              'Medio' => 6.0,
+              'Grande' => 8.0,
+              _ => 0.0,
+            },
     };
-    return weight * factor;
   }
 
   double get _fastingSuggestedMl {
+    if (widget.patientPopulation == PatientPopulation.adult) return 0;
     final hours = _parsedFastingHours();
     if (hours <= 0) return 0;
     return _maintenanceSuggestedMlPerHour * hours;
   }
+
+  double get _suggestedHourlyReferenceHours =>
+      widget.anesthesiaElapsedHours > 0 ? widget.anesthesiaElapsedHours : 1;
+
+  double get _intraoperativeSuggestedMl =>
+      _intraoperativeSuggestedMlPerHour * _suggestedHourlyReferenceHours;
 
   void _addToController(TextEditingController controller, double amount) {
     final current = _parse(controller.text);
@@ -9912,18 +9928,33 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
                     child: OutlinedButton(
                       onPressed: _intraoperativeSuggestedMlPerHour > 0
                           ? () => _applySuggestedCrystalloid(
-                              _intraoperativeSuggestedMlPerHour,
+                              _intraoperativeSuggestedMl,
                             )
                           : null,
                       child: Text(
                         _intraoperativeSuggestedMlPerHour > 0
-                            ? 'Aplicar intraop sugerida (${_intraoperativeSuggestedMlPerHour.toStringAsFixed(0)} mL)'
+                            ? 'Aplicar intraop sugerida (${_intraoperativeSuggestedMlPerHour.toStringAsFixed(0)} mL/h${_suggestedHourlyReferenceHours > 0 ? ' • ${_intraoperativeSuggestedMl.toStringAsFixed(0)} mL em ${_formatHoursReferenceLabel(_suggestedHourlyReferenceHours)}' : ''})'
                             : 'Sem intraop sugerida',
                       ),
                     ),
                   ),
                 ],
               ),
+              if (_intraoperativeSuggestedMlPerHour > 0) ...[
+                const SizedBox(height: 6),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    widget.anesthesiaElapsedHours > 0
+                        ? 'Taxa expressa em mL/h e convertida para o tempo anestésico registrado.'
+                        : 'Taxa expressa em mL/h; sem tempo anestésico registrado, o botão aplica 1 h.',
+                    style: const TextStyle(
+                      color: Color(0xFF5D7288),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 16),
               FluidField(
                 key: const Key('fluid-crystalloids-field'),
@@ -9933,7 +9964,8 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
               const SizedBox(height: 8),
               _QuickVolumeChips(
                 values: _commonVolumes,
-                onSelected: (value) => _crystalloidsController.text = value,
+                onSelected: (value) =>
+                    _addToController(_crystalloidsController, _parse(value)),
               ),
               const SizedBox(height: 8),
               Align(
@@ -9979,7 +10011,8 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
               const SizedBox(height: 8),
               _QuickVolumeChips(
                 values: _commonVolumes,
-                onSelected: (value) => _colloidsController.text = value,
+                onSelected: (value) =>
+                    _addToController(_colloidsController, _parse(value)),
               ),
               const SizedBox(height: 8),
               Align(
@@ -10142,9 +10175,14 @@ class FluidBalanceDialogResult {
 }
 
 class BalanceOnlyDialog extends StatefulWidget {
-  const BalanceOnlyDialog({super.key, required this.initialFluidBalance});
+  const BalanceOnlyDialog({
+    super.key,
+    required this.initialFluidBalance,
+    required this.anesthesiaElapsedHours,
+  });
 
   final FluidBalance initialFluidBalance;
+  final double anesthesiaElapsedHours;
 
   @override
   State<BalanceOnlyDialog> createState() => _BalanceOnlyDialogState();
@@ -10174,6 +10212,9 @@ class _BalanceOnlyDialogState extends State<BalanceOnlyDialog> {
       _parse(widget.initialFluidBalance.blood);
 
   double get _estimatedSpongeLoss => _parse(_spongeCountController.text) * 100;
+
+  double get _hourlyReferenceHours =>
+      widget.anesthesiaElapsedHours > 0 ? widget.anesthesiaElapsedHours : 1;
 
   double _sumEntries(List<String> entries) {
     return entries.fold<double>(0, (total, item) {
@@ -10234,10 +10275,13 @@ class _BalanceOnlyDialogState extends State<BalanceOnlyDialog> {
     });
   }
 
-  void _addOtherLossEntry(String label, double amount) {
-    if (amount <= 0) return;
+  void _addOtherLossEntry(String label, double amountPerHour) {
+    if (amountPerHour <= 0) return;
+    final applied = amountPerHour * _hourlyReferenceHours;
     setState(() {
-      _otherLossEntries.add('$label|${amount.toStringAsFixed(0)}');
+      _otherLossEntries.add(
+        '$label|${amountPerHour.toStringAsFixed(0)} mL/h|${applied.toStringAsFixed(0)}',
+      );
     });
   }
 
@@ -10380,6 +10424,19 @@ class _BalanceOnlyDialogState extends State<BalanceOnlyDialog> {
                 controller: _otherLossesController,
                 label: 'Outras perdas',
               ),
+              const SizedBox(height: 6),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  widget.anesthesiaElapsedHours > 0
+                      ? 'Perdas insensíveis e ventilação mecânica abaixo estão em mL/h e são convertidas pelo tempo anestésico registrado (${_formatHoursReferenceLabel(widget.anesthesiaElapsedHours)}).'
+                      : 'Perdas insensíveis e ventilação mecânica abaixo estão em mL/h; sem tempo anestésico registrado, cada toque aplica 1 h.',
+                  style: const TextStyle(
+                    color: Color(0xFF5D7288),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -10392,7 +10449,7 @@ class _BalanceOnlyDialogState extends State<BalanceOnlyDialog> {
                   ])
                     ActionChip(
                       label: Text(
-                        '${item.label} +${item.defaultMl.toStringAsFixed(0)} mL',
+                        '${item.label} ${item.defaultMl.toStringAsFixed(0)} mL/h',
                       ),
                       onPressed: () =>
                           _addOtherLossEntry(item.label, item.defaultMl),

@@ -814,8 +814,12 @@ void main() {
     (WidgetTester tester) async {
       await pumpScreen(tester, buildRecord());
 
-      final preparationRect = tester.getRect(find.byKey(const Key('preparation-card')));
-      final timeoutRect = tester.getRect(find.byKey(const Key('surgery-timeout-card')));
+      final preparationRect = tester.getRect(
+        find.byKey(const Key('preparation-card')),
+      );
+      final timeoutRect = tester.getRect(
+        find.byKey(const Key('surgery-timeout-card')),
+      );
       final drugsRect = tester.getRect(find.byKey(const Key('drugs-card')));
 
       expect(preparationRect.top, lessThan(drugsRect.top));
@@ -827,7 +831,10 @@ void main() {
     'uses height-based reference weight for adult ventilation suggestion in obesity',
     (WidgetTester tester) async {
       final record = buildRecord().copyWith(
-        patient: buildRecord().patient.copyWith(weightKg: 110, heightMeters: 1.60),
+        patient: buildRecord().patient.copyWith(
+          weightKg: 110,
+          heightMeters: 1.60,
+        ),
         surgeryDescription: 'Colecistectomia videolaparoscópica',
       );
 
@@ -840,7 +847,10 @@ void main() {
 
       expect(find.textContaining('altura 160 cm'), findsOneWidget);
       expect(find.textContaining('peso de referência 64'), findsOneWidget);
-      expect(find.textContaining('PEEP e FR um pouco mais altas'), findsOneWidget);
+      expect(
+        find.textContaining('PEEP e FR um pouco mais altas'),
+        findsOneWidget,
+      );
     },
   );
 
@@ -980,8 +990,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Sugestão automática: Medio'), findsOneWidget);
-      expect(find.textContaining('Aplicar jejum sugerido'), findsOneWidget);
-      expect(find.textContaining('Aplicar intraop sugerida'), findsOneWidget);
+      expect(find.text('Jejum sem sugestão'), findsOneWidget);
+      expect(find.text('Sem intraop sugerida'), findsOneWidget);
 
       await tester.tap(find.widgetWithText(ActionChip, 'RL +500 mL').first);
       await tester.pumpAndSettle();
@@ -1050,23 +1060,23 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Adicionar perdas sanguíneas parciais'), findsOneWidget);
-      expect(find.text('Perdas insensíveis +50 mL'), findsOneWidget);
-      expect(find.text('Ventilação mecânica +50 mL'), findsOneWidget);
+      expect(find.text('Perdas insensíveis 50 mL/h'), findsOneWidget);
+      expect(find.text('Ventilação mecânica 50 mL/h'), findsOneWidget);
 
       await tester.tap(find.widgetWithText(ActionChip, '100 mL'));
       await tester.pumpAndSettle();
       await tester.tap(
-        find.widgetWithText(ActionChip, 'Perdas insensíveis +50 mL'),
+        find.widgetWithText(ActionChip, 'Perdas insensíveis 50 mL/h'),
       );
       await tester.pumpAndSettle();
       await tester.tap(
-        find.widgetWithText(ActionChip, 'Ventilação mecânica +50 mL'),
+        find.widgetWithText(ActionChip, 'Ventilação mecânica 50 mL/h'),
       );
       await tester.pumpAndSettle();
 
       expect(find.text('Perda parcial • 100'), findsOneWidget);
-      expect(find.text('Perdas insensíveis • 50'), findsOneWidget);
-      expect(find.text('Ventilação mecânica • 50'), findsOneWidget);
+      expect(find.text('Perdas insensíveis • 50 mL/h • 50'), findsOneWidget);
+      expect(find.text('Ventilação mecânica • 50 mL/h • 50'), findsOneWidget);
     },
   );
 

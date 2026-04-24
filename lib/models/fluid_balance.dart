@@ -15,18 +15,18 @@ class FluidBalance {
   });
 
   const FluidBalance.empty()
-      : crystalloids = '',
-        colloids = '',
-        blood = '',
-        diuresis = '',
-        bleeding = '',
-        spongeCount = '',
-        otherLosses = '',
-        crystalloidEntries = const [],
-        colloidEntries = const [],
-        bloodEntries = const [],
-        bloodLossEntries = const [],
-        otherLossEntries = const [];
+    : crystalloids = '',
+      colloids = '',
+      blood = '',
+      diuresis = '',
+      bleeding = '',
+      spongeCount = '',
+      otherLosses = '',
+      crystalloidEntries = const [],
+      colloidEntries = const [],
+      bloodEntries = const [],
+      bloodLossEntries = const [],
+      otherLossEntries = const [];
 
   final String crystalloids;
   final String colloids;
@@ -51,15 +51,23 @@ class FluidBalance {
     return double.tryParse(value.replaceAll(',', '.')) ?? 0;
   }
 
-  double get estimatedSpongeLoss =>
-      _parse(spongeCount) * 100;
+  double _sumEntries(List<String> entries) {
+    return entries.fold<double>(0, (total, item) {
+      final parts = item.split('|');
+      return total + (parts.isNotEmpty ? _parse(parts.last) : 0);
+    });
+  }
+
+  double get estimatedSpongeLoss => _parse(spongeCount) * 100;
 
   double get totalBalance =>
       (_parse(crystalloids) + _parse(colloids) + _parse(blood)) -
       (_parse(diuresis) +
           _parse(bleeding) +
+          _sumEntries(bloodLossEntries) +
           estimatedSpongeLoss +
-          _parse(otherLosses));
+          _parse(otherLosses) +
+          _sumEntries(otherLossEntries));
 
   String get formattedBalance {
     final prefix = totalBalance >= 0 ? '+' : '-';
