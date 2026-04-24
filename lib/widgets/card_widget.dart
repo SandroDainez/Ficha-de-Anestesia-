@@ -19,6 +19,7 @@ class PanelCard extends StatefulWidget {
     this.collapsible = true,
     this.initiallyExpanded = false,
     this.collapsedChild,
+    this.onTap,
   });
 
   final String title;
@@ -33,6 +34,7 @@ class PanelCard extends StatefulWidget {
   final bool collapsible;
   final bool initiallyExpanded;
   final Widget? collapsedChild;
+  final VoidCallback? onTap;
 
   @override
   State<PanelCard> createState() => _PanelCardState();
@@ -49,6 +51,26 @@ class _PanelCardState extends State<PanelCard> {
 
   @override
   Widget build(BuildContext context) {
+    void handleCardTap() {
+      if (widget.onTap != null) {
+        widget.onTap!();
+        return;
+      }
+      if (widget.collapsible) {
+        setState(() => _isExpanded = !_isExpanded);
+      }
+    }
+
+    void handleCollapsedTap() {
+      if (widget.onTap != null) {
+        widget.onTap!();
+        return;
+      }
+      if (widget.collapsible) {
+        setState(() => _isExpanded = true);
+      }
+    }
+
     final isSuccess = widget.isCompleted && !widget.isAttention;
     final headerBackground = widget.isAttention
         ? Color.alphaBlend(
@@ -101,8 +123,8 @@ class _PanelCardState extends State<PanelCard> {
               top: const Radius.circular(13),
               bottom: Radius.circular(_isExpanded ? 0 : 13),
             ),
-            onTap: widget.collapsible
-                ? () => setState(() => _isExpanded = !_isExpanded)
+            onTap: (widget.collapsible || widget.onTap != null)
+                ? handleCardTap
                 : null,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
@@ -163,8 +185,8 @@ class _PanelCardState extends State<PanelCard> {
               Padding(padding: const EdgeInsets.all(12), child: widget.child)
           else if (widget.collapsedChild != null)
             InkWell(
-              onTap: widget.collapsible
-                  ? () => setState(() => _isExpanded = true)
+              onTap: (widget.collapsible || widget.onTap != null)
+                  ? handleCollapsedTap
                   : null,
               borderRadius: const BorderRadius.vertical(
                 bottom: Radius.circular(13),

@@ -410,52 +410,72 @@ class _MedicationEntryEditDialogState extends State<MedicationEntryEditDialog> {
       title: Text(widget.title),
       content: SizedBox(
         width: 420,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _doseController,
-              decoration: const InputDecoration(
-                labelText: 'Dose / volume',
-                hintText: 'Ex: 140 mg (14 mL)',
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFE),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE5ECF6)),
+                ),
+                child: const Text(
+                  'Registre o que foi realmente administrado: dose da primeira aplicação, horário, redoses/observações, infusão contínua se houver e quantidade total usada.',
+                  style: TextStyle(
+                    color: Color(0xFF5D7288),
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _timeController,
-              decoration: const InputDecoration(
-                labelText: 'Horário',
-                hintText: '08:30',
+              const SizedBox(height: 12),
+              TextField(
+                controller: _doseController,
+                decoration: const InputDecoration(
+                  labelText: 'Dose administrada na 1ª aplicação',
+                  hintText: 'Ex: 140 mg (14 mL)',
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _repeatController,
-              minLines: 2,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'Repiques / orientações',
-                hintText:
-                    'Ex: repetir 50 mcg se necessário; nova dose em 40-60 min',
+              const SizedBox(height: 12),
+              TextField(
+                controller: _timeController,
+                decoration: const InputDecoration(
+                  labelText: 'Horário da 1ª dose',
+                  hintText: 'Ex: 08:30',
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _infusionController,
-              decoration: const InputDecoration(
-                labelText: 'Infusão contínua',
-                hintText: 'Se aplicável',
+              const SizedBox(height: 12),
+              TextField(
+                controller: _repeatController,
+                minLines: 2,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  labelText: 'Redoses / bolus adicionais / observações',
+                  hintText:
+                      'Ex: 50 mcg às 08:40; repetir se necessário após 40-60 min',
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _ampoulesController,
-              decoration: const InputDecoration(
-                labelText: 'Ampolas / frascos',
-                hintText: 'Ex: 2 ampolas; 1 frasco',
+              const SizedBox(height: 12),
+              TextField(
+                controller: _infusionController,
+                decoration: const InputDecoration(
+                  labelText: 'Infusão contínua / bomba',
+                  hintText: 'Ex: 0,06 mcg/kg/min; deixar em branco se não usou',
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              TextField(
+                controller: _ampoulesController,
+                decoration: const InputDecoration(
+                  labelText: 'Quantidade total usada (ampolas / frascos)',
+                  hintText: 'Ex: 2 ampolas; 1 frasco',
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -662,7 +682,7 @@ class _DrugInfusionsDialogState extends State<DrugInfusionsDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$name (${_defaultDoseLabels[name] ?? 'dose padrão'})',
+                  '$name • dose de referência usual: ${_defaultDoseLabels[name] ?? 'dose padrão'}',
                   style: const TextStyle(
                     color: Color(0xFF17324D),
                     fontWeight: FontWeight.w700,
@@ -676,7 +696,7 @@ class _DrugInfusionsDialogState extends State<DrugInfusionsDialog> {
                         key: Key('drug-dose-field-$name'),
                         controller: _doseControllers[name],
                         decoration: const InputDecoration(
-                          labelText: 'Dose inicial',
+                          labelText: 'Dose administrada na 1ª aplicação',
                           hintText: 'Ex: 150 mg',
                         ),
                       ),
@@ -688,8 +708,8 @@ class _DrugInfusionsDialogState extends State<DrugInfusionsDialog> {
                         key: Key('drug-time-field-$name'),
                         controller: _timeControllers[name],
                         decoration: const InputDecoration(
-                          labelText: 'Horário',
-                          hintText: '08:12',
+                          labelText: 'Horário da 1ª dose',
+                          hintText: 'Ex: 08:12',
                         ),
                       ),
                     ),
@@ -700,8 +720,8 @@ class _DrugInfusionsDialogState extends State<DrugInfusionsDialog> {
                   key: Key('drug-repeat-field-$name'),
                   controller: _repeatControllers[name],
                   decoration: const InputDecoration(
-                    labelText: 'Repiques / novas doses',
-                    hintText: 'Ex: 50 mcg 08:20; 50 mcg 08:35',
+                    labelText: 'Redoses / bolus adicionais',
+                    hintText: 'Ex: 50 mcg às 08:20; 50 mcg às 08:35',
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -709,8 +729,8 @@ class _DrugInfusionsDialogState extends State<DrugInfusionsDialog> {
                   key: Key('drug-infusion-field-$name'),
                   controller: _infusionControllers[name],
                   decoration: const InputDecoration(
-                    labelText: 'Infusão contínua',
-                    hintText: 'Ex: 0,08 mcg/kg/min às 08:40',
+                    labelText: 'Infusão contínua / bomba',
+                    hintText: 'Ex: 0,08 mcg/kg/min a partir de 08:40',
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -718,7 +738,7 @@ class _DrugInfusionsDialogState extends State<DrugInfusionsDialog> {
                   key: Key('drug-ampoules-field-$name'),
                   controller: _ampouleControllers[name],
                   decoration: const InputDecoration(
-                    labelText: 'Ampolas / frascos usados',
+                    labelText: 'Quantidade total usada (ampolas / frascos)',
                     hintText: 'Ex: 3 ampolas',
                   ),
                 ),
@@ -749,6 +769,24 @@ class _DrugInfusionsDialogState extends State<DrugInfusionsDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFE),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE5ECF6)),
+                ),
+                child: const Text(
+                  'As doses mostradas ao lado de cada droga são referências usuais. Registre abaixo o que foi realmente administrado na indução, com primeira dose, horário, redoses, infusão contínua se houver e quantidade total utilizada.',
+                  style: TextStyle(
+                    color: Color(0xFF5D7288),
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
               _buildDrugSection(
                 title: 'Hipnóticos',
                 drugs: _hypnotics,
@@ -1095,6 +1133,24 @@ class _AdjunctsDialogState extends State<AdjunctsDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFE),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE5ECF6)),
+                ),
+                child: const Text(
+                  'A dose ao lado de cada adjuvante é uma referência usual. Preencha o que foi efetivamente administrado no caso, incluindo primeira dose, horário, redoses, infusão contínua se houver e quantidade total usada.',
+                  style: TextStyle(
+                    color: Color(0xFF5D7288),
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
               ..._adjunctNames.map((name) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
@@ -1102,7 +1158,7 @@ class _AdjunctsDialogState extends State<AdjunctsDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '$name (${_defaultDoseLabels[name] ?? 'dose padrão'})',
+                        '$name • dose de referência usual: ${_defaultDoseLabels[name] ?? 'dose padrão'}',
                         style: const TextStyle(
                           color: Color(0xFF17324D),
                           fontWeight: FontWeight.w700,
@@ -1116,7 +1172,7 @@ class _AdjunctsDialogState extends State<AdjunctsDialog> {
                               key: Key('catalog-dose-field-$name'),
                               controller: _doseControllers[name],
                               decoration: const InputDecoration(
-                                labelText: 'Dose inicial',
+                                labelText: 'Dose administrada na 1ª aplicação',
                                 hintText: 'Ex: 100 mg',
                               ),
                             ),
@@ -1128,8 +1184,8 @@ class _AdjunctsDialogState extends State<AdjunctsDialog> {
                               key: Key('catalog-time-field-$name'),
                               controller: _timeControllers[name],
                               decoration: const InputDecoration(
-                                labelText: 'Horário',
-                                hintText: '08:30',
+                                labelText: 'Horário da 1ª dose',
+                                hintText: 'Ex: 08:30',
                               ),
                             ),
                           ),
@@ -1140,8 +1196,8 @@ class _AdjunctsDialogState extends State<AdjunctsDialog> {
                         key: Key('catalog-repeat-field-$name'),
                         controller: _repeatControllers[name],
                         decoration: const InputDecoration(
-                          labelText: 'Repiques / novas doses',
-                          hintText: 'Ex: 25 mg 09:10; 25 mg 09:30',
+                          labelText: 'Redoses / bolus adicionais',
+                          hintText: 'Ex: 25 mg às 09:10; 25 mg às 09:30',
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -1149,8 +1205,8 @@ class _AdjunctsDialogState extends State<AdjunctsDialog> {
                         key: Key('catalog-infusion-field-$name'),
                         controller: _infusionControllers[name],
                         decoration: const InputDecoration(
-                          labelText: 'Infusão contínua',
-                          hintText: 'Se aplicável',
+                          labelText: 'Infusão contínua / bomba',
+                          hintText: 'Ex: 0,2 mg/kg/h; deixar em branco se não usou',
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -1158,7 +1214,7 @@ class _AdjunctsDialogState extends State<AdjunctsDialog> {
                         key: Key('catalog-ampoules-field-$name'),
                         controller: _ampouleControllers[name],
                         decoration: const InputDecoration(
-                          labelText: 'Ampolas / frascos',
+                          labelText: 'Quantidade total usada (ampolas / frascos)',
                           hintText: 'Ex: 2 ampolas',
                         ),
                       ),
@@ -1338,6 +1394,9 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isSedationDialog = widget.title.toLowerCase().contains('sedação') ||
+        widget.title.toLowerCase().contains('sedacao');
+
     return AlertDialog(
       title: Text(widget.title),
       content: SizedBox(
@@ -1346,6 +1405,39 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              if (isSedationDialog) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFE),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE5ECF6)),
+                  ),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Como preencher a sedação',
+                        style: TextStyle(
+                          color: Color(0xFF17324D),
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      SizedBox(height: 6),
+                      Text(
+                        'O valor entre parênteses ao lado de cada medicação é apenas uma dose de referência usual. Preencha abaixo o que foi realmente administrado no caso, com horário da primeira dose, redoses/bolus adicionais, infusão contínua se houver e quantidade total utilizada.',
+                        style: TextStyle(
+                          color: Color(0xFF5D7288),
+                          fontWeight: FontWeight.w600,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+              ],
               if (widget.suggestions.isNotEmpty) ...[
                 Container(
                   width: double.infinity,
@@ -1459,7 +1551,7 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '$name ($defaultDose)',
+                        '$name • dose de referência usual: $defaultDose',
                         style: const TextStyle(
                           color: Color(0xFF17324D),
                           fontWeight: FontWeight.w700,
@@ -1473,8 +1565,8 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
                               key: Key('catalog-dose-field-$name'),
                               controller: _doseControllers[name],
                               decoration: const InputDecoration(
-                                labelText: 'Dose inicial',
-                                hintText: 'Ex: 1 g',
+                                labelText: 'Dose administrada na 1ª aplicação',
+                                hintText: 'Ex: 1 g IV',
                               ),
                             ),
                           ),
@@ -1485,8 +1577,8 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
                               key: Key('catalog-time-field-$name'),
                               controller: _timeControllers[name],
                               decoration: const InputDecoration(
-                                labelText: 'Horário',
-                                hintText: '08:30',
+                                labelText: 'Horário da 1ª dose',
+                                hintText: 'Ex: 08:30',
                               ),
                             ),
                           ),
@@ -1497,8 +1589,8 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
                         key: Key('catalog-repeat-field-$name'),
                         controller: _repeatControllers[name],
                         decoration: const InputDecoration(
-                          labelText: 'Repiques / novas doses',
-                          hintText: 'Ex: repetir às 12:00',
+                          labelText: 'Redoses / bolus adicionais',
+                          hintText: 'Ex: 25 mcg às 09:10; 25 mcg às 09:30',
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -1506,8 +1598,8 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
                         key: Key('catalog-infusion-field-$name'),
                         controller: _infusionControllers[name],
                         decoration: const InputDecoration(
-                          labelText: 'Infusão contínua',
-                          hintText: 'Se aplicável',
+                          labelText: 'Infusão contínua / bomba',
+                          hintText: 'Ex: 0,4 mcg/kg/h; deixar em branco se não usou',
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -1515,7 +1607,7 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
                         key: Key('catalog-ampoules-field-$name'),
                         controller: _ampouleControllers[name],
                         decoration: const InputDecoration(
-                          labelText: 'Ampolas / frascos',
+                          labelText: 'Quantidade total usada (ampolas / frascos)',
                           hintText: 'Ex: 2 ampolas',
                         ),
                       ),
@@ -1723,8 +1815,8 @@ class _VasoactiveDrugsDialogState extends State<VasoactiveDrugsDialog> {
                         key: Key('vasoactive-repeat-field-$name'),
                         controller: _repeatControllers[name],
                         decoration: const InputDecoration(
-                          labelText: 'Repiques intermitentes',
-                          hintText: 'Ex: 5 mg 08:40; 5 mg 08:55',
+                          labelText: 'Bolus / repiques intermitentes',
+                          hintText: 'Ex: 5 mg às 08:40; 5 mg às 08:55',
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -1732,8 +1824,8 @@ class _VasoactiveDrugsDialogState extends State<VasoactiveDrugsDialog> {
                         key: Key('vasoactive-infusion-field-$name'),
                         controller: _infusionControllers[name],
                         decoration: const InputDecoration(
-                          labelText: 'EV contínua / BIC',
-                          hintText: 'Ex: 0,06 mcg/kg/min às 08:45',
+                          labelText: 'Infusão contínua / BIC',
+                          hintText: 'Ex: 0,06 mcg/kg/min a partir de 08:45',
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -1741,7 +1833,7 @@ class _VasoactiveDrugsDialogState extends State<VasoactiveDrugsDialog> {
                         key: Key('vasoactive-ampoules-field-$name'),
                         controller: _ampouleControllers[name],
                         decoration: const InputDecoration(
-                          labelText: 'Ampolas / frascos',
+                          labelText: 'Quantidade total usada (ampolas / frascos)',
                           hintText: 'Ex: 1 ampola; 1 seringa preparada',
                         ),
                       ),

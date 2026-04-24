@@ -163,7 +163,7 @@ void main() {
   ) async {
     await pumpScreen(tester, buildRecord());
 
-    expect(find.text('SALA E EQUIPAMENTO'), findsOneWidget);
+    expect(find.text('CHECKLIST PRÉ-ANESTESIA'), findsOneWidget);
     expect(find.text('7) ANTIBIOTICOPROFILAXIA'), findsOneWidget);
     expect(find.text('8) ACESSO VENOSO'), findsOneWidget);
     expect(find.text('9) ACESSO ARTERIAL'), findsOneWidget);
@@ -616,10 +616,37 @@ void main() {
 
       await tester.tap(find.text('TÉCNICA ANESTÉSICA'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Editar técnica'));
-      await tester.pumpAndSettle();
 
       expect(find.text('Editar Técnica anestésica'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'preparation card exposes clickable pre-anesthesia checklist items',
+    (WidgetTester tester) async {
+      await pumpScreen(tester, buildRecord());
+
+      await tester.ensureVisible(find.byKey(const Key('preparation-card')));
+      await tester.tap(find.byKey(const Key('preparation-card')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Equipamento de anestesia checado'), findsOneWidget);
+      expect(
+        find.text('Materiais para intubação disponíveis e testados'),
+        findsOneWidget,
+      );
+      expect(find.text('Termo de consentimento assinado'), findsOneWidget);
+      expect(find.text('Pré-anestésico realizado'), findsOneWidget);
+      expect(
+        find.text('Monitorização instalada e funcionando'),
+        findsOneWidget,
+      );
+      expect(find.text('Acesso venoso pérvio'), findsOneWidget);
+
+      await tester.tap(find.text('Equipamento de anestesia checado'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('OK'), findsWidgets);
     },
   );
 
@@ -824,6 +851,7 @@ void main() {
 
     expect(find.text('DESPERTAR / EXTUBAÇÃO'), findsOneWidget);
 
+    await tester.ensureVisible(find.byKey(const Key('emergence-entry')));
     await tester.tap(find.byKey(const Key('emergence-entry')));
     await tester.pumpAndSettle();
 
@@ -1096,14 +1124,37 @@ void main() {
 
     await tester.tap(find.text('TÉCNICA ANESTÉSICA'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Editar técnica'));
-    await tester.pumpAndSettle();
 
     expect(find.text('Máscara laríngea'), findsOneWidget);
     expect(find.text('Bloqueio caudal/regional'), findsOneWidget);
     expect(find.text('TIVA'), findsNothing);
     expect(find.text('Raquianestesia'), findsNothing);
   });
+
+  testWidgets(
+    'technique dialog suggests a specific description for combined techniques',
+    (WidgetTester tester) async {
+      await pumpScreen(tester, buildRecord());
+
+      await tester.ensureVisible(find.text('Editar técnica'));
+      await tester.tap(find.text('Editar técnica'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(FilterChip, 'TIVA'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilterChip, 'Bloqueio periférico'));
+      await tester.pumpAndSettle();
+
+      final detailsField = tester.widget<TextField>(
+        find.byKey(const Key('technique-details-field')),
+      );
+      final detailsText = detailsField.controller?.text ?? '';
+
+      expect(detailsText, contains('técnica combinada'));
+      expect(detailsText, contains('anestesia geral'));
+      expect(detailsText, contains('bloqueio'));
+    },
+  );
 
   testWidgets('shows pediatric fasting guidance in the fasting card summary', (
     WidgetTester tester,

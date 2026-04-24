@@ -330,9 +330,9 @@ class _NamedItemsDialogState extends State<NamedItemsDialog> {
     return AlertDialog(
       backgroundColor: _dialogSurfaceColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
-      titlePadding: const EdgeInsets.fromLTRB(48, 40, 48, 0),
-      contentPadding: const EdgeInsets.fromLTRB(48, 28, 48, 24),
-      actionsPadding: const EdgeInsets.fromLTRB(36, 0, 36, 30),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
       title: Text(widget.title, style: _dialogTitleStyle),
       content: SizedBox(
         width: 1120,
@@ -382,6 +382,7 @@ class _NamedItemsDialogState extends State<NamedItemsDialog> {
           child: const Text('Cancelar'),
         ),
         FilledButton(
+          key: const Key('named-items-save-button'),
           style: _dialogPrimaryButtonStyle(
             padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
           ),

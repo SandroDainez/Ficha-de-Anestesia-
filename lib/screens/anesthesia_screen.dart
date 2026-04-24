@@ -957,7 +957,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   static const Color _preInductionPhaseColor = Color(0xFF2B76D2);
   static const Color _inductionPhaseColor = Color(0xFF8A5DD3);
   static const Color _maintenancePhaseColor = Color(0xFF168B79);
-  static const Color _emergencePhaseColor = Color(0xFF5A6F86);
+  static const Color _emergencePhaseColor = Color(0xFFD27A1F);
   static const Color _timeoutRowColor = _preInductionPhaseColor;
   static const Color _accessRowColor = _preInductionPhaseColor;
   static const Color _techniqueRowColor = _inductionPhaseColor;
@@ -1228,6 +1228,14 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     'Capnografia',
     'Temperatura',
     'BIS',
+  ];
+  static const List<String> _preAnesthesiaChecklistOptions = [
+    'Equipamento de anestesia checado',
+    'Materiais para intubação disponíveis e testados',
+    'Termo de consentimento assinado',
+    'Pré-anestésico realizado',
+    'Monitorização instalada e funcionando',
+    'Acesso venoso pérvio',
   ];
   static const List<String> _timeOutOptions = [
     'Equipe identificada por nome e funcao',
@@ -4425,6 +4433,73 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     await _persistRecord();
   }
 
+  bool _hasPreparationChecklistItem(String item) {
+    const aliases = <String, List<String>>{
+      'Equipamento de anestesia checado': [
+        'Equipamento de anestesia checado',
+        'Aparelho de anestesia checado',
+        'Oxigênio, aspirador e ventilador testados',
+        'Materiais e equipamentos conferidos',
+      ],
+      'Materiais para intubação disponíveis e testados': [
+        'Materiais para intubação disponíveis e testados',
+        'Material de via aérea disponível',
+      ],
+      'Termo de consentimento assinado': [
+        'Termo de consentimento assinado',
+        'Consentimento confirmado',
+      ],
+      'Pré-anestésico realizado': [
+        'Pré-anestésico realizado',
+      ],
+      'Monitorização instalada e funcionando': [
+        'Monitorização instalada e funcionando',
+      ],
+      'Acesso venoso pérvio': [
+        'Acesso venoso pérvio',
+      ],
+    };
+    return aliases[item]!.any(_record.safeSurgeryChecklist.contains);
+  }
+
+  Future<void> _togglePreparationChecklistItem(String item) async {
+    const aliases = <String, List<String>>{
+      'Equipamento de anestesia checado': [
+        'Equipamento de anestesia checado',
+        'Aparelho de anestesia checado',
+        'Oxigênio, aspirador e ventilador testados',
+        'Materiais e equipamentos conferidos',
+      ],
+      'Materiais para intubação disponíveis e testados': [
+        'Materiais para intubação disponíveis e testados',
+        'Material de via aérea disponível',
+      ],
+      'Termo de consentimento assinado': [
+        'Termo de consentimento assinado',
+        'Consentimento confirmado',
+      ],
+      'Pré-anestésico realizado': [
+        'Pré-anestésico realizado',
+      ],
+      'Monitorização instalada e funcionando': [
+        'Monitorização instalada e funcionando',
+      ],
+      'Acesso venoso pérvio': [
+        'Acesso venoso pérvio',
+      ],
+    };
+    final next = List<String>.from(_record.safeSurgeryChecklist)
+      ..removeWhere((entry) => aliases[item]!.contains(entry));
+    if (!_hasPreparationChecklistItem(item)) {
+      next.add(item);
+    }
+
+    setState(() {
+      _record = _record.copyWith(safeSurgeryChecklist: next);
+    });
+    await _persistRecord();
+  }
+
   Future<void> _finalizeTimeOutFromCard() async {
     if (_record.timeOutChecklist.length != _timeOutOptions.length) return;
     setState(() {
@@ -5106,42 +5181,65 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     required String subtitle,
     required Color accent,
   }) {
+    final backgroundColor = Color.alphaBlend(
+      accent.withAlpha(18),
+      Colors.white.withAlpha(235),
+    );
+    final borderColor = Color.alphaBlend(
+      accent.withAlpha(90),
+      const Color(0xFFD2E0EF),
+    );
+    final subtitleColor = Color.alphaBlend(
+      accent.withAlpha(130),
+      const Color(0xFF6F8498),
+    );
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withAlpha(190),
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFD2E0EF)),
+        border: Border.all(color: borderColor, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withAlpha(18),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
-            width: 4,
-            height: 38,
+            width: 8,
+            height: 44,
             decoration: BoxDecoration(
               color: accent,
               borderRadius: BorderRadius.circular(999),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: Color(0xFF17324D),
+                  style: TextStyle(
+                    color: Color.alphaBlend(
+                      accent.withAlpha(80),
+                      const Color(0xFF17324D),
+                    ),
                     fontWeight: FontWeight.w800,
-                    fontSize: 14,
+                    fontSize: 15,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    color: Color(0xFF6F8498),
+                  style: TextStyle(
+                    color: subtitleColor,
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
                   ),
@@ -6186,26 +6284,103 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
 
   Widget _buildPreparationCard() {
     final checklist = _record.safeSurgeryChecklist;
-    final status = checklist.isEmpty
+    final completedCount = _preAnesthesiaChecklistOptions
+        .where(_hasPreparationChecklistItem)
+        .length;
+    final status = completedCount == 0
         ? 'Preparação da sala pendente'
-        : checklist.contains('Aparelho de anestesia checado')
-        ? 'Sala e equipamento conferidos'
-        : '${checklist.length} item(ns) confirmados';
-    final summary = checklist.isEmpty
-        ? 'Confirmar aparelho, O₂, aspiração, materiais de via aérea e itens de bloqueio antes da chegada do paciente.'
-        : checklist.take(2).join(' • ');
-    return _buildCompactOperationalCard(
+        : completedCount == _preAnesthesiaChecklistOptions.length
+        ? 'Checklist pré-anestésico OK'
+        : '$completedCount/${_preAnesthesiaChecklistOptions.length} item(ns) confirmados';
+    final summary = completedCount == 0
+        ? 'Confirme equipamento, intubação, consentimento e avaliação pré-anestésica antes de iniciar.'
+        : _preAnesthesiaChecklistOptions
+              .where(_hasPreparationChecklistItem)
+              .take(2)
+              .join(' • ');
+    return PanelCard(
       key: const Key('preparation-card'),
-      tapKey: const Key('preparation-entry'),
-      title: 'Sala e equipamento',
+      title: 'Checklist pré-anestesia',
       titleColor: _timeoutRowColor,
       icon: Icons.fact_check_outlined,
-      minHeight: 92,
-      isAttention: checklist.isEmpty,
-      status: status,
-      summary: summary,
-      onTap: () => _editSurgerySection(SurgeryInfoSection.checklist),
-      isCompleted: checklist.isNotEmpty,
+      minHeight: 240,
+      isAttention: completedCount < _preAnesthesiaChecklistOptions.length,
+      isCompleted: completedCount == _preAnesthesiaChecklistOptions.length,
+      collapsedChild: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            status,
+            style: TextStyle(
+              color: completedCount == _preAnesthesiaChecklistOptions.length
+                  ? const Color(0xFF169653)
+                  : const Color(0xFFF59E0B),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            summary,
+            style: const TextStyle(
+              color: Color(0xFF5D7288),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            key: const Key('preparation-entry'),
+            borderRadius: BorderRadius.circular(14),
+            onTap: () => _editSurgerySection(SurgeryInfoSection.checklist),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  status,
+                  style: TextStyle(
+                    color: completedCount == _preAnesthesiaChecklistOptions.length
+                        ? const Color(0xFF169653)
+                        : const Color(0xFFF59E0B),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  summary,
+                  style: const TextStyle(
+                    color: Color(0xFF5D7288),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          ..._preAnesthesiaChecklistOptions.asMap().entries.map(
+            (entry) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _buildPresetActionCard(
+                key: Key('preparation-item-${entry.key + 1}'),
+                title: entry.value,
+                badge: '${entry.key + 1}',
+                subtitle: 'Checklist antes da anestesia',
+                detail: _hasPreparationChecklistItem(entry.value)
+                    ? 'OK'
+                    : 'Toque em confirmar para registrar este item.',
+                selected: _hasPreparationChecklistItem(entry.value),
+                accentColor: const Color(0xFF169653),
+                onConfirm: () => _togglePreparationChecklistItem(entry.value),
+                onTap: () => _togglePreparationChecklistItem(entry.value),
+                confirmLabel: 'Confirmar',
+                selectedLabel: 'OK',
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -6408,6 +6583,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
               ? _techniqueRowColor
               : const Color(0xFF7A8EA5),
         ),
+        onTap: _editTecnicaAnestesica,
         trailing: AddButton(
           label: 'Editar técnica',
           onTap: _editTecnicaAnestesica,

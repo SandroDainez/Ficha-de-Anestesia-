@@ -750,6 +750,68 @@ class ReportExportService {
       return buffer.toString().trim();
     }
 
+    String escapeSvgText(String value) {
+      return value
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&apos;');
+    }
+
+    String symbolMarkupFor(
+      String type,
+      List<Map<String, double>> data,
+      double Function(double) yMap,
+      String color,
+    ) {
+      if (data.isEmpty) return '';
+      final sorted = [...data]..sort((a, b) => a['time']!.compareTo(b['time']!));
+      final buffer = StringBuffer();
+      for (final point in sorted) {
+        final x = xForTime(point['time']!);
+        final y = yMap(point['value']!);
+        final xText = x.toStringAsFixed(1);
+        final yText = y.toStringAsFixed(1);
+        switch (type) {
+          case 'PAS':
+            buffer.writeln(
+              "<path d='M ${(x - 9).toStringAsFixed(1)} ${(y - 8).toStringAsFixed(1)} L $xText ${(y + 10).toStringAsFixed(1)} L ${(x + 9).toStringAsFixed(1)} ${(y - 8).toStringAsFixed(1)} Z' fill='none' stroke='$color' stroke-width='2.6' stroke-linejoin='round' />",
+            );
+            break;
+          case 'PAD':
+            buffer.writeln(
+              "<path d='M ${(x - 9).toStringAsFixed(1)} ${(y + 8).toStringAsFixed(1)} L $xText ${(y - 10).toStringAsFixed(1)} L ${(x + 9).toStringAsFixed(1)} ${(y + 8).toStringAsFixed(1)} Z' fill='none' stroke='$color' stroke-width='2.6' stroke-linejoin='round' />",
+            );
+            break;
+          case 'FC':
+            buffer.writeln(
+              "<circle cx='$xText' cy='$yText' r='6.5' fill='$color' stroke='$color' stroke-width='2.2' />",
+            );
+            break;
+          case 'PAM':
+            buffer.writeln(
+              "<text x='$xText' y='${(y + 5).toStringAsFixed(1)}' text-anchor='middle' font-size='16' font-weight='700' fill='$color'>M</text>",
+            );
+            break;
+          case 'SpO2':
+            buffer.writeln(
+              "<text x='$xText' y='${(y + 4).toStringAsFixed(1)}' text-anchor='middle' font-size='11' font-weight='700' fill='$color'>Sat</text>",
+            );
+            break;
+          case 'PAI':
+            buffer.writeln(
+              "<circle cx='$xText' cy='$yText' r='13' fill='$color' fill-opacity='0.12' stroke='$color' stroke-width='2.2' />",
+            );
+            buffer.writeln(
+              "<text x='$xText' y='${(y + 4).toStringAsFixed(1)}' text-anchor='middle' font-size='11' font-weight='700' fill='$color'>PAI</text>",
+            );
+            break;
+        }
+      }
+      return buffer.toString();
+    }
+
     final pointsByType = <String, List<Map<String, double>>>{};
     for (final point in record.hemodynamicPoints) {
       pointsByType.putIfAbsent(point.type, () => []);
@@ -804,8 +866,16 @@ class ReportExportService {
     for (final marker in record.hemodynamicMarkers) {
       final x = xForTime(marker.time);
       final color = marker.label == 'Início da anestesia' ? '#2b76d2' : '#169653';
+      final label = escapeSvgText(
+        marker.clockTime.trim().isEmpty
+            ? marker.label
+            : '${marker.label} ${marker.clockTime}',
+      );
       markers.writeln(
         "<line x1='${x.toStringAsFixed(1)}' y1='$top' x2='${x.toStringAsFixed(1)}' y2='${(height - bottom).toStringAsFixed(1)}' stroke='$color' stroke-width='1.2' />",
+      );
+      markers.writeln(
+        "<text x='${(x + (x < 130 ? 34 : 4)).toStringAsFixed(1)}' y='14' font-size='10' font-weight='700' fill='$color'>$label</text>",
       );
     }
 
@@ -835,6 +905,12 @@ class ReportExportService {
   <path d='${pathFor(pointsByType['FC'] ?? const [], yForHemo)}' fill='none' stroke='#ea5455' stroke-width='2.5'/>
   <path d='${pathFor(pointsByType['SpO2'] ?? const [], yForSpo2)}' fill='none' stroke='#16a96b' stroke-width='2.5'/>
   <path d='${pathFor(pointsByType['PAI'] ?? const [], yForHemo)}' fill='none' stroke='#5b6b7a' stroke-width='2.5'/>
+  ${symbolMarkupFor('PAS', pas, yForHemo, '#365fd5')}
+  ${symbolMarkupFor('PAD', pad, yForHemo, '#6b8df2')}
+  ${symbolMarkupFor('PAM', pam, yForHemo, '#2747b8')}
+  ${symbolMarkupFor('FC', pointsByType['FC'] ?? const [], yForHemo, '#ea5455')}
+  ${symbolMarkupFor('SpO2', pointsByType['SpO2'] ?? const [], yForSpo2, '#16a96b')}
+  ${symbolMarkupFor('PAI', pointsByType['PAI'] ?? const [], yForHemo, '#5b6b7a')}
   ${axisLabels()}
 </svg>
 """;
