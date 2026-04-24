@@ -467,7 +467,7 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
                     value: mallampati.trim().isEmpty
                         ? 'Não informado'
                         : 'Classe $mallampati',
-                    color: UiColors.info,
+                    color: _mallampatiColor(mallampati),
                     onTap: onMallampatiTap,
                   ),
                 ClinicalChip(
@@ -475,9 +475,7 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
                   value: patient.allergies.isEmpty
                       ? 'Nenhuma'
                       : patient.allergies.join(', '),
-                  color: patient.allergies.isEmpty
-                      ? UiColors.info
-                      : UiColors.danger,
+                  color: _allergiesColor(patient),
                   onTap: onAllergiesTap,
                 ),
                 ClinicalChip(
@@ -485,9 +483,7 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
                   value: patient.restrictions.isEmpty
                       ? 'Nenhuma'
                       : patient.restrictions.join(', '),
-                  color: patient.restrictions.isEmpty
-                      ? UiColors.info
-                      : UiColors.warning,
+                  color: _restrictionsColor(patient),
                   onTap: onRestrictionsTap,
                 ),
                 ClinicalChip(
@@ -495,7 +491,7 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
                   value: patient.medications.isEmpty
                       ? 'Nenhuma'
                       : patient.medications.join(', '),
-                  color: UiColors.accent,
+                  color: _medicationsColor(patient),
                   onTap: onMedicationsTap,
                 ),
                 if (isPediatric || isNeonatal)
@@ -674,6 +670,26 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
       return UiColors.warning;
     }
     return UiColors.success;
+  }
+
+  static Color _mallampatiColor(String mallampati) {
+    final normalized = mallampati.trim().toUpperCase();
+    if (normalized.isEmpty) return UiColors.warning;
+    if (normalized == 'III') return UiColors.warning;
+    if (normalized == 'IV') return UiColors.danger;
+    return UiColors.success;
+  }
+
+  static Color _allergiesColor(Patient patient) {
+    return UiColors.success;
+  }
+
+  static Color _restrictionsColor(Patient patient) {
+    return UiColors.success;
+  }
+
+  static Color _medicationsColor(Patient patient) {
+    return patient.medications.isEmpty ? UiColors.warning : UiColors.success;
   }
 }
 

@@ -11,7 +11,7 @@ void main() {
         home: Scaffold(
           body: NamedItemsDialog(
             title: 'Cirurgiões',
-            label: 'Nome do cirurgião',
+            label: 'Nome',
             addButtonLabel: 'Adicionar cirurgião',
             emptyStateText: 'Nenhum cirurgião adicionado.',
             initialItems: [],
@@ -30,5 +30,26 @@ void main() {
 
     expect(find.text('Dr. Silva'), findsOneWidget);
     expect(find.text('Dra. Lima'), findsOneWidget);
+  });
+
+  testWidgets('uses the same base field label pattern as anesthesiologists', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: NamedItemsDialog(
+            title: 'Auxiliares',
+            label: 'Nome',
+            addButtonLabel: 'Adicionar auxiliar',
+            emptyStateText: 'Nenhum auxiliar adicionado.',
+            initialItems: [],
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Nome'), findsOneWidget);
+    expect(find.text('Nenhum auxiliar adicionado.'), findsOneWidget);
   });
 }

@@ -4318,11 +4318,10 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         context: context,
         builder: (_) => NamedItemsDialog(
           title: 'Cirurgiões',
-          label: 'Nome do cirurgião',
+          label: 'Nome',
           addButtonLabel: 'Adicionar cirurgião',
           emptyStateText: 'Nenhum cirurgião adicionado.',
           initialItems: _lineItems(_record.surgeonName),
-          hintText: 'Ex: Dr. Fulano',
         ),
       );
       if (result == null) return;
@@ -4338,11 +4337,10 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         context: context,
         builder: (_) => NamedItemsDialog(
           title: 'Auxiliares',
-          label: 'Nome do auxiliar',
+          label: 'Nome',
           addButtonLabel: 'Adicionar auxiliar',
           emptyStateText: 'Nenhum auxiliar adicionado.',
           initialItems: _record.assistantNames,
-          hintText: 'Ex: Dra. Ciclana',
         ),
       );
       if (result == null) return;
