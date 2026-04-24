@@ -807,6 +807,7 @@ class ListFieldDialog extends StatefulWidget {
     required this.initialItems,
     this.suggestions = const [],
     this.hintText,
+    this.clearButtonLabel = 'Limpar',
   });
 
   final String title;
@@ -814,6 +815,7 @@ class ListFieldDialog extends StatefulWidget {
   final List<String> initialItems;
   final List<String> suggestions;
   final String? hintText;
+  final String clearButtonLabel;
 
   @override
   State<ListFieldDialog> createState() => _ListFieldDialogState();
@@ -998,7 +1000,7 @@ class _ListFieldDialogState extends State<ListFieldDialog> {
         TextButton(
           style: _dialogSecondaryButtonStyle(),
           onPressed: () => Navigator.of(context).pop(const <String>[]),
-          child: const Text('Limpar'),
+          child: Text(widget.clearButtonLabel),
         ),
         FilledButton(
           style: _dialogPrimaryButtonStyle(
@@ -1246,6 +1248,7 @@ class _PatientIdentificationDialogState
         initialItems: _combinedItems(selectedItems, controller),
         suggestions: suggestions,
         hintText: hintText,
+        clearButtonLabel: title == 'Alergias' ? 'Sem alergias' : 'Limpar',
       ),
     );
 

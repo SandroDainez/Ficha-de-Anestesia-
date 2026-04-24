@@ -4052,6 +4052,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         initialItems: _record.patient.allergies,
         suggestions: _commonAllergies,
         hintText: 'Uma alergia por linha',
+        clearButtonLabel: 'Sem alergias',
       ),
     );
 

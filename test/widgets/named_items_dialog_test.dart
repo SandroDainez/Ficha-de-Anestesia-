@@ -58,6 +58,27 @@ void main() {
     expect(find.text('Penicilina'), findsOneWidget);
   });
 
+  testWidgets('list field dialog supports a custom clear action label', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: ListFieldDialog(
+            title: 'Alergias',
+            label: 'Alergias',
+            initialItems: ['Látex'],
+            suggestions: ['Látex', 'Dipirona'],
+            clearButtonLabel: 'Sem alergias',
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Sem alergias'), findsOneWidget);
+    expect(find.text('Limpar'), findsNothing);
+  });
+
   testWidgets('supports adding more than one team member before saving', (
     WidgetTester tester,
   ) async {
