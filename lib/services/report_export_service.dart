@@ -916,7 +916,7 @@ class ReportExportService {
           "<text x='10' y='${(y + 4).toStringAsFixed(1)}' font-size='10' font-weight='700' fill='#16a96b'>$value</text>",
         );
       }
-      for (var value = 0; value <= 200; value += 10) {
+      for (var value = 0; value <= 200; value += 20) {
         final y = yForHemo(value.toDouble());
         buffer.writeln(
           "<text x='10' y='${(y + 4).toStringAsFixed(1)}' font-size='10' font-weight='700' fill='#5f7896'>$value</text>",
