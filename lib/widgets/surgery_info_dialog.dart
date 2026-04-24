@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/patient.dart';
+import 'anesthesia_basic_dialogs.dart';
 
 class SurgeryInfoDialogResult {
   const SurgeryInfoDialogResult({
@@ -322,26 +323,19 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
                 ),
               if (showDescription) const SizedBox(height: 8),
               if (showDescription)
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: _commonProcedureOptions
-                      .map(
-                        (item) => _ProcedureCard(
-                          label: item,
-                          selected: _selectedProcedures.contains(item),
-                          onTap: () {
-                            setState(() {
-                              if (_selectedProcedures.contains(item)) {
-                                _selectedProcedures.remove(item);
-                              } else {
-                                _selectedProcedures.add(item);
-                              }
-                            });
-                          },
-                        ),
-                      )
-                      .toList(),
+                SelectionGridSection(
+                  options: _commonProcedureOptions,
+                  color: const Color(0xFF2B76D2),
+                  isSelected: (item) => _selectedProcedures.contains(item),
+                  onToggle: (item) {
+                    setState(() {
+                      if (_selectedProcedures.contains(item)) {
+                        _selectedProcedures.remove(item);
+                      } else {
+                        _selectedProcedures.add(item);
+                      }
+                    });
+                  },
                 ),
               if (showDescription) const SizedBox(height: 14),
               if (showDescription)
@@ -375,20 +369,13 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
                 ),
               if (showPriority) const SizedBox(height: 8),
               if (showPriority)
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _priorityOptions
-                      .map(
-                        (item) => ChoiceChip(
-                          label: Text(item),
-                          selected: _selectedPriority == item,
-                          onSelected: (_) {
-                            setState(() => _selectedPriority = item);
-                          },
-                        ),
-                      )
-                      .toList(),
+                SelectionGridSection(
+                  options: _priorityOptions,
+                  searchEnabled: false,
+                  isSelected: (item) => _selectedPriority == item,
+                  onToggle: (item) {
+                    setState(() => _selectedPriority = item);
+                  },
                 ),
               if (showPriority &&
                   (showSurgeon ||
@@ -437,20 +424,13 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
                 ),
               if (showDestination) const SizedBox(height: 10),
               if (showDestination)
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _destinationOptions
-                      .map(
-                        (item) => ChoiceChip(
-                          label: Text(item),
-                          selected: _selectedDestination == item,
-                          onSelected: (_) {
-                            setState(() => _selectedDestination = item);
-                          },
-                        ),
-                      )
-                      .toList(),
+                SelectionGridSection(
+                  options: _destinationOptions,
+                  searchEnabled: false,
+                  isSelected: (item) => _selectedDestination == item,
+                  onToggle: (item) {
+                    setState(() => _selectedDestination = item);
+                  },
                 ),
               if (showDestination) const SizedBox(height: 12),
               if (showDestination)
@@ -493,26 +473,19 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
                 ),
               if (showChecklist) const SizedBox(height: 10),
               if (showChecklist)
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _safeChecklistOptions
-                      .map(
-                        (item) => FilterChip(
-                          label: Text(item),
-                          selected: _selectedChecklist.contains(item),
-                          onSelected: (value) {
-                            setState(() {
-                              if (value) {
-                                _selectedChecklist.add(item);
-                              } else {
-                                _selectedChecklist.remove(item);
-                              }
-                            });
-                          },
-                        ),
-                      )
-                      .toList(),
+                SelectionGridSection(
+                  options: _safeChecklistOptions,
+                  searchEnabled: false,
+                  isSelected: (item) => _selectedChecklist.contains(item),
+                  onToggle: (item) {
+                    setState(() {
+                      if (_selectedChecklist.contains(item)) {
+                        _selectedChecklist.remove(item);
+                      } else {
+                        _selectedChecklist.add(item);
+                      }
+                    });
+                  },
                 ),
               if (showChecklist && showTimeOut) const SizedBox(height: 18),
               if (showTimeOut)
@@ -527,30 +500,24 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
                 ),
               if (showTimeOut) const SizedBox(height: 10),
               if (showTimeOut)
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _timeOutOptions
-                      .map(
-                        (item) => FilterChip(
-                          label: Text(item),
-                          selected: _selectedTimeOutChecklist.contains(item),
-                          onSelected: (value) {
-                            setState(() {
-                              if (value) {
-                                _selectedTimeOutChecklist.add(item);
-                              } else {
-                                _selectedTimeOutChecklist.remove(item);
-                              }
-                              if (_selectedTimeOutChecklist.length !=
-                                  _timeOutOptions.length) {
-                                _timeOutCompleted = false;
-                              }
-                            });
-                          },
-                        ),
-                      )
-                      .toList(),
+                SelectionGridSection(
+                  options: _timeOutOptions,
+                  searchEnabled: false,
+                  isSelected: (item) =>
+                      _selectedTimeOutChecklist.contains(item),
+                  onToggle: (item) {
+                    setState(() {
+                      if (_selectedTimeOutChecklist.contains(item)) {
+                        _selectedTimeOutChecklist.remove(item);
+                      } else {
+                        _selectedTimeOutChecklist.add(item);
+                      }
+                      if (_selectedTimeOutChecklist.length !=
+                          _timeOutOptions.length) {
+                        _timeOutCompleted = false;
+                      }
+                    });
+                  },
                 ),
               if (showTimeOut) const SizedBox(height: 14),
               if (showTimeOut)
@@ -603,63 +570,6 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
           child: const Text('Salvar'),
         ),
       ],
-    );
-  }
-}
-
-class _ProcedureCard extends StatelessWidget {
-  const _ProcedureCard({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Material(
-      color: selected
-          ? colorScheme.primaryContainer
-          : colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Container(
-          constraints: const BoxConstraints(minWidth: 150, maxWidth: 220),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                selected
-                    ? Icons.check_circle_rounded
-                    : Icons.add_circle_outline_rounded,
-                size: 18,
-                color: selected
-                    ? colorScheme.onPrimaryContainer
-                    : colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  label,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: selected
-                        ? colorScheme.onPrimaryContainer
-                        : colorScheme.onSurface,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

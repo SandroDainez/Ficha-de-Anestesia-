@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../models/patient.dart';
+import 'anesthesia_basic_dialogs.dart';
 
 class TechniqueDialogResult {
-  const TechniqueDialogResult({
-    required this.technique,
-    required this.details,
-  });
+  const TechniqueDialogResult({required this.technique, required this.details});
 
   final String technique;
   final String details;
@@ -159,43 +157,23 @@ class _MonitoringDialogState extends State<MonitoringDialog> {
                 ),
               ),
               const SizedBox(height: 14),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _availableItems
-                    .map(
-                      (item) => FilterChip(
-                        label: Text(item),
-                        selected: _selectedItems.contains(item),
-                        onSelected: (value) {
-                          setState(() {
-                            if (value) {
-                              _selectedItems.add(item);
-                            } else {
-                              _selectedItems.remove(item);
-                            }
-                          });
-                        },
-                        selectedColor: const Color(0xFF2B76D2).withAlpha(28),
-                        checkmarkColor: const Color(0xFF2B76D2),
-                        side: BorderSide(
-                          color: _selectedItems.contains(item)
-                              ? const Color(0xFF2B76D2)
-                              : _recommendedItems.contains(item)
-                                  ? const Color(0xFF9CC0EC)
-                                  : const Color(0xFFD6E1ED),
-                        ),
-                        labelStyle: TextStyle(
-                          color: _selectedItems.contains(item)
-                              ? const Color(0xFF2B76D2)
-                              : _recommendedItems.contains(item)
-                                  ? const Color(0xFF315E8D)
-                                  : const Color(0xFF4F6378),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    )
-                    .toList(),
+              SelectionGridSection(
+                options: _availableItems,
+                color: const Color(0xFF2B76D2),
+                optionDescriptionBuilder: (item) =>
+                    _recommendedItems.contains(item)
+                    ? 'Monitorização recomendada para este perfil.'
+                    : null,
+                isSelected: (item) => _selectedItems.contains(item),
+                onToggle: (item) {
+                  setState(() {
+                    if (_selectedItems.contains(item)) {
+                      _selectedItems.remove(item);
+                    } else {
+                      _selectedItems.add(item);
+                    }
+                  });
+                },
               ),
               const SizedBox(height: 14),
               TextField(
@@ -222,10 +200,7 @@ class _MonitoringDialogState extends State<MonitoringDialog> {
                 .map((item) => item.trim())
                 .where((item) => item.isNotEmpty)
                 .toList();
-            Navigator.of(context).pop([
-              ..._selectedItems,
-              ...customItems,
-            ]);
+            Navigator.of(context).pop([..._selectedItems, ...customItems]);
           },
           child: const Text('Salvar'),
         ),
@@ -327,30 +302,32 @@ class _TechniqueDialogState extends State<TechniqueDialog> {
   }
 
   List<String> get _allSelectedTechniques => [
-        ..._selectedTechniques,
-        ..._otherTechniqueController.text
-            .split('\n')
-            .map((item) => item.trim())
-            .where((item) => item.isNotEmpty),
-      ];
+    ..._selectedTechniques,
+    ..._otherTechniqueController.text
+        .split('\n')
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty),
+  ];
 
   bool _containsAny(Iterable<String> values, List<String> needles) {
-    return values.any(
-      (item) => needles.any((needle) => item.contains(needle)),
-    );
+    return values.any((item) => needles.any((needle) => item.contains(needle)));
   }
 
   String _joinSelectedTechniques(List<String> techniques) {
     if (techniques.isEmpty) return '';
     if (techniques.length == 1) return techniques.first;
-    if (techniques.length == 2) return '${techniques.first} associada a ${techniques.last}';
+    if (techniques.length == 2) {
+      return '${techniques.first} associada a ${techniques.last}';
+    }
     final head = techniques.take(techniques.length - 1).join(', ');
     return '$head e ${techniques.last}';
   }
 
   String _buildSuggestedDetails() {
     final selectedOriginal = _allSelectedTechniques;
-    final selected = selectedOriginal.map((item) => item.toLowerCase()).toList();
+    final selected = selectedOriginal
+        .map((item) => item.toLowerCase())
+        .toList();
 
     if (selected.isEmpty) {
       return switch (widget.patient.population) {
@@ -364,14 +341,24 @@ class _TechniqueDialogState extends State<TechniqueDialog> {
     }
 
     final hasTiva = _containsAny(selected, ['tiva', 'venosa total']);
-    final hasBalancedGeneral = _containsAny(selected, ['anestesia geral balanceada']);
-    final hasGeneral = hasTiva || hasBalancedGeneral || _containsAny(
-      selected,
-      ['anestesia geral', 'máscara laríngea', 'mascara laringea'],
-    );
+    final hasBalancedGeneral = _containsAny(selected, [
+      'anestesia geral balanceada',
+    ]);
+    final hasGeneral =
+        hasTiva ||
+        hasBalancedGeneral ||
+        _containsAny(selected, [
+          'anestesia geral',
+          'máscara laríngea',
+          'mascara laringea',
+        ]);
     final hasSpinal = _containsAny(selected, ['raqui']);
     final hasEpidural = _containsAny(selected, ['peridural', 'epidural']);
-    final hasRegional = _containsAny(selected, ['bloqueio', 'regional', 'caudal']);
+    final hasRegional = _containsAny(selected, [
+      'bloqueio',
+      'regional',
+      'caudal',
+    ]);
     final hasSedation = _containsAny(selected, ['sedação', 'sedacao']);
 
     final combinedLabel = _joinSelectedTechniques(selectedOriginal);
@@ -424,7 +411,9 @@ class _TechniqueDialogState extends State<TechniqueDialog> {
   }
 
   void _refreshSuggestedDetails() {
-    if (_detailsEditedManually || widget.initialDetails.trim().isNotEmpty) return;
+    if (_detailsEditedManually || widget.initialDetails.trim().isNotEmpty) {
+      return;
+    }
     _updatingSuggestedDetails = true;
     _detailsController.text = _buildSuggestedDetails();
     _detailsController.selection = TextSelection.collapsed(
@@ -445,39 +434,20 @@ class _TechniqueDialogState extends State<TechniqueDialog> {
             children: [
               Align(
                 alignment: Alignment.centerLeft,
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _techniqueOptions
-                      .map(
-                        (item) => FilterChip(
-                          label: Text(item),
-                          selected: _selectedTechniques.contains(item),
-                          onSelected: (value) {
-                            setState(() {
-                              if (value) {
-                                _selectedTechniques.add(item);
-                              } else {
-                                _selectedTechniques.remove(item);
-                              }
-                              _refreshSuggestedDetails();
-                            });
-                          },
-                          selectedColor: const Color(0xFF8A5DD3).withAlpha(28),
-                          side: BorderSide(
-                            color: _selectedTechniques.contains(item)
-                                ? const Color(0xFF8A5DD3)
-                                : const Color(0xFFD6E1ED),
-                          ),
-                          labelStyle: TextStyle(
-                            color: _selectedTechniques.contains(item)
-                                ? const Color(0xFF8A5DD3)
-                                : const Color(0xFF4F6378),
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      )
-                      .toList(),
+                child: SelectionGridSection(
+                  options: _techniqueOptions,
+                  color: const Color(0xFF8A5DD3),
+                  isSelected: (item) => _selectedTechniques.contains(item),
+                  onToggle: (item) {
+                    setState(() {
+                      if (_selectedTechniques.contains(item)) {
+                        _selectedTechniques.remove(item);
+                      } else {
+                        _selectedTechniques.add(item);
+                      }
+                      _refreshSuggestedDetails();
+                    });
+                  },
                 ),
               ),
               const SizedBox(height: 12),

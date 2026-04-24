@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../models/airway.dart';
 import '../models/patient.dart';
+import 'anesthesia_basic_dialogs.dart';
 
 enum AirwayEditSection { cormack, device, technique, observation }
 
@@ -129,20 +130,15 @@ class _AirwayDialogState extends State<AirwayDialog> {
               if (showCormack) ...[
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _cormackOptions
-                        .map(
-                          (item) => ChoiceChip(
-                            label: Text('Cormack $item'),
-                            selected: _selectedCormack == item,
-                            onSelected: (_) {
-                              setState(() => _selectedCormack = item);
-                            },
-                          ),
-                        )
-                        .toList(),
+                  child: SelectionGridSection(
+                    options: _cormackOptions,
+                    searchEnabled: false,
+                    color: const Color(0xFF2B76D2),
+                    optionDescriptionBuilder: (item) => 'Cormack $item',
+                    isSelected: (item) => _selectedCormack == item,
+                    onToggle: (item) {
+                      setState(() => _selectedCormack = item);
+                    },
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -159,28 +155,20 @@ class _AirwayDialogState extends State<AirwayDialog> {
               if (showDevice) ...[
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _deviceOptions
-                        .map(
-                          (item) => ChoiceChip(
-                            label: Text(item),
-                            selected: _selectedDevice == item,
-                            onSelected: (_) {
-                              setState(() => _selectedDevice = item);
-                            },
-                          ),
-                        )
-                        .toList(),
+                  child: SelectionGridSection(
+                    options: _deviceOptions,
+                    searchEnabled: false,
+                    color: const Color(0xFF2B76D2),
+                    isSelected: (item) => _selectedDevice == item,
+                    onToggle: (item) {
+                      setState(() => _selectedDevice = item);
+                    },
                   ),
                 ),
-                if (_buildInlineAirwayHint(widget.patient) case final hint?) ...[
+                if (_buildInlineAirwayHint(widget.patient)
+                    case final hint?) ...[
                   const SizedBox(height: 12),
-                  _InlineAirwayHintCard(
-                    title: hint.title,
-                    lines: hint.lines,
-                  ),
+                  _InlineAirwayHintCard(title: hint.title, lines: hint.lines),
                 ],
                 const SizedBox(height: 14),
                 TextField(
@@ -192,7 +180,9 @@ class _AirwayDialogState extends State<AirwayDialog> {
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
                   ],
-                  decoration: const InputDecoration(labelText: 'Número do tubo'),
+                  decoration: const InputDecoration(
+                    labelText: 'Número do tubo',
+                  ),
                 ),
                 if (_selectedDevice == 'Outro') ...[
                   const SizedBox(height: 14),
@@ -218,20 +208,15 @@ class _AirwayDialogState extends State<AirwayDialog> {
                 const SizedBox(height: 10),
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _techniqueOptions
-                        .map(
-                          (item) => ChoiceChip(
-                            label: Text(item),
-                            selected: _techniqueController.text.trim() == item,
-                            onSelected: (_) {
-                              setState(() => _techniqueController.text = item);
-                            },
-                          ),
-                        )
-                        .toList(),
+                  child: SelectionGridSection(
+                    options: _techniqueOptions,
+                    searchEnabled: false,
+                    color: const Color(0xFF2B76D2),
+                    isSelected: (item) =>
+                        _techniqueController.text.trim() == item,
+                    onToggle: (item) {
+                      setState(() => _techniqueController.text = item);
+                    },
                   ),
                 ),
               ],
@@ -240,27 +225,21 @@ class _AirwayDialogState extends State<AirwayDialog> {
                   children: [
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _observationOptions
-                            .map(
-                              (item) => FilterChip(
-                                label: Text(item),
-                                selected:
-                                    _selectedObservationOptions.contains(item),
-                                onSelected: (value) {
-                                  setState(() {
-                                    if (value) {
-                                      _selectedObservationOptions.add(item);
-                                    } else {
-                                      _selectedObservationOptions.remove(item);
-                                    }
-                                  });
-                                },
-                              ),
-                            )
-                            .toList(),
+                      child: SelectionGridSection(
+                        options: _observationOptions,
+                        searchEnabled: false,
+                        color: const Color(0xFF2B76D2),
+                        isSelected: (item) =>
+                            _selectedObservationOptions.contains(item),
+                        onToggle: (item) {
+                          setState(() {
+                            if (_selectedObservationOptions.contains(item)) {
+                              _selectedObservationOptions.remove(item);
+                            } else {
+                              _selectedObservationOptions.add(item);
+                            }
+                          });
+                        },
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -268,9 +247,7 @@ class _AirwayDialogState extends State<AirwayDialog> {
                       key: const Key('airway-observation-field'),
                       controller: _observationController,
                       maxLines: 4,
-                      decoration: const InputDecoration(
-                        labelText: 'Outros',
-                      ),
+                      decoration: const InputDecoration(labelText: 'Outros'),
                     ),
                   ],
                 ),
@@ -292,8 +269,8 @@ class _AirwayDialogState extends State<AirwayDialog> {
                   : widget.initialAirway.cormackLehane,
               device: showDevice
                   ? (_selectedDevice == 'Outro'
-                      ? _otherDeviceController.text.trim()
-                      : _selectedDevice)
+                        ? _otherDeviceController.text.trim()
+                        : _selectedDevice)
                   : widget.initialAirway.device,
               tubeNumber: showDevice
                   ? _tubeController.text.trim()
@@ -329,10 +306,7 @@ class _AirwayDialogState extends State<AirwayDialog> {
 }
 
 class _InlineAirwayHint {
-  const _InlineAirwayHint({
-    required this.title,
-    required this.lines,
-  });
+  const _InlineAirwayHint({required this.title, required this.lines});
 
   final String title;
   final List<String> lines;
@@ -365,8 +339,9 @@ _InlineAirwayHint? _buildInlineAirwayHint(Patient patient) {
         ],
       );
     case PatientPopulation.neonatal:
-      final weightKg =
-          patient.weightKg > 0 ? patient.weightKg : patient.birthWeightKg;
+      final weightKg = patient.weightKg > 0
+          ? patient.weightKg
+          : patient.birthWeightKg;
       if (weightKg <= 0) {
         return const _InlineAirwayHint(
           title: 'Referência neonatal',
@@ -395,10 +370,7 @@ _InlineAirwayHint? _buildInlineAirwayHint(Patient patient) {
 }
 
 class _InlineAirwayHintCard extends StatelessWidget {
-  const _InlineAirwayHintCard({
-    required this.title,
-    required this.lines,
-  });
+  const _InlineAirwayHintCard({required this.title, required this.lines});
 
   final String title;
   final List<String> lines;

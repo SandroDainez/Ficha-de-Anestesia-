@@ -287,10 +287,7 @@ class HemodynamicChartCard extends StatelessWidget {
                       onSelectType: onSelectType,
                       onToggleRemoveMode: onToggleRemoveMode,
                     ),
-                    SizedBox(
-                      width: minChartWidth,
-                      child: chartStack,
-                    ),
+                    SizedBox(width: minChartWidth, child: chartStack),
                   ],
                 ),
               );
@@ -492,20 +489,34 @@ class _HemodynamicParameterSidebar extends StatelessWidget {
             for (final type in const ['PAS', 'PAD', 'FC', 'SpO2', 'PAI'])
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
-                child: Center(
-                  child: ChoiceChip(
-                    label: Text(
-                      type == 'SpO2' ? 'Sat' : type,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
+                child: SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => onSelectType(type),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 10,
+                      ),
+                      backgroundColor: inlineHemodynamicType == type
+                          ? const Color(0xFFE1EDFF)
+                          : Colors.white,
+                      side: BorderSide(
+                        color: inlineHemodynamicType == type
+                            ? const Color(0xFF365FD5)
+                            : const Color(0xFFDCE7F3),
                       ),
                     ),
-                    selected: inlineHemodynamicType == type,
-                    onSelected: (_) => onSelectType(type),
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    visualDensity: VisualDensity.compact,
+                    child: Text(
+                      type == 'SpO2' ? 'Sat' : type,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: inlineHemodynamicType == type
+                            ? const Color(0xFF365FD5)
+                            : const Color(0xFF17324D),
+                      ),
+                    ),
                   ),
                 ),
               ),

@@ -357,6 +357,8 @@ class _DetailedChoiceDialog extends StatefulWidget {
 class _DetailedChoiceDialogState extends State<_DetailedChoiceDialog> {
   late String _selectedValue;
   late final TextEditingController _customController;
+  late final TextEditingController _searchController;
+  String _query = '';
 
   @override
   void initState() {
@@ -368,11 +370,13 @@ class _DetailedChoiceDialogState extends State<_DetailedChoiceDialog> {
     _customController = TextEditingController(
       text: matchesPreset ? '' : widget.initialValue,
     );
+    _searchController = TextEditingController();
   }
 
   @override
   void dispose() {
     _customController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -380,102 +384,209 @@ class _DetailedChoiceDialogState extends State<_DetailedChoiceDialog> {
   Widget build(BuildContext context) {
     final allowsCustom = widget.customLabel != null;
     return AlertDialog(
-      title: Text(widget.title),
+      backgroundColor: const Color(0xFFF3F6FC),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+      title: Text(
+        widget.title,
+        style: const TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1F2630),
+        ),
+      ),
       content: SizedBox(
-        width: 620,
+        width: 1120,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              ...widget.options.map((option) {
-                final selected =
-                    _selectedValue == option.value &&
-                    _customController.text.trim().isEmpty;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(18),
-                      onTap: () {
-                        setState(() {
-                          _selectedValue = option.value;
-                          if (allowsCustom) {
-                            _customController.clear();
-                          }
-                        });
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 160),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: selected
-                              ? widget.color.withAlpha(18)
-                              : const Color(0xFFF8FAFE),
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                            color: selected
-                                ? widget.color
-                                : const Color(0xFFD7E3F3),
-                            width: selected ? 1.6 : 1,
+              TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Buscar...',
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: Color(0xFF6A7E94),
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFFBF8EF),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 18,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: const BorderSide(color: Color(0xFFD5E4F7)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: const BorderSide(color: Color(0xFFD5E4F7)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide(color: widget.color, width: 1.2),
+                  ),
+                ),
+                onChanged: (value) => setState(() => _query = value),
+              ),
+              const SizedBox(height: 22),
+              Builder(
+                builder: (context) {
+                  final normalizedQuery = _query.trim().toLowerCase();
+                  final filteredOptions = widget.options.where((option) {
+                    final haystack =
+                        '${option.title} ${option.description} ${option.supportingText}'
+                            .toLowerCase();
+                    return normalizedQuery.isEmpty ||
+                        haystack.contains(normalizedQuery);
+                  }).toList();
+
+                  if (filteredOptions.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 56),
+                      child: Center(
+                        child: Text(
+                          'Nenhuma opção encontrada para a busca.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color(0xFF7A8EA5),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              width: 34,
-                              height: 34,
-                              decoration: BoxDecoration(
-                                color: selected
-                                    ? widget.color
-                                    : widget.color.withAlpha(20),
-                                shape: BoxShape.circle,
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                option.title,
-                                style: TextStyle(
-                                  color: selected ? Colors.white : widget.color,
-                                  fontWeight: FontWeight.w900,
+                      ),
+                    );
+                  }
+
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      final columns = constraints.maxWidth >= 900 ? 2 : 1;
+                      final columnChildren = List.generate(
+                        columns,
+                        (_) => <Widget>[],
+                      );
+
+                      for (var i = 0; i < filteredOptions.length; i++) {
+                        final option = filteredOptions[i];
+                        final selected =
+                            _selectedValue == option.value &&
+                            _customController.text.trim().isEmpty;
+                        columnChildren[i % columns].add(
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(22),
+                                onTap: () {
+                                  setState(() {
+                                    _selectedValue = option.value;
+                                    if (allowsCustom) {
+                                      _customController.clear();
+                                    }
+                                  });
+                                },
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 160),
+                                  padding: const EdgeInsets.all(22),
+                                  decoration: BoxDecoration(
+                                    color: selected
+                                        ? widget.color.withAlpha(12)
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(22),
+                                    border: Border.all(
+                                      color: selected
+                                          ? widget.color
+                                          : const Color(0xFFD5E4F7),
+                                      width: selected ? 1.4 : 1,
+                                    ),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x0A17324D),
+                                        blurRadius: 14,
+                                        offset: Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      if (selected) ...[
+                                        Icon(
+                                          Icons.check_rounded,
+                                          color: widget.color,
+                                          size: 22,
+                                        ),
+                                        const SizedBox(width: 12),
+                                      ],
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              option.title,
+                                              style: TextStyle(
+                                                color: widget.color,
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              option.description,
+                                              style: const TextStyle(
+                                                color: Color(0xFF17324D),
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                            if (option
+                                                .supportingText
+                                                .isNotEmpty) ...[
+                                              const SizedBox(height: 6),
+                                              Text(
+                                                option.supportingText,
+                                                style: const TextStyle(
+                                                  color: Color(0xFF5D7288),
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 12),
+                          ),
+                        );
+                      }
+
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (var i = 0; i < columns; i++) ...[
                             Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    option.description,
-                                    style: const TextStyle(
-                                      color: Color(0xFF17324D),
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                  if (option.supportingText.isNotEmpty) ...[
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      option.supportingText,
-                                      style: const TextStyle(
-                                        color: Color(0xFF5D7288),
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
+                              child: Column(children: columnChildren[i]),
                             ),
+                            if (i != columns - 1) const SizedBox(width: 16),
                           ],
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
               if (allowsCustom) ...[
-                const SizedBox(height: 6),
+                const SizedBox(height: 10),
                 TextField(
                   controller: _customController,
                   maxLines: 3,
@@ -515,14 +626,42 @@ class _DetailedChoiceDialogState extends State<_DetailedChoiceDialog> {
       ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(''),
           child: const Text('Limpar'),
         ),
         FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF3C6C9C),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
           onPressed: () => Navigator.of(context).pop(
             _customController.text.trim().isNotEmpty
                 ? _customController.text.trim()
@@ -619,18 +758,11 @@ class _FastingQuickEditDialogState extends State<_FastingQuickEditDialog> {
           ),
         ),
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: options
-              .map(
-                (option) => ChoiceChip(
-                  label: Text(option),
-                  selected: selectedValue == option,
-                  onSelected: (_) => setState(() => onSelected(option)),
-                ),
-              )
-              .toList(),
+        SelectionGridSection(
+          options: options,
+          searchEnabled: false,
+          isSelected: (option) => selectedValue == option,
+          onToggle: (option) => setState(() => onSelected(option)),
         ),
       ],
     );
@@ -2029,12 +2161,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         _hasNeuromuscularBlocker ||
         technique.contains('ventilação controlada') ||
         technique.contains('ventilacao controlada');
-  }
-
-  double _parsedPositiveDouble(String value) {
-    final parsed = double.tryParse(value.trim().replaceAll(',', '.'));
-    if (parsed == null || parsed <= 0) return 0;
-    return parsed;
   }
 
   int _roundedPositiveInt(double value) => value <= 0 ? 0 : value.round();
@@ -4865,40 +4991,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         );
       },
     );
-  }
-
-  List<Widget> _buildTechniqueAwareOperationalCards() {
-    return [
-      _buildPreparationCard(),
-      _buildAntibioticProphylaxisCard(),
-      _buildMonitoringCard(),
-      _buildVenousAccessCard(),
-      _buildArterialAccessCard(),
-      _buildTimeOutCard(),
-      if (_showsSedationWorkflowCard) _buildTechniqueCard(),
-      if (_showsNeuraxialWorkflowCard) _buildNeuraxialNeedlesCard(),
-      if (_showsGeneralWorkflowCards) _buildDrugsCard(),
-      _buildAdjunctsCard(),
-      if (_showsGeneralWorkflowCards) _buildAirwayCard(),
-      if (_showsMechanicalVentilationCard) _buildMechanicalVentilationCard(),
-      if (_showsGeneralWorkflowCards) _buildMaintenanceCard(),
-      _buildVasoactiveDrugsCard(),
-      _buildOtherMedicationsCard(),
-      _buildVolumeReplacementCard(),
-      _buildFluidBalanceCard(),
-      _buildAnesthesiaMaterialsCard(),
-      _buildEmergenceCard(),
-      _buildSurgerySummaryCard(
-        key: const Key('surgery-destination-card'),
-        tapKey: const Key('surgery-destination-entry'),
-        title: '22) Destino pós-operatório',
-        icon: Icons.local_hospital_outlined,
-        value: _displayPatientDestination,
-        section: SurgeryInfoSection.destination,
-        isCompleted: _record.patientDestination.trim().isNotEmpty,
-      ),
-      _buildUsageSummaryCard(),
-    ];
   }
 
   List<Widget> _buildPreInductionCards() {
@@ -7750,24 +7842,15 @@ class _EmergenceDialogState extends State<_EmergenceDialog> {
                 ),
               ),
               const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _statusOptions
-                    .map(
-                      (option) => ChoiceChip(
-                        label: Text(option),
-                        selected: _selectedStatus == option,
-                        onSelected: (_) {
-                          setState(() {
-                            _selectedStatus = _selectedStatus == option
-                                ? ''
-                                : option;
-                          });
-                        },
-                      ),
-                    )
-                    .toList(),
+              SelectionGridSection(
+                options: _statusOptions,
+                searchEnabled: false,
+                isSelected: (option) => _selectedStatus == option,
+                onToggle: (option) {
+                  setState(() {
+                    _selectedStatus = _selectedStatus == option ? '' : option;
+                  });
+                },
               ),
               const SizedBox(height: 14),
               if (widget.patientDestination.trim().isNotEmpty)
@@ -8008,20 +8091,13 @@ class _MechanicalVentilationDialogState
                 ),
               ),
               const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _modeSuggestions
-                    .map(
-                      (mode) => ChoiceChip(
-                        label: Text(mode),
-                        selected: _modeController.text.trim() == mode,
-                        onSelected: (_) {
-                          setState(() => _modeController.text = mode);
-                        },
-                      ),
-                    )
-                    .toList(),
+              SelectionGridSection(
+                options: _modeSuggestions,
+                searchEnabled: false,
+                isSelected: (mode) => _modeController.text.trim() == mode,
+                onToggle: (mode) {
+                  setState(() => _modeController.text = mode);
+                },
               ),
               const SizedBox(height: 16),
               TextField(
@@ -8383,6 +8459,21 @@ class _HemodynamicDialogState extends State<HemodynamicDialog> {
     });
   }
 
+  Future<void> _selectHemodynamicType() async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => ChoiceFieldDialog(
+        title: 'Parâmetro hemodinâmico',
+        options: _types,
+        initialValue: _selectedType,
+        optionLabelBuilder: (option) => option == 'SpO2' ? 'Sat' : option,
+      ),
+    );
+
+    if (result == null) return;
+    setState(() => _selectedType = result);
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -8441,20 +8532,24 @@ class _HemodynamicDialogState extends State<HemodynamicDialog> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _types
-                        .map(
-                          (type) => ChoiceChip(
-                            label: Text(type),
-                            selected: _selectedType == type,
-                            onSelected: (_) {
-                              setState(() => _selectedType = type);
-                            },
-                          ),
-                        )
-                        .toList(),
+                  SizedBox(
+                    width: 190,
+                    child: OutlinedButton.icon(
+                      onPressed: _selectHemodynamicType,
+                      icon: const Icon(Icons.tune),
+                      label: Text(
+                        _selectedType == 'SpO2'
+                            ? 'Parâmetro: Sat'
+                            : 'Parâmetro: $_selectedType',
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 14,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -8664,20 +8759,13 @@ class _VenousAccessDialogState extends State<VenousAccessDialog> {
                 ),
               ),
               const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _avpSizes
-                    .map(
-                      (size) => ChoiceChip(
-                        label: Text(size),
-                        selected: _selectedAvpSize == size,
-                        onSelected: (_) {
-                          setState(() => _selectedAvpSize = size);
-                        },
-                      ),
-                    )
-                    .toList(),
+              SelectionGridSection(
+                options: _avpSizes,
+                searchEnabled: false,
+                isSelected: (size) => _selectedAvpSize == size,
+                onToggle: (size) {
+                  setState(() => _selectedAvpSize = size);
+                },
               ),
               const SizedBox(height: 10),
               Align(
@@ -8697,20 +8785,13 @@ class _VenousAccessDialogState extends State<VenousAccessDialog> {
                 ),
               ),
               const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _centralOptions
-                    .map(
-                      (item) => ChoiceChip(
-                        label: Text(item),
-                        selected: _selectedCentral == item,
-                        onSelected: (_) {
-                          setState(() => _selectedCentral = item);
-                        },
-                      ),
-                    )
-                    .toList(),
+              SelectionGridSection(
+                options: _centralOptions,
+                searchEnabled: true,
+                isSelected: (item) => _selectedCentral == item,
+                onToggle: (item) {
+                  setState(() => _selectedCentral = item);
+                },
               ),
               const SizedBox(height: 10),
               Align(
@@ -8959,10 +9040,11 @@ class _ArterialAccessDialogState extends State<ArterialAccessDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ChoiceChip(
-                label: const Text('PAI'),
-                selected: _paiSelected,
-                onSelected: (_) {
+              SelectionGridSection(
+                options: const ['PAI'],
+                searchEnabled: false,
+                isSelected: (item) => _paiSelected,
+                onToggle: (item) {
                   setState(() => _paiSelected = true);
                 },
               ),
@@ -9234,6 +9316,35 @@ class _NeuraxialNeedlesDialogState extends State<NeuraxialNeedlesDialog> {
     return _formatLossEntryLabel(entry, prefix: 'Consumo extra');
   }
 
+  Future<void> _editPresetNeedles({
+    required String title,
+    required List<String> options,
+  }) async {
+    final result = await showDialog<List<String>>(
+      context: context,
+      builder: (_) => ListFieldDialog(
+        title: title,
+        label: 'Outros itens',
+        initialItems: _selectedMainItems.where(options.contains).toList(),
+        suggestions: options,
+      ),
+    );
+
+    if (result == null) return;
+    setState(() {
+      _selectedMainItems.removeWhere(options.contains);
+      _selectedMainItems.addAll(result.where(options.contains));
+      _extraEntries.addAll(result.where((item) => !options.contains(item)));
+    });
+  }
+
+  String _presetSummary(List<String> options) {
+    final selected = _selectedMainItems.where(options.contains).toList();
+    if (selected.isEmpty) return 'Nenhum item selecionado';
+    if (selected.length <= 2) return selected.join(' • ');
+    return '${selected.take(2).join(' • ')} +${selected.length - 2}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -9255,26 +9366,23 @@ class _NeuraxialNeedlesDialogState extends State<NeuraxialNeedlesDialog> {
                 ),
               ),
               const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _spinalNeedles
-                    .map(
-                      (item) => FilterChip(
-                        label: Text(item),
-                        selected: _selectedMainItems.contains(item),
-                        onSelected: (selected) {
-                          setState(() {
-                            if (selected) {
-                              _selectedMainItems.add(item);
-                            } else {
-                              _selectedMainItems.remove(item);
-                            }
-                          });
-                        },
-                      ),
-                    )
-                    .toList(),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _editPresetNeedles(
+                    title: 'Agulhas para raqui',
+                    options: _spinalNeedles,
+                  ),
+                  icon: const Icon(Icons.vaccines_outlined),
+                  label: Text(_presetSummary(_spinalNeedles)),
+                  style: OutlinedButton.styleFrom(
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
               const Text(
@@ -9285,26 +9393,23 @@ class _NeuraxialNeedlesDialogState extends State<NeuraxialNeedlesDialog> {
                 ),
               ),
               const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _epiduralNeedles
-                    .map(
-                      (item) => FilterChip(
-                        label: Text(item),
-                        selected: _selectedMainItems.contains(item),
-                        onSelected: (selected) {
-                          setState(() {
-                            if (selected) {
-                              _selectedMainItems.add(item);
-                            } else {
-                              _selectedMainItems.remove(item);
-                            }
-                          });
-                        },
-                      ),
-                    )
-                    .toList(),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _editPresetNeedles(
+                    title: 'Agulhas para peridural',
+                    options: _epiduralNeedles,
+                  ),
+                  icon: const Icon(Icons.medical_services_outlined),
+                  label: Text(_presetSummary(_epiduralNeedles)),
+                  style: OutlinedButton.styleFrom(
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
               TextField(
@@ -9761,6 +9866,20 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
                 ) ??
                 0);
 
+  Future<void> _selectSurgicalSize() async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => ChoiceFieldDialog(
+        title: 'Porte cirúrgico',
+        options: _surgicalSizes,
+        initialValue: _selectedSurgicalSize,
+      ),
+    );
+
+    if (result == null) return;
+    setState(() => _selectedSurgicalSize = result);
+  }
+
   @override
   Widget build(BuildContext context) {
     final preview = FluidBalance(
@@ -9818,20 +9937,24 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
                 ),
               ),
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _surgicalSizes
-                    .map(
-                      (item) => ChoiceChip(
-                        label: Text(item),
-                        selected: _selectedSurgicalSize == item,
-                        onSelected: (_) {
-                          setState(() => _selectedSurgicalSize = item);
-                        },
-                      ),
-                    )
-                    .toList(),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _selectSurgicalSize,
+                  icon: const Icon(Icons.straighten_outlined),
+                  label: Text(
+                    _selectedSurgicalSize.trim().isEmpty
+                        ? 'Selecionar porte cirúrgico'
+                        : _selectedSurgicalSize,
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 8),
               Align(
@@ -10892,25 +11015,28 @@ class _AnesthesiaMaterialsDialogState
                 ),
               ),
               const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  ChoiceChip(
-                    label: const Text('O₂ em cateter'),
-                    selected: _selectedOxygenDevice == 'cateter',
-                    onSelected: (_) {
-                      setState(() => _selectedOxygenDevice = 'cateter');
-                    },
-                  ),
-                  ChoiceChip(
-                    label: const Text('O₂ em máscara'),
-                    selected: _selectedOxygenDevice == 'mascara',
-                    onSelected: (_) {
-                      setState(() => _selectedOxygenDevice = 'mascara');
-                    },
-                  ),
-                ],
+              SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment<String>(
+                      value: 'cateter',
+                      label: Text('O₂ em cateter'),
+                      icon: Icon(Icons.air_outlined),
+                    ),
+                    ButtonSegment<String>(
+                      value: 'mascara',
+                      label: Text('O₂ em máscara'),
+                      icon: Icon(Icons.masks_outlined),
+                    ),
+                  ],
+                  selected: {_selectedOxygenDevice},
+                  multiSelectionEnabled: false,
+                  onSelectionChanged: (selection) {
+                    if (selection.isEmpty) return;
+                    setState(() => _selectedOxygenDevice = selection.first);
+                  },
+                ),
               ),
               const SizedBox(height: 12),
               TextField(

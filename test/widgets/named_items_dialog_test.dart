@@ -3,6 +3,61 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('choice field dialog shows searchable option grid', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: ChoiceFieldDialog(
+            title: 'Perfil do paciente',
+            options: ['adult', 'pediatric'],
+            initialValue: 'adult',
+            optionLabelBuilder: _labelForProfile,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Buscar...'), findsOneWidget);
+    expect(find.text('Adulto'), findsOneWidget);
+    expect(find.text('Pediátrico'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).first, 'pedi');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Adulto'), findsNothing);
+    expect(find.text('Pediátrico'), findsOneWidget);
+  });
+
+  testWidgets('list field dialog shows searchable suggestion grid', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: ListFieldDialog(
+            title: 'Alergias',
+            label: 'Alergias',
+            initialItems: [],
+            suggestions: ['Látex', 'Dipirona', 'Penicilina'],
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Buscar...'), findsOneWidget);
+    expect(find.text('Látex'), findsOneWidget);
+    expect(find.text('Dipirona'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).first, 'peni');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Látex'), findsNothing);
+    expect(find.text('Dipirona'), findsNothing);
+    expect(find.text('Penicilina'), findsOneWidget);
+  });
+
   testWidgets('supports adding more than one team member before saving', (
     WidgetTester tester,
   ) async {
@@ -52,4 +107,15 @@ void main() {
     expect(find.text('Nome'), findsOneWidget);
     expect(find.text('Nenhum auxiliar adicionado.'), findsOneWidget);
   });
+}
+
+String _labelForProfile(String option) {
+  switch (option) {
+    case 'adult':
+      return 'Adulto';
+    case 'pediatric':
+      return 'Pediátrico';
+    default:
+      return option;
+  }
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'anesthesia_basic_dialogs.dart';
+
 class MedicationCatalogSuggestion {
   const MedicationCatalogSuggestion({
     required this.title,
@@ -892,6 +894,20 @@ class _EventsDialogState extends State<EventsDialog> {
     });
   }
 
+  Future<void> _selectCommonEvent() async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => ChoiceFieldDialog(
+        title: 'Evento comum',
+        options: _commonEvents,
+        initialValue: _selectedEvent,
+      ),
+    );
+
+    if (result == null) return;
+    setState(() => _selectedEvent = result);
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -902,21 +918,33 @@ class _EventsDialogState extends State<EventsDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _commonEvents
-                    .map(
-                      (item) => ChoiceChip(
-                        label: Text(item),
-                        selected: _selectedEvent == item,
-                        onSelected: (_) {
-                          setState(() => _selectedEvent = item);
-                        },
-                      ),
-                    )
-                    .toList(),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _selectCommonEvent,
+                  style: OutlinedButton.styleFrom(
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                  ),
+                  icon: const Icon(Icons.local_offer_outlined),
+                  label: Text(
+                    _selectedEvent.isEmpty
+                        ? 'Selecionar evento comum'
+                        : 'Evento comum: $_selectedEvent',
+                  ),
+                ),
               ),
+              if (_selectedEvent.isNotEmpty)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => setState(() => _selectedEvent = ''),
+                    child: const Text('Limpar seleção'),
+                  ),
+                ),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -1206,7 +1234,8 @@ class _AdjunctsDialogState extends State<AdjunctsDialog> {
                         controller: _infusionControllers[name],
                         decoration: const InputDecoration(
                           labelText: 'Infusão contínua / bomba',
-                          hintText: 'Ex: 0,2 mg/kg/h; deixar em branco se não usou',
+                          hintText:
+                              'Ex: 0,2 mg/kg/h; deixar em branco se não usou',
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -1214,7 +1243,8 @@ class _AdjunctsDialogState extends State<AdjunctsDialog> {
                         key: Key('catalog-ampoules-field-$name'),
                         controller: _ampouleControllers[name],
                         decoration: const InputDecoration(
-                          labelText: 'Quantidade total usada (ampolas / frascos)',
+                          labelText:
+                              'Quantidade total usada (ampolas / frascos)',
                           hintText: 'Ex: 2 ampolas',
                         ),
                       ),
@@ -1394,7 +1424,8 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isSedationDialog = widget.title.toLowerCase().contains('sedação') ||
+    final isSedationDialog =
+        widget.title.toLowerCase().contains('sedação') ||
         widget.title.toLowerCase().contains('sedacao');
 
     return AlertDialog(
@@ -1599,7 +1630,8 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
                         controller: _infusionControllers[name],
                         decoration: const InputDecoration(
                           labelText: 'Infusão contínua / bomba',
-                          hintText: 'Ex: 0,4 mcg/kg/h; deixar em branco se não usou',
+                          hintText:
+                              'Ex: 0,4 mcg/kg/h; deixar em branco se não usou',
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -1607,7 +1639,8 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
                         key: Key('catalog-ampoules-field-$name'),
                         controller: _ampouleControllers[name],
                         decoration: const InputDecoration(
-                          labelText: 'Quantidade total usada (ampolas / frascos)',
+                          labelText:
+                              'Quantidade total usada (ampolas / frascos)',
                           hintText: 'Ex: 2 ampolas',
                         ),
                       ),
@@ -1833,7 +1866,8 @@ class _VasoactiveDrugsDialogState extends State<VasoactiveDrugsDialog> {
                         key: Key('vasoactive-ampoules-field-$name'),
                         controller: _ampouleControllers[name],
                         decoration: const InputDecoration(
-                          labelText: 'Quantidade total usada (ampolas / frascos)',
+                          labelText:
+                              'Quantidade total usada (ampolas / frascos)',
                           hintText: 'Ex: 1 ampola; 1 seringa preparada',
                         ),
                       ),

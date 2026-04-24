@@ -57,6 +57,25 @@ ButtonStyle _dialogSecondaryButtonStyle() {
   );
 }
 
+InputDecoration _dialogSearchDecoration() {
+  final border = OutlineInputBorder(
+    borderRadius: BorderRadius.circular(24),
+    borderSide: const BorderSide(color: _dialogFieldBorderColor),
+  );
+  return InputDecoration(
+    hintText: 'Buscar...',
+    prefixIcon: const Icon(Icons.search, color: Color(0xFF6A7E94)),
+    filled: true,
+    fillColor: const Color(0xFFFBF8EF),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+    border: border,
+    enabledBorder: border,
+    focusedBorder: border.copyWith(
+      borderSide: const BorderSide(color: _dialogActionColor, width: 1.2),
+    ),
+  );
+}
+
 Widget _dialogEmptyState(String text) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 56),
@@ -123,6 +142,190 @@ Widget _dialogListTile({
       ],
     ),
   );
+}
+
+class _DialogOptionCard extends StatelessWidget {
+  const _DialogOptionCard({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.supportingText,
+    this.color = _dialogActionColor,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final String? supportingText;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final activeBorder = selected ? color : _dialogFieldBorderColor;
+    final activeBackground = selected ? color.withAlpha(12) : Colors.white;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            color: activeBackground,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: activeBorder, width: selected ? 1.4 : 1),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0A17324D),
+                blurRadius: 14,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (selected) ...[
+                Icon(Icons.check_rounded, color: color, size: 22),
+                const SizedBox(width: 12),
+              ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        color: Color(0xFF26384A),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                    if (supportingText != null &&
+                        supportingText!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        supportingText!,
+                        style: const TextStyle(
+                          color: _dialogEmptyTextColor,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class SelectionGridSection extends StatefulWidget {
+  const SelectionGridSection({
+    super.key,
+    required this.options,
+    required this.isSelected,
+    required this.onToggle,
+    this.searchEnabled = true,
+    this.emptySearchText = 'Nenhuma opção encontrada para a busca.',
+    this.color = _dialogActionColor,
+    this.optionDescriptionBuilder,
+  });
+
+  final List<String> options;
+  final bool Function(String option) isSelected;
+  final ValueChanged<String> onToggle;
+  final bool searchEnabled;
+  final String emptySearchText;
+  final Color color;
+  final String? Function(String option)? optionDescriptionBuilder;
+
+  @override
+  State<SelectionGridSection> createState() => _SelectionGridSectionState();
+}
+
+class _SelectionGridSectionState extends State<SelectionGridSection> {
+  late final TextEditingController _searchController;
+  String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final normalizedQuery = _query.trim().toLowerCase();
+    final filteredOptions = widget.options.where((option) {
+      final description = widget.optionDescriptionBuilder?.call(option) ?? '';
+      final haystack = '$option $description'.toLowerCase();
+      return normalizedQuery.isEmpty || haystack.contains(normalizedQuery);
+    }).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (widget.searchEnabled) ...[
+          TextField(
+            controller: _searchController,
+            decoration: _dialogSearchDecoration(),
+            onChanged: (value) => setState(() => _query = value),
+          ),
+          const SizedBox(height: 22),
+        ],
+        if (filteredOptions.isEmpty)
+          _dialogEmptyState(widget.emptySearchText)
+        else
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final columns = constraints.maxWidth >= 900 ? 2 : 1;
+              final columnChildren = List.generate(columns, (_) => <Widget>[]);
+
+              for (var i = 0; i < filteredOptions.length; i++) {
+                final option = filteredOptions[i];
+                columnChildren[i % columns].add(
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _DialogOptionCard(
+                      label: option,
+                      supportingText: widget.optionDescriptionBuilder?.call(
+                        option,
+                      ),
+                      selected: widget.isSelected(option),
+                      onTap: () => widget.onToggle(option),
+                      color: widget.color,
+                    ),
+                  ),
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var i = 0; i < columns; i++) ...[
+                    Expanded(child: Column(children: columnChildren[i])),
+                    if (i != columns - 1) const SizedBox(width: 16),
+                  ],
+                ],
+              );
+            },
+          ),
+      ],
+    );
+  }
 }
 
 class AnesthesiologistsDialog extends StatefulWidget {
@@ -488,43 +691,106 @@ class ChoiceFieldDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var selectedValue = initialValue;
+    final searchController = TextEditingController();
+    var query = '';
 
     return AlertDialog(
-      title: Text(title),
+      backgroundColor: _dialogSurfaceColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+      title: Text(title, style: _dialogTitleStyle),
       content: SizedBox(
-        width: 440,
+        width: 1120,
         child: StatefulBuilder(
           builder: (context, setState) {
-            return Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: options
-                  .map(
-                    (option) => ChoiceChip(
-                      label: Text(optionLabelBuilder?.call(option) ?? option),
-                      selected: selectedValue == option,
-                      onSelected: (_) {
-                        setState(() {
-                          selectedValue = option;
-                        });
-                      },
-                    ),
-                  )
-                  .toList(),
+            final normalizedQuery = query.trim().toLowerCase();
+            final filteredOptions = options.where((option) {
+              final label = optionLabelBuilder?.call(option) ?? option;
+              return normalizedQuery.isEmpty ||
+                  label.toLowerCase().contains(normalizedQuery);
+            }).toList();
+
+            return SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextField(
+                    controller: searchController,
+                    decoration: _dialogSearchDecoration(),
+                    onChanged: (value) => setState(() => query = value),
+                  ),
+                  const SizedBox(height: 22),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final columns = constraints.maxWidth >= 900 ? 2 : 1;
+                      final columnChildren = List.generate(
+                        columns,
+                        (_) => <Widget>[],
+                      );
+
+                      for (var i = 0; i < filteredOptions.length; i++) {
+                        final option = filteredOptions[i];
+                        final label =
+                            optionLabelBuilder?.call(option) ?? option;
+                        columnChildren[i % columns].add(
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: _DialogOptionCard(
+                              label: label,
+                              selected: selectedValue == option,
+                              onTap: () {
+                                setState(() {
+                                  selectedValue = option;
+                                });
+                              },
+                            ),
+                          ),
+                        );
+                      }
+
+                      if (filteredOptions.isEmpty) {
+                        return _dialogEmptyState(
+                          'Nenhuma opção encontrada para a busca.',
+                        );
+                      }
+
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (var i = 0; i < columns; i++) ...[
+                            Expanded(
+                              child: Column(children: columnChildren[i]),
+                            ),
+                            if (i != columns - 1) const SizedBox(width: 16),
+                          ],
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
             );
           },
         ),
       ),
       actions: [
         TextButton(
+          style: _dialogSecondaryButtonStyle(),
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         TextButton(
+          style: _dialogSecondaryButtonStyle(),
           onPressed: () => Navigator.of(context).pop(''),
           child: const Text('Limpar'),
         ),
         FilledButton(
+          style: _dialogPrimaryButtonStyle(
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+          ),
           onPressed: () => Navigator.of(context).pop(selectedValue),
           child: const Text('Salvar'),
         ),
@@ -555,8 +821,10 @@ class ListFieldDialog extends StatefulWidget {
 
 class _ListFieldDialogState extends State<ListFieldDialog> {
   late final TextEditingController _controller;
+  late final TextEditingController _searchController;
   late Set<String> _selectedSuggestions;
   late List<String> _manualEntries;
+  String _query = '';
 
   @override
   void initState() {
@@ -570,11 +838,13 @@ class _ListFieldDialogState extends State<ListFieldDialog> {
         .where((item) => item.isNotEmpty)
         .toList();
     _controller = TextEditingController();
+    _searchController = TextEditingController();
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -598,47 +868,100 @@ class _ListFieldDialogState extends State<ListFieldDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.title),
+      backgroundColor: _dialogSurfaceColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+      title: Text(widget.title, style: _dialogTitleStyle),
       content: SizedBox(
-        width: 500,
+        width: 1120,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (widget.suggestions.isNotEmpty) ...[
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: widget.suggestions
-                      .map(
-                        (item) => FilterChip(
-                          label: Text(item),
-                          selected: _selectedSuggestions.contains(item),
-                          onSelected: (selected) {
-                            setState(() {
-                              if (selected) {
-                                _selectedSuggestions.add(item);
-                              } else {
-                                _selectedSuggestions.remove(item);
-                              }
-                            });
-                          },
-                        ),
-                      )
-                      .toList(),
+                TextField(
+                  controller: _searchController,
+                  decoration: _dialogSearchDecoration(),
+                  onChanged: (value) => setState(() => _query = value),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 22),
+                Builder(
+                  builder: (context) {
+                    final normalizedQuery = _query.trim().toLowerCase();
+                    final filteredSuggestions = widget.suggestions
+                        .where(
+                          (item) =>
+                              normalizedQuery.isEmpty ||
+                              item.toLowerCase().contains(normalizedQuery),
+                        )
+                        .toList();
+
+                    if (filteredSuggestions.isEmpty) {
+                      return _dialogEmptyState(
+                        'Nenhuma opção encontrada para a busca.',
+                      );
+                    }
+
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        final columns = constraints.maxWidth >= 900 ? 2 : 1;
+                        final columnChildren = List.generate(
+                          columns,
+                          (_) => <Widget>[],
+                        );
+
+                        for (var i = 0; i < filteredSuggestions.length; i++) {
+                          final item = filteredSuggestions[i];
+                          columnChildren[i % columns].add(
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: _DialogOptionCard(
+                                label: item,
+                                selected: _selectedSuggestions.contains(item),
+                                onTap: () {
+                                  setState(() {
+                                    if (_selectedSuggestions.contains(item)) {
+                                      _selectedSuggestions.remove(item);
+                                    } else {
+                                      _selectedSuggestions.add(item);
+                                    }
+                                  });
+                                },
+                              ),
+                            ),
+                          );
+                        }
+
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            for (var i = 0; i < columns; i++) ...[
+                              Expanded(
+                                child: Column(children: columnChildren[i]),
+                              ),
+                              if (i != columns - 1) const SizedBox(width: 16),
+                            ],
+                          ],
+                        );
+                      },
+                    );
+                  },
+                ),
+                const SizedBox(height: 20),
               ],
               TextField(
                 controller: _controller,
                 maxLines: 4,
-                decoration: InputDecoration(
+                decoration: _dialogInputDecoration(
                   labelText: widget.label,
                   hintText: widget.hintText ?? 'Um item por linha',
+                  alignLabelWithHint: true,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 20),
               Align(
                 alignment: Alignment.centerRight,
                 child: FilledButton.icon(
@@ -648,7 +971,7 @@ class _ListFieldDialogState extends State<ListFieldDialog> {
                   label: const Text('Adicionar item'),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               if (_manualEntries.isEmpty)
                 _dialogEmptyState('Nenhum item manual adicionado.')
               else
@@ -668,14 +991,19 @@ class _ListFieldDialogState extends State<ListFieldDialog> {
       ),
       actions: [
         TextButton(
+          style: _dialogSecondaryButtonStyle(),
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         TextButton(
+          style: _dialogSecondaryButtonStyle(),
           onPressed: () => Navigator.of(context).pop(const <String>[]),
           child: const Text('Limpar'),
         ),
         FilledButton(
+          style: _dialogPrimaryButtonStyle(
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+          ),
           onPressed: () => Navigator.of(
             context,
           ).pop([..._selectedSuggestions, ..._manualEntries, ..._draftItems()]),
@@ -730,7 +1058,6 @@ class _PatientIdentificationDialogState
   late final TextEditingController _gestationalAgeController;
   late final TextEditingController _correctedGestationalAgeController;
   late final TextEditingController _birthWeightController;
-  late final TextEditingController _asaController;
   late String _selectedInformedConsentStatus;
   late final TextEditingController _allergiesController;
   late final TextEditingController _restrictionsController;
@@ -784,7 +1111,6 @@ class _PatientIdentificationDialogState
                 .replaceAll('.', ',')
           : '',
     );
-    _asaController = TextEditingController(text: widget.initialPatient.asa);
     _allergiesController = TextEditingController(
       text: widget.initialPatient.allergies
           .where((item) => !_commonAllergies.contains(item))
@@ -831,7 +1157,6 @@ class _PatientIdentificationDialogState
     _gestationalAgeController.dispose();
     _correctedGestationalAgeController.dispose();
     _birthWeightController.dispose();
-    _asaController.dispose();
     _allergiesController.dispose();
     _restrictionsController.dispose();
     _medicationsController.dispose();
@@ -846,6 +1171,148 @@ class _PatientIdentificationDialogState
         .toList();
   }
 
+  List<String> _combinedItems(
+    Set<String> selectedItems,
+    TextEditingController controller,
+  ) => [...selectedItems, ..._lines(controller.text)];
+
+  String _summaryForSelection(
+    List<String> items, {
+    required String emptyLabel,
+  }) {
+    if (items.isEmpty) return emptyLabel;
+    if (items.length <= 2) return items.join(' • ');
+    return '${items.take(2).join(' • ')} +${items.length - 2}';
+  }
+
+  Future<void> _editPopulation() async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => ChoiceFieldDialog(
+        title: 'Perfil do paciente',
+        options: PatientPopulation.values.map((item) => item.code).toList(),
+        initialValue: _selectedPopulation.code,
+        optionLabelBuilder: (option) =>
+            PatientPopulationX.fromCode(option).label,
+      ),
+    );
+
+    if (result == null) return;
+    setState(() => _selectedPopulation = PatientPopulationX.fromCode(result));
+  }
+
+  Future<void> _editAsa() async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => ChoiceFieldDialog(
+        title: 'Classificação ASA',
+        options: _asaOptions,
+        initialValue: _selectedAsa,
+        optionLabelBuilder: (option) => 'ASA $option',
+      ),
+    );
+
+    if (result == null) return;
+    setState(() => _selectedAsa = result);
+  }
+
+  Future<void> _editInformedConsent() async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => ChoiceFieldDialog(
+        title: 'Termo de consentimento',
+        options: _informedConsentOptions,
+        initialValue: _selectedInformedConsentStatus,
+      ),
+    );
+
+    if (result == null) return;
+    setState(() => _selectedInformedConsentStatus = result);
+  }
+
+  Future<void> _editListSelection({
+    required String title,
+    required String label,
+    required List<String> suggestions,
+    required Set<String> selectedItems,
+    required TextEditingController controller,
+    String? hintText,
+  }) async {
+    final result = await showDialog<List<String>>(
+      context: context,
+      builder: (_) => ListFieldDialog(
+        title: title,
+        label: label,
+        initialItems: _combinedItems(selectedItems, controller),
+        suggestions: suggestions,
+        hintText: hintText,
+      ),
+    );
+
+    if (result == null) return;
+    setState(() {
+      selectedItems
+        ..clear()
+        ..addAll(result.where(suggestions.contains));
+      controller.text = result
+          .where((item) => !suggestions.contains(item))
+          .join('\n');
+    });
+  }
+
+  Widget _selectionButton({
+    required String label,
+    required String value,
+    required VoidCallback onTap,
+  }) {
+    final hasValue = value.trim().isNotEmpty;
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+          alignment: Alignment.centerLeft,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          side: const BorderSide(color: _dialogFieldBorderColor),
+          backgroundColor: Colors.white,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      color: Color(0xFF5D7288),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    hasValue ? value : 'Selecionar',
+                    style: TextStyle(
+                      color: hasValue
+                          ? const Color(0xFF17324D)
+                          : const Color(0xFF7A8EA5),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Icon(Icons.chevron_right, color: _dialogActionColor),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -856,23 +1323,10 @@ class _PatientIdentificationDialogState
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: PatientPopulation.values
-                      .map(
-                        (item) => ChoiceChip(
-                          label: Text(item.label),
-                          selected: _selectedPopulation == item,
-                          onSelected: (_) {
-                            setState(() => _selectedPopulation = item);
-                          },
-                        ),
-                      )
-                      .toList(),
-                ),
+              _selectionButton(
+                label: 'Perfil do paciente',
+                value: _selectedPopulation.label,
+                onTap: _editPopulation,
               ),
               const SizedBox(height: 12),
               TextField(
@@ -996,139 +1450,66 @@ class _PatientIdentificationDialogState
                 ),
               ],
               const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _asaOptions
-                      .map(
-                        (item) => ChoiceChip(
-                          label: Text('ASA $item'),
-                          selected: _selectedAsa == item,
-                          onSelected: (_) {
-                            setState(() {
-                              _selectedAsa = item;
-                              _asaController.text = item;
-                            });
-                          },
-                        ),
-                      )
-                      .toList(),
+              _selectionButton(
+                label: 'Classificação ASA',
+                value: _selectedAsa.isEmpty ? '' : 'ASA $_selectedAsa',
+                onTap: _editAsa,
+              ),
+              const SizedBox(height: 12),
+              _selectionButton(
+                label: 'Termo de consentimento',
+                value: _selectedInformedConsentStatus,
+                onTap: _editInformedConsent,
+              ),
+              const SizedBox(height: 12),
+              _selectionButton(
+                label: 'Alergias',
+                value: _summaryForSelection(
+                  _combinedItems(_selectedAllergies, _allergiesController),
+                  emptyLabel: 'Nenhuma alergia registrada',
+                ),
+                onTap: () => _editListSelection(
+                  title: 'Alergias',
+                  label: 'Alergias',
+                  suggestions: _commonAllergies,
+                  selectedItems: _selectedAllergies,
+                  controller: _allergiesController,
+                  hintText: 'Uma alergia por linha',
                 ),
               ),
               const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _informedConsentOptions
-                      .map(
-                        (item) => ChoiceChip(
-                          label: Text(item),
-                          selected: _selectedInformedConsentStatus == item,
-                          onSelected: (_) {
-                            setState(() {
-                              _selectedInformedConsentStatus = item;
-                            });
-                          },
-                        ),
-                      )
-                      .toList(),
+              _selectionButton(
+                label: 'Restrições',
+                value: _summaryForSelection(
+                  _combinedItems(
+                    _selectedRestrictions,
+                    _restrictionsController,
+                  ),
+                  emptyLabel: 'Nenhuma restrição registrada',
+                ),
+                onTap: () => _editListSelection(
+                  title: 'Restrições',
+                  label: 'Restrições',
+                  suggestions: _commonRestrictions,
+                  selectedItems: _selectedRestrictions,
+                  controller: _restrictionsController,
+                  hintText: 'Uma restrição por linha',
                 ),
               ),
               const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _commonAllergies
-                    .map(
-                      (item) => FilterChip(
-                        label: Text(item),
-                        selected: _selectedAllergies.contains(item),
-                        onSelected: (value) {
-                          setState(() {
-                            if (value) {
-                              _selectedAllergies.add(item);
-                            } else {
-                              _selectedAllergies.remove(item);
-                            }
-                          });
-                        },
-                      ),
-                    )
-                    .toList(),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _allergiesController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Alergias',
-                  hintText: 'Uma por linha',
+              _selectionButton(
+                label: 'Medicações em uso',
+                value: _summaryForSelection(
+                  _combinedItems(_selectedMedications, _medicationsController),
+                  emptyLabel: 'Nenhuma medicação registrada',
                 ),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _commonRestrictions
-                    .map(
-                      (item) => FilterChip(
-                        label: Text(item),
-                        selected: _selectedRestrictions.contains(item),
-                        onSelected: (value) {
-                          setState(() {
-                            if (value) {
-                              _selectedRestrictions.add(item);
-                            } else {
-                              _selectedRestrictions.remove(item);
-                            }
-                          });
-                        },
-                      ),
-                    )
-                    .toList(),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _restrictionsController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Restrições',
-                  hintText: 'Uma por linha',
-                ),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _commonMedications
-                    .map(
-                      (item) => FilterChip(
-                        label: Text(item),
-                        selected: _selectedMedications.contains(item),
-                        onSelected: (value) {
-                          setState(() {
-                            if (value) {
-                              _selectedMedications.add(item);
-                            } else {
-                              _selectedMedications.remove(item);
-                            }
-                          });
-                        },
-                      ),
-                    )
-                    .toList(),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _medicationsController,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: 'Medicações em uso',
-                  hintText: 'Uma por linha',
+                onTap: () => _editListSelection(
+                  title: 'Medicações em uso',
+                  label: 'Medicações',
+                  suggestions: _commonMedications,
+                  selectedItems: _selectedMedications,
+                  controller: _medicationsController,
+                  hintText: 'Uma medicação por linha',
                 ),
               ),
             ],
@@ -1171,9 +1552,7 @@ class _PatientIdentificationDialogState
                     _birthWeightController.text.replaceAll(',', '.'),
                   ) ??
                   0,
-              asa: _selectedAsa.isNotEmpty
-                  ? _selectedAsa
-                  : _asaController.text.trim(),
+              asa: _selectedAsa,
               allergies: [
                 ..._selectedAllergies,
                 ..._lines(_allergiesController.text),

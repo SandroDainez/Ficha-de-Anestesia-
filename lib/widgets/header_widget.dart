@@ -407,11 +407,11 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
           const SizedBox(height: UiSpace.md),
           LayoutBuilder(
             builder: (context, constraints) {
-              final chips = [
+              final clinicalChips = [
                 ClinicalChip(
                   label: 'Perfil',
                   value: populationLabel,
-                  color: UiColors.textSecondary,
+                  color: _profileColor(patient.population),
                   onTap: onPopulationTap,
                 ),
                 ClinicalChip(
@@ -535,14 +535,14 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
               return Wrap(
                 spacing: UiSpace.xs,
                 runSpacing: UiSpace.xs,
-                children: chips
+                children: clinicalChips
                     .map(
-                      (chip) => ConstrainedBox(
+                      (clinicalChip) => ConstrainedBox(
                         constraints: const BoxConstraints(
                           minWidth: 150,
                           maxWidth: 230,
                         ),
-                        child: chip,
+                        child: clinicalChip,
                       ),
                     )
                     .toList(),
@@ -556,12 +556,20 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
 
   static Color _asaColor(String asa) {
     final normalized = asa.trim().toUpperCase();
-    if (normalized == 'IV' || normalized == 'V' || normalized == 'VI') {
+    if (normalized == 'III' ||
+        normalized == 'IV' ||
+        normalized == 'V' ||
+        normalized == 'VI') {
       return UiColors.danger;
     }
-    if (normalized == 'III') return UiColors.warning;
     if (normalized.isEmpty) return UiColors.warning;
     return UiColors.success;
+  }
+
+  static Color _profileColor(PatientPopulation population) {
+    return population.label.trim().isEmpty
+        ? UiColors.warning
+        : UiColors.success;
   }
 
   static String _functionalCapacityValue(PreAnestheticAssessment assessment) {
@@ -603,7 +611,7 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
     final hasRisk =
         assessment.difficultAirwayPredictors.isNotEmpty ||
         assessment.otherDifficultAirwayPredictors.trim().isNotEmpty;
-    return hasRisk ? UiColors.danger : UiColors.success;
+    return hasRisk ? UiColors.danger : UiColors.info;
   }
 
   static String _ventilationRiskValue(PreAnestheticAssessment assessment) {
@@ -623,7 +631,7 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
     final hasRisk =
         assessment.difficultVentilationPredictors.isNotEmpty ||
         assessment.otherDifficultVentilationPredictors.trim().isNotEmpty;
-    return hasRisk ? UiColors.danger : UiColors.success;
+    return hasRisk ? UiColors.danger : UiColors.info;
   }
 
   static String _fastingValue(
@@ -675,17 +683,17 @@ class AnesthesiaHeaderWidget extends StatelessWidget {
   static Color _mallampatiColor(String mallampati) {
     final normalized = mallampati.trim().toUpperCase();
     if (normalized.isEmpty) return UiColors.warning;
-    if (normalized == 'III') return UiColors.warning;
-    if (normalized == 'IV') return UiColors.danger;
-    return UiColors.success;
+    if (normalized == 'III' || normalized == 'IV') return UiColors.danger;
+    if (normalized == 'I' || normalized == 'II') return UiColors.success;
+    return UiColors.warning;
   }
 
   static Color _allergiesColor(Patient patient) {
-    return UiColors.success;
+    return patient.allergies.isEmpty ? UiColors.info : UiColors.danger;
   }
 
   static Color _restrictionsColor(Patient patient) {
-    return UiColors.success;
+    return patient.restrictions.isEmpty ? UiColors.info : UiColors.danger;
   }
 
   static Color _medicationsColor(Patient patient) {

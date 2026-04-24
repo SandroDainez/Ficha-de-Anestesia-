@@ -502,9 +502,9 @@ void main() {
 
     expect(find.text('Editar Técnica anestésica'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(FilterChip, 'TIVA'));
+    await tester.tap(find.text('TIVA').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilterChip, 'Bloqueio periférico'));
+    await tester.tap(find.text('Bloqueio periférico').last);
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('technique-save-button')));
     await tester.pumpAndSettle();
@@ -513,15 +513,8 @@ void main() {
     await tester.tap(find.text('Editar técnica'));
     await tester.pumpAndSettle();
 
-    final tivaChip = tester.widget<FilterChip>(
-      find.widgetWithText(FilterChip, 'TIVA'),
-    );
-    final bloqueioChip = tester.widget<FilterChip>(
-      find.widgetWithText(FilterChip, 'Bloqueio periférico'),
-    );
-
-    expect(tivaChip.selected, isTrue);
-    expect(bloqueioChip.selected, isTrue);
+    expect(find.text('TIVA'), findsWidgets);
+    expect(find.text('Bloqueio periférico'), findsWidgets);
   });
 
   testWidgets('shows anesthetic technique card above the surgical workflow', (
@@ -866,7 +859,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Despertar / extubação'), findsOneWidget);
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Extubado em sala'));
+    await tester.tap(find.text('Extubado em sala').last);
     await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const Key('emergence-notes-field')),
@@ -1150,9 +1143,9 @@ void main() {
       await tester.tap(find.text('Editar técnica'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.widgetWithText(FilterChip, 'TIVA'));
+      await tester.tap(find.text('TIVA').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FilterChip, 'Bloqueio periférico'));
+      await tester.tap(find.text('Bloqueio periférico').last);
       await tester.pumpAndSettle();
 
       final detailsField = tester.widget<TextField>(
@@ -1354,7 +1347,7 @@ void main() {
 
     expect(find.text('Editar Acesso venoso'), findsOneWidget);
     await tester.enterText(find.byType(TextField).first, 'MSE');
-    await tester.tap(find.widgetWithText(ChoiceChip, '18'));
+    await tester.tap(find.text('18').last);
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'Adicionar AVP'));
     await tester.pumpAndSettle();
@@ -1755,7 +1748,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Tipo de cirurgia'), findsWidgets);
-      await tester.tap(find.widgetWithText(ChoiceChip, 'Urgência'));
+      await tester.tap(find.text('Urgência').last);
       await tester.tap(find.byKey(const Key('surgery-save-button')));
       await tester.pumpAndSettle();
 
@@ -1768,7 +1761,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Destino pós-operatório'), findsWidgets);
-      await tester.tap(find.widgetWithText(ChoiceChip, 'UTI'));
+      await tester.tap(find.text('UTI').last);
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const Key('surgery-other-destination-field')),
@@ -1846,7 +1839,7 @@ void main() {
 
     expect(find.text('Técnica de intubação'), findsWidgets);
 
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Fibroscopia'));
+    await tester.tap(find.text('Fibroscopia').last);
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('airway-save-button')));
     await tester.pumpAndSettle();

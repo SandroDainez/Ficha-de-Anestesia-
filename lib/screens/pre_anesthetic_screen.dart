@@ -1404,7 +1404,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     );
   }
 
-  Widget _buildFilterChips({
+  Widget _buildMultiSelectButtons({
     required List<String> options,
     required Set<String> selectedValues,
     required ValueChanged<String> onToggle,
@@ -1415,23 +1415,30 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       runSpacing: 8,
       children: options.map((option) {
         final selected = selectedValues.contains(option);
-        return FilterChip(
+        return OutlinedButton.icon(
+          onPressed: () => onToggle(option),
+          icon: Icon(
+            selected ? Icons.check_circle : Icons.add_circle_outline,
+            size: 18,
+            color: selected ? color : const Color(0xFF7A8EA5),
+          ),
           label: Text(option),
-          selected: selected,
-          onSelected: (_) => onToggle(option),
-          selectedColor: color.withAlpha(36),
-          checkmarkColor: color,
-          side: BorderSide(color: selected ? color : const Color(0xFFD6E1ED)),
-          labelStyle: TextStyle(
-            color: selected ? color : const Color(0xFF4F6378),
-            fontWeight: FontWeight.w700,
+          style: OutlinedButton.styleFrom(
+            backgroundColor: selected ? color.withAlpha(18) : Colors.white,
+            side: BorderSide(color: selected ? color : const Color(0xFFD6E1ED)),
+            foregroundColor: selected ? color : const Color(0xFF4F6378),
+            textStyle: const TextStyle(fontWeight: FontWeight.w700),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),
         );
       }).toList(),
     );
   }
 
-  Widget _buildChoiceChips({
+  Widget _buildSingleSelectButtons({
     required List<String> options,
     required String selectedValue,
     required ValueChanged<String> onSelected,
@@ -1442,15 +1449,30 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       runSpacing: 8,
       children: options.map((option) {
         final selected = selectedValue == option;
-        return ChoiceChip(
-          label: Text(option),
-          selected: selected,
-          onSelected: (_) => onSelected(option),
-          selectedColor: color.withAlpha(32),
-          side: BorderSide(color: selected ? color : const Color(0xFFD6E1ED)),
-          labelStyle: TextStyle(
-            color: selected ? color : const Color(0xFF4F6378),
-            fontWeight: FontWeight.w700,
+        return OutlinedButton(
+          onPressed: () => onSelected(option),
+          style: OutlinedButton.styleFrom(
+            backgroundColor: selected ? color.withAlpha(18) : Colors.white,
+            side: BorderSide(color: selected ? color : const Color(0xFFD6E1ED)),
+            foregroundColor: selected ? color : const Color(0xFF4F6378),
+            textStyle: const TextStyle(fontWeight: FontWeight.w700),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                selected
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_off_outlined,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Text(option),
+            ],
           ),
         );
       }).toList(),
@@ -1593,10 +1615,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                     runSpacing: 8,
                     children: PatientPopulation.values
                         .map(
-                          (item) => ChoiceChip(
-                            label: Text(item.label),
-                            selected: _selectedPopulation == item,
-                            onSelected: (_) {
+                          (item) => OutlinedButton(
+                            onPressed: () {
                               setState(() {
                                 _selectedPopulation = item;
                                 _selectedPostoperativePlanningItems.removeWhere(
@@ -1610,6 +1630,30 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                                 _syncAirwayPredictors();
                               });
                             },
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: _selectedPopulation == item
+                                  ? const Color(0xFF2B76D2).withAlpha(18)
+                                  : Colors.white,
+                              side: BorderSide(
+                                color: _selectedPopulation == item
+                                    ? const Color(0xFF2B76D2)
+                                    : const Color(0xFFD6E1ED),
+                              ),
+                              foregroundColor: _selectedPopulation == item
+                                  ? const Color(0xFF2B76D2)
+                                  : const Color(0xFF4F6378),
+                              textStyle: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 12,
+                              ),
+                            ),
+                            child: Text(item.label),
                           ),
                         )
                         .toList(),
@@ -1786,7 +1830,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                _buildFilterChips(
+                _buildMultiSelectButtons(
                   options: _profileComorbidityOptions,
                   selectedValues: _selectedComorbidities,
                   color: const Color(0xFFCC7A00),
@@ -1853,7 +1897,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                _buildFilterChips(
+                _buildMultiSelectButtons(
                   options: _profileMedicationOptions,
                   selectedValues: _selectedMedications,
                   onToggle: (value) {
@@ -1898,7 +1942,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
               children: [
                 _sectionLabel(_primaryExposureLabel),
                 const SizedBox(height: 8),
-                _buildChoiceChips(
+                _buildSingleSelectButtons(
                   options: _profileSmokingExposureOptions,
                   selectedValue: _smokingStatus,
                   onSelected: (value) => setState(() => _smokingStatus = value),
@@ -1906,7 +1950,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                 const SizedBox(height: 14),
                 _sectionLabel(_secondaryExposureLabel),
                 const SizedBox(height: 8),
-                _buildChoiceChips(
+                _buildSingleSelectButtons(
                   options: _profileSecondaryExposureOptions,
                   selectedValue: _alcoholStatus,
                   onSelected: (value) => setState(() => _alcoholStatus = value),
@@ -1970,35 +2014,60 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   runSpacing: 8,
                   children: _profileFunctionalOptions.map((option) {
                     final selected = _selectedMets == option.value;
-                    return ChoiceChip(
-                      label: Column(
+                    return OutlinedButton(
+                      onPressed: () {
+                        setState(() {
+                          _selectedMets = option.value;
+                        });
+                      },
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: selected
+                            ? const Color(0xFF2B76D2).withAlpha(18)
+                            : Colors.white,
+                        side: BorderSide(
+                          color: selected
+                              ? const Color(0xFF2B76D2)
+                              : const Color(0xFFD6E1ED),
+                        ),
+                        foregroundColor: selected
+                            ? const Color(0xFF2B76D2)
+                            : const Color(0xFF4F6378),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(option.value),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                selected
+                                    ? Icons.radio_button_checked
+                                    : Icons.radio_button_off_outlined,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                option.value,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
                           Text(
                             option.description,
                             style: const TextStyle(fontSize: 11),
                           ),
                         ],
-                      ),
-                      selected: selected,
-                      onSelected: (_) {
-                        setState(() {
-                          _selectedMets = option.value;
-                        });
-                      },
-                      selectedColor: const Color(0xFF2B76D2).withAlpha(28),
-                      side: BorderSide(
-                        color: selected
-                            ? const Color(0xFF2B76D2)
-                            : const Color(0xFFD6E1ED),
-                      ),
-                      labelStyle: TextStyle(
-                        color: selected
-                            ? const Color(0xFF2B76D2)
-                            : const Color(0xFF4F6378),
-                        fontWeight: FontWeight.w700,
                       ),
                     );
                   }).toList(),
@@ -2113,7 +2182,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                 if (_showMallampatiSection) ...[
                   _sectionLabel('Mallampati'),
                   const SizedBox(height: 8),
-                  _buildChoiceChips(
+                  _buildSingleSelectButtons(
                     options: _mallampatiOptions,
                     selectedValue: _selectedMallampati,
                     onSelected: (value) {
@@ -2145,7 +2214,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                 ],
                 _sectionLabel(_mouthOpeningLabel),
                 const SizedBox(height: 8),
-                _buildChoiceChips(
+                _buildSingleSelectButtons(
                   options: _profileMouthOpeningOptions,
                   selectedValue: _selectedMouthOpening,
                   onSelected: (value) {
@@ -2159,7 +2228,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                 const SizedBox(height: 14),
                 _sectionLabel('Mobilidade cervical'),
                 const SizedBox(height: 8),
-                _buildChoiceChips(
+                _buildSingleSelectButtons(
                   options: _profileNeckMobilityOptions,
                   selectedValue: _selectedNeckMobility,
                   onSelected: (value) {
@@ -2174,7 +2243,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   const SizedBox(height: 14),
                   _sectionLabel(_dentitionLabel),
                   const SizedBox(height: 8),
-                  _buildChoiceChips(
+                  _buildSingleSelectButtons(
                     options: _profileDentitionOptions,
                     selectedValue: _selectedDentition,
                     onSelected: (value) {
@@ -2207,7 +2276,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                _buildFilterChips(
+                _buildMultiSelectButtons(
                   options: _profileDifficultAirwayPredictorOptions,
                   selectedValues: _selectedDifficultAirwayPredictors,
                   color: const Color(0xFFEA5455),
@@ -2234,7 +2303,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                 const SizedBox(height: 14),
                 _sectionLabel('Preditores de ventilação difícil'),
                 const SizedBox(height: 8),
-                _buildFilterChips(
+                _buildMultiSelectButtons(
                   options: _profileDifficultVentilationPredictorOptions,
                   selectedValues: _selectedDifficultVentilationPredictors,
                   color: const Color(0xFFCC7A00),
@@ -2317,7 +2386,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                _buildFilterChips(
+                _buildMultiSelectButtons(
                   options: _profileComplementaryExamOptions,
                   selectedValues: _selectedExamItems,
                   color: const Color(0xFF2B76D2),
@@ -2398,7 +2467,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                 const SizedBox(height: 14),
                 _sectionLabel('$_solidFastingLabel (horas)'),
                 const SizedBox(height: 8),
-                _buildChoiceChips(
+                _buildSingleSelectButtons(
                   options: _solidFastingOptions,
                   selectedValue: _selectedSolidFasting,
                   onSelected: (value) {
@@ -2409,7 +2478,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                 const SizedBox(height: 14),
                 _sectionLabel('$_liquidFastingLabel (horas)'),
                 const SizedBox(height: 8),
-                _buildChoiceChips(
+                _buildSingleSelectButtons(
                   options: _liquidFastingOptions,
                   selectedValue: _selectedLiquidFasting,
                   onSelected: (value) {
@@ -2420,7 +2489,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   const SizedBox(height: 14),
                   _sectionLabel('$_breastMilkFastingLabel (horas)'),
                   const SizedBox(height: 8),
-                  _buildChoiceChips(
+                  _buildSingleSelectButtons(
                     options: _breastMilkFastingOptions,
                     selectedValue: _selectedBreastMilkFasting,
                     onSelected: (value) {
@@ -2451,7 +2520,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildChoiceChips(
+                _buildSingleSelectButtons(
                   options: _surgeryPriorityOptions,
                   selectedValue: _selectedSurgeryPriority,
                   onSelected: (value) {
@@ -2477,7 +2546,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildChoiceChips(
+                _buildSingleSelectButtons(
                   options: _asaOptions,
                   selectedValue: _selectedAsa,
                   onSelected: (value) => setState(() => _selectedAsa = value),
@@ -2552,7 +2621,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                _buildFilterChips(
+                _buildMultiSelectButtons(
                   options: _profileAnestheticPlanOptions,
                   selectedValues: _selectedAnestheticPlans,
                   color: const Color(0xFF8A5DD3),
@@ -2612,7 +2681,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                _buildFilterChips(
+                _buildMultiSelectButtons(
                   options: _profilePostoperativePlanningOptions,
                   selectedValues: _selectedPostoperativePlanningItems,
                   color: const Color(0xFF169653),
@@ -2672,7 +2741,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                _buildFilterChips(
+                _buildMultiSelectButtons(
                   options: _profileRestrictionOptions,
                   selectedValues: _selectedRestrictions,
                   color: const Color(0xFFCC3D3D),

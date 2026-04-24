@@ -149,7 +149,99 @@ void main() {
     expect(fastingTapped, isTrue);
   });
 
-  testWidgets('uses success color for completed normal summary chips', (
+  testWidgets(
+    'uses neutral colors for absent findings and danger for positive risks',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: AnesthesiaHeaderWidget(
+              patient: Patient(
+                name: 'Paciente teste',
+                age: 54,
+                weightKg: 78,
+                heightMeters: 1.7,
+                asa: 'II',
+                informedConsentStatus: 'Assinado',
+                allergies: [],
+                restrictions: [],
+                medications: ['Losartana'],
+              ),
+              mallampati: 'II',
+              preAnestheticAssessment: PreAnestheticAssessment(
+                comorbidities: [],
+                otherComorbidities: '',
+                currentMedications: [],
+                otherMedications: '',
+                allergyDescription: '',
+                smokingStatus: '',
+                alcoholStatus: '',
+                otherHabits: '',
+                mets: '>4 METs',
+                physicalExam: '',
+                airway: Airway.empty(),
+                mouthOpening: '',
+                neckMobility: '',
+                dentition: '',
+                difficultAirwayPredictors: [],
+                otherDifficultAirwayPredictors: '',
+                difficultVentilationPredictors: [],
+                otherDifficultVentilationPredictors: '',
+                otherAirwayDetails: '',
+                complementaryExamItems: [],
+                complementaryExams: '',
+                otherComplementaryExams: '',
+                fastingSolids: '>8h',
+                fastingLiquids: '',
+                fastingBreastMilk: '',
+                fastingNotes: '',
+                asaClassification: 'II',
+                asaNotes: '',
+                anestheticPlan: '',
+                otherAnestheticPlan: '',
+                restrictionItems: [],
+                patientRestrictions: '',
+                otherRestrictions: '',
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final chips = tester.widgetList<ClinicalChip>(find.byType(ClinicalChip));
+      final profileChip = chips.firstWhere((chip) => chip.label == 'Perfil');
+      final asaChip = chips.firstWhere((chip) => chip.label == 'ASA');
+      final airwayChip = chips.firstWhere(
+        (chip) => chip.label == 'Via aérea difícil',
+      );
+      final ventilationChip = chips.firstWhere(
+        (chip) => chip.label == 'Ventilação difícil',
+      );
+      final mallampatiChip = chips.firstWhere(
+        (chip) => chip.label == 'Mallampati',
+      );
+      final allergiesChip = chips.firstWhere(
+        (chip) => chip.label == 'Alergias',
+      );
+      final restrictionsChip = chips.firstWhere(
+        (chip) => chip.label == 'Restrições',
+      );
+      final medicationsChip = chips.firstWhere(
+        (chip) => chip.label == 'Medicações',
+      );
+
+      expect(profileChip.color, UiColors.success);
+      expect(asaChip.color, UiColors.success);
+      expect(airwayChip.color, UiColors.info);
+      expect(ventilationChip.color, UiColors.info);
+      expect(mallampatiChip.color, UiColors.success);
+      expect(allergiesChip.color, UiColors.info);
+      expect(restrictionsChip.color, UiColors.info);
+      expect(medicationsChip.color, UiColors.success);
+    },
+  );
+
+  testWidgets('marks ASA III or higher and positive restrictions in red', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -161,54 +253,21 @@ void main() {
               age: 54,
               weightKg: 78,
               heightMeters: 1.7,
-              asa: 'II',
+              asa: 'IV',
               informedConsentStatus: 'Assinado',
-              allergies: [],
-              restrictions: [],
-              medications: ['Losartana'],
+              allergies: ['Látex'],
+              restrictions: ['Não aceita transfusão'],
+              medications: [],
             ),
-            mallampati: 'II',
-            preAnestheticAssessment: PreAnestheticAssessment(
-              comorbidities: [],
-              otherComorbidities: '',
-              currentMedications: [],
-              otherMedications: '',
-              allergyDescription: '',
-              smokingStatus: '',
-              alcoholStatus: '',
-              otherHabits: '',
-              mets: '>4 METs',
-              physicalExam: '',
-              airway: Airway.empty(),
-              mouthOpening: '',
-              neckMobility: '',
-              dentition: '',
-              difficultAirwayPredictors: [],
-              otherDifficultAirwayPredictors: '',
-              difficultVentilationPredictors: [],
-              otherDifficultVentilationPredictors: '',
-              otherAirwayDetails: '',
-              complementaryExamItems: [],
-              complementaryExams: '',
-              otherComplementaryExams: '',
-              fastingSolids: '>8h',
-              fastingLiquids: '',
-              fastingBreastMilk: '',
-              fastingNotes: '',
-              asaClassification: 'II',
-              asaNotes: '',
-              anestheticPlan: '',
-              otherAnestheticPlan: '',
-              restrictionItems: [],
-              patientRestrictions: '',
-              otherRestrictions: '',
-            ),
+            mallampati: 'III',
+            preAnestheticAssessment: PreAnestheticAssessment.empty(),
           ),
         ),
       ),
     );
 
     final chips = tester.widgetList<ClinicalChip>(find.byType(ClinicalChip));
+    final asaChip = chips.firstWhere((chip) => chip.label == 'ASA');
     final mallampatiChip = chips.firstWhere(
       (chip) => chip.label == 'Mallampati',
     );
@@ -216,13 +275,10 @@ void main() {
     final restrictionsChip = chips.firstWhere(
       (chip) => chip.label == 'Restrições',
     );
-    final medicationsChip = chips.firstWhere(
-      (chip) => chip.label == 'Medicações',
-    );
 
-    expect(mallampatiChip.color, UiColors.success);
-    expect(allergiesChip.color, UiColors.success);
-    expect(restrictionsChip.color, UiColors.success);
-    expect(medicationsChip.color, UiColors.success);
+    expect(asaChip.color, UiColors.danger);
+    expect(mallampatiChip.color, UiColors.danger);
+    expect(allergiesChip.color, UiColors.danger);
+    expect(restrictionsChip.color, UiColors.danger);
   });
 }

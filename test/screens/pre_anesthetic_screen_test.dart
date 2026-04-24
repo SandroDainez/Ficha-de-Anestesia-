@@ -676,13 +676,20 @@ void main() {
     await tester.tap(find.text('Avaliação de via aérea'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.widgetWithText(ChoiceChip, 'III'));
+    await tester.tap(find.widgetWithText(OutlinedButton, 'III'));
     await tester.pumpAndSettle();
 
-    final predictorChip = tester.widget<FilterChip>(
-      find.widgetWithText(FilterChip, 'Mallampati III/IV'),
+    final predictorButton = find.widgetWithText(
+      OutlinedButton,
+      'Mallampati III/IV',
     );
-    expect(predictorChip.selected, isTrue);
+    expect(
+      find.descendant(
+        of: predictorButton,
+        matching: find.byIcon(Icons.check_circle),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets(
@@ -717,20 +724,36 @@ void main() {
       await tester.tap(find.text('Avaliação de via aérea'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.widgetWithText(ChoiceChip, '2-3 dedos (3-5 cm)'));
+      await tester.tap(
+        find.widgetWithText(OutlinedButton, '2-3 dedos (3-5 cm)'),
+      );
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(ChoiceChip, 'Limitada'));
+      await tester.tap(find.widgetWithText(OutlinedButton, 'Limitada'));
       await tester.pumpAndSettle();
 
-      final mouthPredictor = tester.widget<FilterChip>(
-        find.widgetWithText(FilterChip, 'Abertura oral reduzida'),
+      final mouthPredictor = find.widgetWithText(
+        OutlinedButton,
+        'Abertura oral reduzida',
       );
-      final neckPredictor = tester.widget<FilterChip>(
-        find.widgetWithText(FilterChip, 'Mobilidade cervical limitada'),
+      final neckPredictor = find.widgetWithText(
+        OutlinedButton,
+        'Mobilidade cervical limitada',
       );
 
-      expect(mouthPredictor.selected, isTrue);
-      expect(neckPredictor.selected, isTrue);
+      expect(
+        find.descendant(
+          of: mouthPredictor,
+          matching: find.byIcon(Icons.check_circle),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: neckPredictor,
+          matching: find.byIcon(Icons.check_circle),
+        ),
+        findsOneWidget,
+      );
     },
   );
 }

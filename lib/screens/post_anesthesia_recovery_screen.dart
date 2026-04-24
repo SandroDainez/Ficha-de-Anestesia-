@@ -6,10 +6,7 @@ import '../widgets/card_widget.dart';
 import '../widgets/page_container.dart';
 
 class PostAnesthesiaRecoveryScreen extends StatefulWidget {
-  const PostAnesthesiaRecoveryScreen({
-    super.key,
-    required this.record,
-  });
+  const PostAnesthesiaRecoveryScreen({super.key, required this.record});
 
   final AnesthesiaRecord record;
 
@@ -99,13 +96,21 @@ class _PostAnesthesiaRecoveryScreenState
   void initState() {
     super.initState();
     _recovery = widget.record.postAnesthesiaRecovery;
-    _admissionTimeController = TextEditingController(text: _recovery.admissionTime);
-    _dischargeTimeController = TextEditingController(text: _recovery.dischargeTime);
+    _admissionTimeController = TextEditingController(
+      text: _recovery.admissionTime,
+    );
+    _dischargeTimeController = TextEditingController(
+      text: _recovery.dischargeTime,
+    );
     _painScoreController = TextEditingController(text: _recovery.painScore);
     _nauseaScoreController = TextEditingController(text: _recovery.nauseaScore);
     _temperatureController = TextEditingController(text: _recovery.temperature);
-    _admissionNotesController = TextEditingController(text: _recovery.admissionNotes);
-    _dischargeNotesController = TextEditingController(text: _recovery.dischargeNotes);
+    _admissionNotesController = TextEditingController(
+      text: _recovery.admissionNotes,
+    );
+    _dischargeNotesController = TextEditingController(
+      text: _recovery.dischargeNotes,
+    );
   }
 
   @override
@@ -148,7 +153,9 @@ class _PostAnesthesiaRecoveryScreenState
       if (record.operationalNotes.trim().isNotEmpty)
         'Anotações: ${record.operationalNotes.trim()}',
     ];
-    return items.isEmpty ? 'Sem resumo integrado disponível.' : items.join('\n\n');
+    return items.isEmpty
+        ? 'Sem resumo integrado disponível.'
+        : items.join('\n\n');
   }
 
   String get _intraoperativeEventsSummary {
@@ -182,14 +189,40 @@ class _PostAnesthesiaRecoveryScreenState
         runSpacing: 8,
         children: options
             .map(
-              (item) => FilterChip(
-                label: Text(item),
-                selected: selected.contains(item),
-                onSelected: (_) {
+              (item) => OutlinedButton.icon(
+                onPressed: () {
                   setState(() {
                     _toggleItem(selected, item, onChanged);
                   });
                 },
+                icon: Icon(
+                  selected.contains(item)
+                      ? Icons.check_circle
+                      : Icons.add_circle_outline,
+                  size: 18,
+                ),
+                label: Text(item),
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: selected.contains(item)
+                      ? const Color(0xFF2B76D2).withAlpha(16)
+                      : Colors.white,
+                  side: BorderSide(
+                    color: selected.contains(item)
+                        ? const Color(0xFF2B76D2)
+                        : const Color(0xFFD6E1ED),
+                  ),
+                  foregroundColor: selected.contains(item)
+                      ? const Color(0xFF2B76D2)
+                      : const Color(0xFF4F6378),
+                  textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                ),
               ),
             )
             .toList(),
@@ -217,10 +250,27 @@ class _PostAnesthesiaRecoveryScreenState
           spacing: 8,
           children: List.generate(
             3,
-            (index) => ChoiceChip(
-              label: Text(index.toString()),
-              selected: value == index,
-              onSelected: (_) => setState(() => onChanged(index)),
+            (index) => OutlinedButton(
+              onPressed: () => setState(() => onChanged(index)),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(48, 44),
+                backgroundColor: value == index
+                    ? const Color(0xFF8A5DD3).withAlpha(18)
+                    : Colors.white,
+                side: BorderSide(
+                  color: value == index
+                      ? const Color(0xFF8A5DD3)
+                      : const Color(0xFFD6E1ED),
+                ),
+                foregroundColor: value == index
+                    ? const Color(0xFF8A5DD3)
+                    : const Color(0xFF4F6378),
+                textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(index.toString()),
             ),
           ),
         ),
@@ -389,13 +439,38 @@ class _PostAnesthesiaRecoveryScreenState
                         runSpacing: 8,
                         children: _sedationScaleOptions
                             .map(
-                              (item) => ChoiceChip(
-                                label: Text(item),
-                                selected: _recovery.sedationScale == item,
-                                onSelected: (_) => setState(
-                                  () => _recovery =
-                                      _recovery.copyWith(sedationScale: item),
+                              (item) => OutlinedButton(
+                                onPressed: () => setState(
+                                  () => _recovery = _recovery.copyWith(
+                                    sedationScale: item,
+                                  ),
                                 ),
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor:
+                                      _recovery.sedationScale == item
+                                      ? const Color(0xFF8A5DD3).withAlpha(18)
+                                      : Colors.white,
+                                  side: BorderSide(
+                                    color: _recovery.sedationScale == item
+                                        ? const Color(0xFF8A5DD3)
+                                        : const Color(0xFFD6E1ED),
+                                  ),
+                                  foregroundColor:
+                                      _recovery.sedationScale == item
+                                      ? const Color(0xFF8A5DD3)
+                                      : const Color(0xFF4F6378),
+                                  textStyle: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 12,
+                                  ),
+                                ),
+                                child: Text(item),
                               ),
                             )
                             .toList(),
@@ -419,8 +494,8 @@ class _PostAnesthesiaRecoveryScreenState
                             child: _buildAldreteSelector(
                               label: 'Atividade',
                               value: _recovery.aldreteActivity,
-                              onChanged: (value) => _recovery =
-                                  _recovery.copyWith(aldreteActivity: value),
+                              onChanged: (value) => _recovery = _recovery
+                                  .copyWith(aldreteActivity: value),
                             ),
                           ),
                           SizedBox(
@@ -428,8 +503,8 @@ class _PostAnesthesiaRecoveryScreenState
                             child: _buildAldreteSelector(
                               label: 'Respiração',
                               value: _recovery.aldreteRespiration,
-                              onChanged: (value) => _recovery =
-                                  _recovery.copyWith(aldreteRespiration: value),
+                              onChanged: (value) => _recovery = _recovery
+                                  .copyWith(aldreteRespiration: value),
                             ),
                           ),
                           SizedBox(
@@ -437,8 +512,8 @@ class _PostAnesthesiaRecoveryScreenState
                             child: _buildAldreteSelector(
                               label: 'Circulação',
                               value: _recovery.aldreteCirculation,
-                              onChanged: (value) => _recovery =
-                                  _recovery.copyWith(aldreteCirculation: value),
+                              onChanged: (value) => _recovery = _recovery
+                                  .copyWith(aldreteCirculation: value),
                             ),
                           ),
                           SizedBox(
@@ -455,10 +530,8 @@ class _PostAnesthesiaRecoveryScreenState
                             child: _buildAldreteSelector(
                               label: 'SpO₂',
                               value: _recovery.aldreteSpo2,
-                              onChanged: (value) =>
-                                  _recovery = _recovery.copyWith(
-                                aldreteSpo2: value,
-                              ),
+                              onChanged: (value) => _recovery = _recovery
+                                  .copyWith(aldreteSpo2: value),
                             ),
                           ),
                         ],
@@ -515,7 +588,8 @@ class _PostAnesthesiaRecoveryScreenState
                             width: 220,
                             child: DropdownButtonFormField<String>(
                               isExpanded: true,
-                              initialValue: _recovery.destinationAfterRecovery.isEmpty
+                              initialValue:
+                                  _recovery.destinationAfterRecovery.isEmpty
                                   ? null
                                   : _recovery.destinationAfterRecovery,
                               decoration: const InputDecoration(
