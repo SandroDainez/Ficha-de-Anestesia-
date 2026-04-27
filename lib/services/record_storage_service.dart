@@ -10,6 +10,15 @@ import 'supabase_service.dart';
 import '../models/anesthesia_case.dart';
 import '../models/anesthesia_record.dart';
 
+class RecordStorageException implements Exception {
+  const RecordStorageException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
 class RecordStorageService {
   RecordStorageService();
 
@@ -131,8 +140,14 @@ class RecordStorageService {
   }
 
   Future<void> upsertCase(AnesthesiaCase caseFile) async {
-    if (await _ensureRemote()) {
+    final remoteReady = await _ensureRemote();
+    if (remoteReady) {
       await _upsertRemoteCase(caseFile);
+    }
+    if (kIsWeb && !remoteReady) {
+      throw const RecordStorageException(
+        'Não foi possível salvar a ficha porque o Supabase não está acessível.',
+      );
     }
     if (kIsWeb) return;
     final cases = await loadCases();
@@ -148,8 +163,14 @@ class RecordStorageService {
   }
 
   Future<void> deleteCase(String caseId) async {
-    if (await _ensureRemote()) {
+    final remoteReady = await _ensureRemote();
+    if (remoteReady) {
       await _deleteRemoteCase(caseId);
+    }
+    if (kIsWeb && !remoteReady) {
+      throw const RecordStorageException(
+        'Não foi possível excluir a ficha porque o Supabase não está acessível.',
+      );
     }
     if (kIsWeb) return;
     final cases = await loadCases();
@@ -246,8 +267,10 @@ class RecordStorageService {
         'status': caseFile.status.code,
         'record': caseFile.record.toJson(),
       }, onConflict: 'id');
-    } catch (_) {
-      // remote save failure is non-fatal
+    } catch (error) {
+      throw RecordStorageException(
+        'Falha ao salvar a ficha no Supabase: $error',
+      );
     }
   }
 
@@ -256,8 +279,10 @@ class RecordStorageService {
     if (client == null) return;
     try {
       await client.from('anesthesia_cases').delete().eq('id', caseId);
-    } catch (_) {
-      // ignore
+    } catch (error) {
+      throw RecordStorageException(
+        'Falha ao excluir a ficha no Supabase: $error',
+      );
     }
   }
 

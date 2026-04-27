@@ -3598,25 +3598,40 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     _startHemodynamicTickerIfNeeded();
   }
 
-  Future<void> _persistRecord() async {
+  Future<bool> _persistRecord() async {
+    final messenger = ScaffoldMessenger.of(context);
     final caseId = widget.caseId;
-    if (caseId == null) {
-      await _storageService.saveRecord(_record);
-      return;
-    }
+    try {
+      if (caseId == null) {
+        await _storageService.saveRecord(_record);
+        return true;
+      }
 
-    final now = DateTime.now().toIso8601String();
-    await _storageService.upsertCase(
-      AnesthesiaCase(
-        id: caseId,
-        createdAtIso: widget.createdAtIso ?? now,
-        updatedAtIso: now,
-        preAnestheticDate: _preAnestheticDate,
-        anesthesiaDate: _anesthesiaDate,
-        status: _persistedCaseStatus,
-        record: _record,
-      ),
-    );
+      final now = DateTime.now().toIso8601String();
+      await _storageService.upsertCase(
+        AnesthesiaCase(
+          id: caseId,
+          createdAtIso: widget.createdAtIso ?? now,
+          updatedAtIso: now,
+          preAnestheticDate: _preAnestheticDate,
+          anesthesiaDate: _anesthesiaDate,
+          status: _persistedCaseStatus,
+          record: _record,
+        ),
+      );
+      return true;
+    } catch (error) {
+      if (!mounted) return false;
+      messenger.clearSnackBars();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('$error'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 6),
+        ),
+      );
+      return false;
+    }
   }
 
   void _startHemodynamicTickerIfNeeded() {
@@ -3717,6 +3732,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Future<void> _finalizarCaso() async {
+    final messenger = ScaffoldMessenger.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -3739,11 +3755,26 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
 
     if (confirmed != true) return;
 
+    final previousStatus = _caseStatus;
     setState(() {
       _caseStatus = AnesthesiaCaseStatus.finalized;
     });
-    await _persistRecord();
+    final saved = await _persistRecord();
     if (!mounted) return;
+    if (!saved) {
+      setState(() {
+        _caseStatus = previousStatus;
+      });
+      return;
+    }
+    messenger.clearSnackBars();
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('Caso finalizado e salvo com sucesso.'),
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 3),
+      ),
+    );
     Navigator.of(context).pop();
   }
 
