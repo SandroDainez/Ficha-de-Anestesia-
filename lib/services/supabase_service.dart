@@ -5,8 +5,17 @@ class SupabaseService {
 
   static final SupabaseService instance = SupabaseService._();
 
-  static const String _url = String.fromEnvironment('SUPABASE_URL');
-  static const String _anonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+  static const String _defaultUrl = 'https://ekzwbjfimrojujookyhi.supabase.co';
+  static const String _defaultAnonKey =
+      'sb_publishable_m_6gsKJexTpua5tKSWUOxA_I2TuuccE';
+  static const String _url = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: _defaultUrl,
+  );
+  static const String _anonKey = String.fromEnvironment(
+    'SUPABASE_ANON_KEY',
+    defaultValue: _defaultAnonKey,
+  );
 
   SupabaseClient? _client;
   bool _initialized = false;

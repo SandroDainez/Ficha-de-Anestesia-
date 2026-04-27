@@ -125,7 +125,9 @@ O projeto esta funcional localmente e hoje usa analise "IA" simulada por heurist
      --dart-define=SUPABASE_ANON_KEY=sb_publishable_m_6gsKJexTpua5tKSWUOxA_I2TuuccE
    ```
 
-   No Vercel, defina as mesmas chaves (Settings → Environment Variables). O app detecta essas variáveis e habilita o modo compartilhado com login.
+   Essas variáveis continuam sendo aceitas para sobrescrever a configuração padrão. No estado atual do projeto, o app já traz um fallback com essas mesmas chaves e passa a armazenar/listar casos diretamente no Supabase mesmo sem `--dart-define`.
+
+   No Vercel, ainda é recomendado definir `SUPABASE_URL` e `SUPABASE_ANON_KEY` em Settings → Environment Variables. Com essas chaves, o app habilita o modo compartilhado com login e mantém a configuração explícita no deploy.
 
 2. Crie a tabela de usuários do app, a tabela de casos e as políticas com esse SQL:
 
@@ -284,7 +286,7 @@ O projeto esta funcional localmente e hoje usa analise "IA" simulada por heurist
    - cadastro comum com status `pending`, aguardando aprovação do administrador
    - administrador com acesso para listar usuários, aprovar, bloquear e reativar
    - casos sincronizados no Supabase para todos os usuários ativos
-   - fallback para Hive local quando as chaves não estiverem definidas
+   - fallback para Hive local quando o Supabase não estiver acessível
    - exportação de PDF e também JSON (botão novo no rodapé e na lista de casos) para baixar/enviar por email ou WhatsApp
 
 5. Redefinição de senha por administrador e convite por email/WhatsApp ficam para a próxima etapa. Para redefinir senha de forma segura será necessário usar backend próprio, Edge Function ou script administrativo com `service_role` fora do Flutter/web.
