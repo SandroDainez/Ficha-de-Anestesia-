@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
-
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 import 'supabase_service.dart';
 import '../models/anesthesia_case.dart';
@@ -25,6 +25,7 @@ class RecordStorageService {
   static const String _boxName = 'anesthesia_record_box';
   static const String _legacyRecordKey = 'current_record';
   static const String _casesKey = 'saved_cases';
+  static const Uuid _uuid = Uuid();
 
   bool _initialized = false;
 
@@ -50,7 +51,7 @@ class RecordStorageService {
     return Hive.openBox<dynamic>(_boxName);
   }
 
-  String createCaseId() => DateTime.now().microsecondsSinceEpoch.toString();
+  String createCaseId() => _uuid.v4();
 
   Future<List<AnesthesiaCase>> loadCases() async {
     Box<dynamic>? box;
