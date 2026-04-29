@@ -3087,6 +3087,45 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         .toList();
   }
 
+  AnesthesiaRecord _syncRecordFromPreAnesthetic(AnesthesiaRecord record) {
+    final assessment = record.preAnestheticAssessment;
+    final allergies = record.patient.allergies.isNotEmpty
+        ? record.patient.allergies
+        : _splitListText(assessment.allergyDescription);
+    final restrictions = record.patient.restrictions.isNotEmpty
+        ? record.patient.restrictions
+        : _splitListText(assessment.patientRestrictions);
+    final medications = record.patient.medications.isNotEmpty
+        ? record.patient.medications
+        : assessment.currentMedications;
+
+    return record.copyWith(
+      patient: record.patient.copyWith(
+        asa: record.patient.asa.trim().isNotEmpty
+            ? record.patient.asa
+            : assessment.asaClassification,
+        allergies: allergies,
+        restrictions: restrictions,
+        medications: medications,
+      ),
+      airway: record.airway.mallampati.trim().isNotEmpty
+          ? record.airway
+          : record.airway.copyWith(mallampati: assessment.airway.mallampati),
+      surgeryDescription: record.surgeryDescription.trim().isNotEmpty
+          ? record.surgeryDescription
+          : assessment.surgeryDescription,
+      surgeryPriority: record.surgeryPriority.trim().isNotEmpty
+          ? record.surgeryPriority
+          : assessment.surgeryPriority,
+      anesthesiaTechnique: record.anesthesiaTechnique.trim().isNotEmpty
+          ? record.anesthesiaTechnique
+          : assessment.anestheticPlan.trim(),
+      fastingHours: record.fastingHours.trim().isNotEmpty
+          ? record.fastingHours
+          : assessment.fastingSolids.trim(),
+    );
+  }
+
   Future<void> _updatePatient({
     String? name,
     int? age,
@@ -3581,7 +3620,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   void initState() {
     super.initState();
     _initialRecord = widget.initialRecord ?? const AnesthesiaRecord.empty();
-    _record = _migrateLegacyHemodynamics(_initialRecord);
+    _record = _syncRecordFromPreAnesthetic(
+      _migrateLegacyHemodynamics(_initialRecord),
+    );
     _caseStatus = widget.initialCaseStatus;
     _venousAccesses = List<String>.from(_record.venousAccesses);
     _arterialAccesses = List<String>.from(_record.arterialAccesses);
@@ -3614,7 +3655,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     if (!mounted || storedRecord == null) return;
 
     setState(() {
-      _record = _migrateLegacyHemodynamics(storedRecord);
+      _record = _syncRecordFromPreAnesthetic(
+        _migrateLegacyHemodynamics(storedRecord),
+      );
       _venousAccesses = List<String>.from(_record.venousAccesses);
       _arterialAccesses = List<String>.from(_record.arterialAccesses);
       _monitoringItems = List<String>.from(_record.monitoringItems);
@@ -3829,16 +3872,20 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         medications: result.assessment.currentMedications,
       );
 
-      _record = _record.copyWith(
-        patient: updatedPatient,
-        preAnestheticAssessment: result.assessment,
-        airway: result.assessment.airway,
-        fastingHours: _record.fastingHours.trim().isEmpty
-            ? result.assessment.fastingSolids
-            : _record.fastingHours,
-        anesthesiaTechnique: result.assessment.anestheticPlan.trim().isEmpty
-            ? _record.anesthesiaTechnique
-            : result.assessment.anestheticPlan.trim(),
+      _record = _syncRecordFromPreAnesthetic(
+        _record.copyWith(
+          patient: updatedPatient,
+          preAnestheticAssessment: result.assessment,
+          airway: result.assessment.airway,
+          surgeryDescription: result.assessment.surgeryDescription.trim(),
+          surgeryPriority: result.assessment.surgeryPriority.trim(),
+          fastingHours: _record.fastingHours.trim().isEmpty
+              ? result.assessment.fastingSolids
+              : _record.fastingHours,
+          anesthesiaTechnique: result.assessment.anestheticPlan.trim().isEmpty
+              ? _record.anesthesiaTechnique
+              : result.assessment.anestheticPlan.trim(),
+        ),
       );
       _preAnestheticDate = result.consultationDate.trim();
     });
@@ -5386,18 +5433,10 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     required String subtitle,
     required Color accent,
   }) {
-    final backgroundColor = Color.alphaBlend(
-      accent.withAlpha(18),
-      Colors.white.withAlpha(235),
-    );
-    final borderColor = Color.alphaBlend(
-      accent.withAlpha(90),
-      const Color(0xFFD2E0EF),
-    );
-    final subtitleColor = Color.alphaBlend(
-      accent.withAlpha(130),
-      const Color(0xFF6F8498),
-    );
+    const headerAccent = Color(0xFF7D93AA);
+    const backgroundColor = Color(0xFFF5F7FC);
+    const borderColor = Color(0xFFBCD0E4);
+    const subtitleColor = Color(0xFF6F8498);
 
     return Container(
       width: double.infinity,
@@ -5420,7 +5459,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             width: 8,
             height: 44,
             decoration: BoxDecoration(
-              color: accent,
+              color: headerAccent,
               borderRadius: BorderRadius.circular(999),
             ),
           ),
@@ -5432,10 +5471,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                 Text(
                   title,
                   style: TextStyle(
-                    color: Color.alphaBlend(
-                      accent.withAlpha(80),
-                      const Color(0xFF17324D),
-                    ),
+                    color: const Color(0xFF17324D),
                     fontWeight: FontWeight.w800,
                     fontSize: 15,
                   ),

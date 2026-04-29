@@ -65,6 +65,53 @@ class _PatientListScreenState extends State<PatientListScreen> {
     return '$day/$month/$year $hour:$minute';
   }
 
+  List<String> _splitListText(String value) {
+    return value
+        .split(RegExp(r'[\n,;]'))
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+  }
+
+  AnesthesiaRecord _syncRecordFromPreAnesthetic(AnesthesiaRecord record) {
+    final assessment = record.preAnestheticAssessment;
+    final allergies = record.patient.allergies.isNotEmpty
+        ? record.patient.allergies
+        : _splitListText(assessment.allergyDescription);
+    final restrictions = record.patient.restrictions.isNotEmpty
+        ? record.patient.restrictions
+        : _splitListText(assessment.patientRestrictions);
+    final medications = record.patient.medications.isNotEmpty
+        ? record.patient.medications
+        : assessment.currentMedications;
+
+    return record.copyWith(
+      patient: record.patient.copyWith(
+        asa: record.patient.asa.trim().isNotEmpty
+            ? record.patient.asa
+            : assessment.asaClassification,
+        allergies: allergies,
+        restrictions: restrictions,
+        medications: medications,
+      ),
+      airway: record.airway.mallampati.trim().isNotEmpty
+          ? record.airway
+          : record.airway.copyWith(mallampati: assessment.airway.mallampati),
+      surgeryDescription: record.surgeryDescription.trim().isNotEmpty
+          ? record.surgeryDescription
+          : assessment.surgeryDescription,
+      surgeryPriority: record.surgeryPriority.trim().isNotEmpty
+          ? record.surgeryPriority
+          : assessment.surgeryPriority,
+      anesthesiaTechnique: record.anesthesiaTechnique.trim().isNotEmpty
+          ? record.anesthesiaTechnique
+          : assessment.anestheticPlan.trim(),
+      fastingHours: record.fastingHours.trim().isNotEmpty
+          ? record.fastingHours
+          : assessment.fastingSolids.trim(),
+    );
+  }
+
   Future<void> _reloadCases() async {
     final cases = await _storageService.loadCases();
     if (!mounted) return;
@@ -125,10 +172,14 @@ class _PatientListScreenState extends State<PatientListScreen> {
     if (!mounted || result == null) return;
 
     final now = DateTime.now().toIso8601String();
-    final updatedRecord = currentRecord.copyWith(
-      patient: result.patient,
-      preAnestheticAssessment: result.assessment,
-      airway: result.assessment.airway,
+    final updatedRecord = _syncRecordFromPreAnesthetic(
+      currentRecord.copyWith(
+        patient: result.patient,
+        preAnestheticAssessment: result.assessment,
+        airway: result.assessment.airway,
+        surgeryDescription: result.assessment.surgeryDescription.trim(),
+        surgeryPriority: result.assessment.surgeryPriority.trim(),
+      ),
     );
     final updatedCase = AnesthesiaCase(
       id: caseFile?.id ?? _storageService.createCaseId(),

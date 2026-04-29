@@ -73,30 +73,30 @@ class _PanelCardState extends State<PanelCard> {
 
     final isSuccess = widget.isCompleted && !widget.isAttention;
     final headerBackground = widget.isAttention
-        ? Color.alphaBlend(
-            const Color(0x14F0A11F),
-            widget.titleColor.withAlpha(18),
-          )
+        ? const Color(0xFFFFF1F1)
         : isSuccess
         ? const Color(0xFFE7F6EC)
-        : widget.titleColor.withAlpha(18);
+        : const Color(0xFFF5F7FC);
     final headerDivider = widget.isAttention
-        ? Color.alphaBlend(
-            const Color(0x40F0A11F),
-            widget.titleColor.withAlpha(48),
-          )
-        : isSuccess
-        ? const Color(0xFF8DD0A3)
-        : widget.titleColor.withAlpha(48);
-    final cardBackground = isSuccess ? const Color(0xFFF4FBF6) : Colors.white;
-    final cardBorder = widget.isAttention
-        ? const Color(0xFFF2C879)
+        ? const Color(0xFFE29B9B)
         : isSuccess
         ? const Color(0xFF8DD0A3)
         : const Color(0xFFBCD0E4);
-    final effectiveTitleColor = isSuccess
+    final cardBackground = isSuccess
+        ? const Color(0xFFF4FBF6)
+        : widget.isAttention
+        ? const Color(0xFFFFF7F7)
+        : Colors.white;
+    final cardBorder = widget.isAttention
+        ? const Color(0xFFE29B9B)
+        : isSuccess
+        ? const Color(0xFF8DD0A3)
+        : const Color(0xFFBCD0E4);
+    final effectiveTitleColor = widget.isAttention
+        ? const Color(0xFFB04141)
+        : isSuccess
         ? const Color(0xFF177245)
-        : widget.titleColor;
+        : const Color(0xFF6A7E94);
 
     return Container(
       width: double.infinity,
