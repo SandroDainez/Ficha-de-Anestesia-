@@ -763,7 +763,8 @@ class _FastingQuickEditDialogState extends State<_FastingQuickEditDialog> {
           options: options,
           searchEnabled: false,
           isSelected: (option) => selectedValue == option,
-          onToggle: (option) => setState(() => onSelected(option)),
+          onToggle: (option) =>
+              setState(() => onSelected(selectedValue == option ? '' : option)),
         ),
       ],
     );
@@ -8248,7 +8249,11 @@ class _MechanicalVentilationDialogState
                 searchEnabled: false,
                 isSelected: (mode) => _modeController.text.trim() == mode,
                 onToggle: (mode) {
-                  setState(() => _modeController.text = mode);
+                  setState(() {
+                    _modeController.text = _modeController.text.trim() == mode
+                        ? ''
+                        : mode;
+                  });
                 },
               ),
               const SizedBox(height: 16),
@@ -8934,7 +8939,9 @@ class _VenousAccessDialogState extends State<VenousAccessDialog> {
                 searchEnabled: false,
                 isSelected: (size) => _selectedAvpSize == size,
                 onToggle: (size) {
-                  setState(() => _selectedAvpSize = size);
+                  setState(() {
+                    _selectedAvpSize = _selectedAvpSize == size ? '' : size;
+                  });
                 },
               ),
               const SizedBox(height: 10),
@@ -8960,7 +8967,9 @@ class _VenousAccessDialogState extends State<VenousAccessDialog> {
                 searchEnabled: true,
                 isSelected: (item) => _selectedCentral == item,
                 onToggle: (item) {
-                  setState(() => _selectedCentral = item);
+                  setState(() {
+                    _selectedCentral = _selectedCentral == item ? '' : item;
+                  });
                 },
               ),
               const SizedBox(height: 10),
@@ -9215,7 +9224,7 @@ class _ArterialAccessDialogState extends State<ArterialAccessDialog> {
                 searchEnabled: false,
                 isSelected: (item) => _paiSelected,
                 onToggle: (item) {
-                  setState(() => _paiSelected = true);
+                  setState(() => _paiSelected = !_paiSelected);
                 },
               ),
               const SizedBox(height: 14),

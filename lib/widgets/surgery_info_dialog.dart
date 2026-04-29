@@ -375,7 +375,9 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
                   searchEnabled: false,
                   isSelected: (item) => _selectedPriority == item,
                   onToggle: (item) {
-                    setState(() => _selectedPriority = item);
+                    setState(() {
+                      _selectedPriority = _selectedPriority == item ? '' : item;
+                    });
                   },
                 ),
               if (showPriority &&
@@ -430,7 +432,11 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
                   searchEnabled: false,
                   isSelected: (item) => _selectedDestination == item,
                   onToggle: (item) {
-                    setState(() => _selectedDestination = item);
+                    setState(() {
+                      _selectedDestination = _selectedDestination == item
+                          ? ''
+                          : item;
+                    });
                   },
                 ),
               if (showDestination) const SizedBox(height: 12),

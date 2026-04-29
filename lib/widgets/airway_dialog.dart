@@ -137,7 +137,9 @@ class _AirwayDialogState extends State<AirwayDialog> {
                     optionDescriptionBuilder: (item) => 'Cormack $item',
                     isSelected: (item) => _selectedCormack == item,
                     onToggle: (item) {
-                      setState(() => _selectedCormack = item);
+                      setState(() {
+                        _selectedCormack = _selectedCormack == item ? '' : item;
+                      });
                     },
                   ),
                 ),
@@ -161,7 +163,9 @@ class _AirwayDialogState extends State<AirwayDialog> {
                     color: const Color(0xFF2B76D2),
                     isSelected: (item) => _selectedDevice == item,
                     onToggle: (item) {
-                      setState(() => _selectedDevice = item);
+                      setState(() {
+                        _selectedDevice = _selectedDevice == item ? '' : item;
+                      });
                     },
                   ),
                 ),
@@ -215,7 +219,12 @@ class _AirwayDialogState extends State<AirwayDialog> {
                     isSelected: (item) =>
                         _techniqueController.text.trim() == item,
                     onToggle: (item) {
-                      setState(() => _techniqueController.text = item);
+                      setState(() {
+                        _techniqueController.text =
+                            _techniqueController.text.trim() == item
+                            ? ''
+                            : item;
+                      });
                     },
                   ),
                 ),

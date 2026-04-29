@@ -466,7 +466,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     'Emergência',
   ];
   static const List<String> _anestheticPlanOptions = [
-    'Anestesia geral balanceada',
+    'Anestesia geral',
     'Raquianestesia',
     'Peridural',
     'Bloqueio periférico',
@@ -481,7 +481,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     'Analgesia multimodal',
   ];
   static const List<String> _neonatalAnestheticPlanOptions = [
-    'Anestesia geral balanceada',
+    'Anestesia geral',
     'Intubação orotraqueal',
     'Ventilação controlada',
     'Analgesia opioide titulada',
@@ -2136,7 +2136,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     return _buildOptionCardGrid(
       options: options,
       isSelected: (option) => selectedValue == option,
-      onTap: onSelected,
+      onTap: (option) => onSelected(selectedValue == option ? '' : option),
       color: color,
     );
   }
@@ -3239,6 +3239,11 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
             title: _functionalSectionTitle,
             isCompleted: _hasFunctionalContent,
             summary: _functionalSummary(),
+            tone: _hasFunctionalRisk
+                ? _SectionCardTone.alert
+                : (_hasFunctionalContent
+                      ? _SectionCardTone.completed
+                      : _SectionCardTone.neutral),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -3343,6 +3348,11 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
             title: 'Classificação ASA',
             isCompleted: _hasAsaContent,
             summary: _asaSummary(),
+            tone: _hasHighRiskAsa
+                ? _SectionCardTone.alert
+                : (_hasAsaContent
+                      ? _SectionCardTone.completed
+                      : _SectionCardTone.neutral),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -4280,8 +4290,25 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   bool get _hasFunctionalContent =>
       _selectedMets.isNotEmpty || _metsNotesController.text.trim().isNotEmpty;
 
+  bool get _hasFunctionalRisk {
+    return switch (_selectedPopulation) {
+      PatientPopulation.adult =>
+        _selectedMets == '1 MET' || _selectedMets == '2-3 METs',
+      PatientPopulation.pediatric => _selectedMets == 'Limitação importante',
+      PatientPopulation.neonatal =>
+        _selectedMets == 'Oxigênio recente' ||
+            _selectedMets == 'Apneia/bradicardia' ||
+            _selectedMets == 'Suporte ventilatório',
+    };
+  }
+
   bool get _hasAsaContent =>
       _selectedAsa.isNotEmpty || _asaNotesController.text.trim().isNotEmpty;
+
+  bool get _hasHighRiskAsa => switch (_selectedAsa) {
+    'III' || 'IV' || 'V' || 'VI' => true,
+    _ => false,
+  };
 
   bool get _hasAirwayContent =>
       _selectedMallampati.isNotEmpty ||
