@@ -238,24 +238,6 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     '40 mmHg',
     '50 mmHg',
   ];
-  static const List<String> _adultFastingNoteOptions = [
-    'Jejum adequado',
-    'Jejum inadequado',
-    'Última refeição registrada',
-  ];
-  static const List<String> _pediatricFastingNoteOptions = [
-    'Leite materno',
-    'Fórmula láctea',
-    'Sólidos',
-    'Jejum adequado',
-    'Jejum inadequado',
-  ];
-  static const List<String> _neonatalFastingNoteOptions = [
-    'Última mamada',
-    'Fórmula',
-    'Glicemia checada',
-    'Jejum inadequado',
-  ];
   static const List<String> _smokingOptions = ['Não', 'Ex-tabagista', 'Sim'];
   static const List<String> _alcoholOptions = ['Não', 'Social', 'Frequente'];
   static const List<_OptionDetail> _metsOptions = [
@@ -2238,6 +2220,38 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     );
   }
 
+  Widget _buildExpandableInputWithQuickPresets({
+    required TextEditingController controller,
+    required String label,
+    required List<String> presetOptions,
+    required ValueChanged<String> onSelected,
+    String? hintText,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+    Color color = const Color(0xFF169653),
+  }) {
+    if (presetOptions.isEmpty) {
+      return _buildAdaptiveInputField(
+        controller: controller,
+        label: label,
+        hintText: hintText,
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
+      );
+    }
+
+    return _ExpandablePresetFieldCard(
+      controller: controller,
+      label: label,
+      hintText: hintText,
+      presetOptions: presetOptions,
+      onSelected: onSelected,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
+      color: color,
+    );
+  }
+
   Widget _buildInputWithQuickPresets({
     required TextEditingController controller,
     required String label,
@@ -2515,7 +2529,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: _buildInputWithQuickPresets(
+                      child: _buildExpandableInputWithQuickPresets(
                         controller:
                             _selectedPopulation == PatientPopulation.neonatal
                                 ? _postnatalAgeController
@@ -2523,13 +2537,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                         label: _selectedPopulation == PatientPopulation.neonatal
                             ? 'Idade pós-natal (dias)'
                             : 'Idade (anos)',
-                        options: _profileAgePresetOptions,
-                        selectedValue:
-                            (_selectedPopulation == PatientPopulation.neonatal
-                                    ? _postnatalAgeController
-                                    : _ageController)
-                                .text
-                                .trim(),
+                        presetOptions: _profileAgePresetOptions,
                         onSelected: (option) {
                           setState(() {
                             (_selectedPopulation == PatientPopulation.neonatal
@@ -2547,11 +2555,10 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: _buildInputWithQuickPresets(
+                      child: _buildExpandableInputWithQuickPresets(
                         controller: _weightController,
                         label: 'Peso (kg)',
-                        options: _profileWeightPresetOptions,
-                        selectedValue: _weightController.text.trim(),
+                        presetOptions: _profileWeightPresetOptions,
                         onSelected: (option) {
                           setState(() => _weightController.text = option);
                         },
@@ -2562,11 +2569,10 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: _buildInputWithQuickPresets(
+                      child: _buildExpandableInputWithQuickPresets(
                         controller: _heightController,
                         label: 'Altura (cm)',
-                        options: _profileHeightPresetOptions,
-                        selectedValue: _heightController.text.trim(),
+                        presetOptions: _profileHeightPresetOptions,
                         onSelected: (option) {
                           setState(() => _heightController.text = option);
                         },
@@ -2599,11 +2605,10 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: _buildInputWithQuickPresets(
+                        child: _buildExpandableInputWithQuickPresets(
                           controller: _birthWeightController,
                           label: 'Peso ao nascer (kg)',
-                          options: _profileBirthWeightPresetOptions,
-                          selectedValue: _birthWeightController.text.trim(),
+                          presetOptions: _profileBirthWeightPresetOptions,
                           onSelected: (option) {
                             setState(() => _birthWeightController.text = option);
                           },
@@ -2619,11 +2624,10 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _buildInputWithQuickPresets(
+                        child: _buildExpandableInputWithQuickPresets(
                           controller: _gestationalAgeController,
                           label: 'IG ao nascer (semanas)',
-                          options: _profileGestationalAgePresetOptions,
-                          selectedValue: _gestationalAgeController.text.trim(),
+                          presetOptions: _profileGestationalAgePresetOptions,
                           onSelected: (option) {
                             setState(
                               () => _gestationalAgeController.text = option,
@@ -2641,12 +2645,11 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: _buildInputWithQuickPresets(
+                        child: _buildExpandableInputWithQuickPresets(
                           controller: _correctedGestationalAgeController,
                           label: 'IG corrigida (semanas)',
-                          options: _profileCorrectedGestationalAgePresetOptions,
-                          selectedValue:
-                              _correctedGestationalAgeController.text.trim(),
+                          presetOptions:
+                              _profileCorrectedGestationalAgePresetOptions,
                           onSelected: (option) {
                             setState(
                               () =>
@@ -3867,25 +3870,6 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   ),
                 ],
                 const SizedBox(height: 14),
-                const Text(
-                  'Observações rápidas do jejum',
-                  style: TextStyle(
-                    color: Color(0xFF17324D),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                SelectionGridSection(
-                  options: _fastingNoteOptions,
-                  searchEnabled: false,
-                  isSelected: (option) => _fastingNotesController.text
-                      .split('\n')
-                      .map((line) => line.trim())
-                      .where((line) => line.isNotEmpty)
-                      .contains(option),
-                  onToggle: _toggleFastingNoteOption,
-                ),
-                const SizedBox(height: 14),
                 TextField(
                   controller: _fastingNotesController,
                   minLines: 2,
@@ -4439,35 +4423,6 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     );
   }
 
-  List<String> get _fastingNoteOptions {
-    switch (_selectedPopulation) {
-      case PatientPopulation.adult:
-        return _adultFastingNoteOptions;
-      case PatientPopulation.pediatric:
-        return _pediatricFastingNoteOptions;
-      case PatientPopulation.neonatal:
-        return _neonatalFastingNoteOptions;
-    }
-  }
-
-  void _toggleFastingNoteOption(String option) {
-    final lines = _fastingNotesController.text
-        .split('\n')
-        .map((line) => line.trim())
-        .where((line) => line.isNotEmpty)
-        .toList();
-    if (lines.contains(option)) {
-      lines.remove(option);
-    } else {
-      lines.add(option);
-    }
-    _fastingNotesController.text = lines.join('\n');
-    _fastingNotesController.selection = TextSelection.collapsed(
-      offset: _fastingNotesController.text.length,
-    );
-    setState(() {});
-  }
-
   void _togglePreAnestheticOrientationNoteOption(String option) {
     final lines = _preAnestheticOrientationNotesController.text
         .split('\n')
@@ -4818,6 +4773,193 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
 }
 
 enum _SectionCardTone { neutral, completed, alert }
+
+class _ExpandablePresetFieldCard extends StatefulWidget {
+  const _ExpandablePresetFieldCard({
+    required this.controller,
+    required this.label,
+    required this.presetOptions,
+    required this.onSelected,
+    required this.color,
+    this.hintText,
+    this.keyboardType,
+    this.inputFormatters,
+  });
+
+  final TextEditingController controller;
+  final String label;
+  final String? hintText;
+  final List<String> presetOptions;
+  final ValueChanged<String> onSelected;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
+  final Color color;
+
+  @override
+  State<_ExpandablePresetFieldCard> createState() =>
+      _ExpandablePresetFieldCardState();
+}
+
+class _ExpandablePresetFieldCardState extends State<_ExpandablePresetFieldCard> {
+  late final ExpansibleController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = ExpansibleController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: widget.controller,
+      builder: (context, value, _) {
+        final text = value.text.trim();
+        final hasContent = text.isNotEmpty;
+        final borderColor = hasContent
+            ? const Color(0xFF8DD0A3)
+            : const Color(0xFFDCE6F2);
+        final headerColor = hasContent
+            ? const Color(0xFFE7F6EC)
+            : const Color(0xFFF5F7FC);
+        final titleColor = hasContent
+            ? const Color(0xFF177245)
+            : const Color(0xFF17324D);
+
+        return TapRegion(
+          onTapOutside: (_) {
+            FocusManager.instance.primaryFocus?.unfocus();
+            _controller.collapse();
+          },
+          child: Card(
+            margin: EdgeInsets.zero,
+            clipBehavior: Clip.antiAlias,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+              side: BorderSide(color: borderColor),
+            ),
+            elevation: 0,
+            child: ExpansionTile(
+              controller: _controller,
+              tilePadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 4,
+              ),
+              childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              expandedCrossAxisAlignment: CrossAxisAlignment.start,
+              backgroundColor: headerColor,
+              collapsedBackgroundColor: headerColor,
+              iconColor: titleColor,
+              collapsedIconColor: titleColor,
+              title: Text(
+                widget.label,
+                style: TextStyle(fontWeight: FontWeight.w800, color: titleColor),
+              ),
+              subtitle: Text(
+                hasContent ? text : 'Toque para selecionar ou digitar',
+                style: TextStyle(
+                  color: hasContent
+                      ? titleColor.withAlpha(180)
+                      : const Color(0xFF5D7288),
+                  fontWeight: FontWeight.w600,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              children: [
+                const SizedBox(height: 8),
+                const Text(
+                  'Valores pré-determinados',
+                  style: TextStyle(
+                    color: Color(0xFF17324D),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: widget.presetOptions.map((option) {
+                    final selected = text == option;
+                    return OutlinedButton(
+                      onPressed: () => widget.onSelected(option),
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: selected
+                            ? widget.color.withAlpha(18)
+                            : Colors.white,
+                        side: BorderSide(
+                          color: selected
+                              ? widget.color
+                              : const Color(0xFFD6E1ED),
+                        ),
+                        foregroundColor: selected
+                            ? widget.color
+                            : const Color(0xFF4F6378),
+                        textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            selected
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_off_outlined,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(option),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: widget.controller,
+                  keyboardType: widget.keyboardType,
+                  inputFormatters: widget.inputFormatters,
+                  decoration: InputDecoration(
+                    labelText: 'Outro valor',
+                    hintText: widget.hintText ?? 'Digite um valor',
+                    filled: true,
+                    fillColor: hasContent
+                        ? const Color(0xFFF1FBF6)
+                        : Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: borderColor),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: borderColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: widget.color, width: 1.6),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
 
 class _SectionCard extends StatefulWidget {
   const _SectionCard({
