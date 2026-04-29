@@ -58,30 +58,30 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     'Enterocolite necrosante / cirurgia abdominal',
   ];
   static const List<String> _medicationOptions = [
-    'Antiagregante plaquetário',
-    'Anticoagulante',
-    'Betabloqueador',
-    'IECA/ARB',
-    'Diurético',
-    'Antidiabético/insulina',
-    'Corticoide',
-    'Broncodilatador',
+    'AAS / clopidogrel (antiagregantes)',
+    'Varfarina / rivaroxabana / apixabana (anticoagulantes)',
+    'Atenolol / metoprolol / propranolol (betabloqueadores)',
+    'Captopril / enalapril / losartana (IECA/ARB)',
+    'Furosemida / hidroclorotiazida (diuréticos)',
+    'Metformina / insulina / glibenclamida (antidiabéticos)',
+    'Prednisona / dexametasona (corticoides)',
+    'Salbutamol / formoterol / ipratrópio (broncodilatadores)',
   ];
   static const List<String> _pediatricMedicationOptions = [
-    'Broncodilatador',
-    'Corticoide inalatório',
-    'Anticonvulsivante',
-    'Antibiótico em uso',
-    'Insulina',
-    'Imunossupressor',
+    'Salbutamol / ipratrópio (broncodilatadores)',
+    'Budesonida / fluticasona (corticoides inalatórios)',
+    'Valproato / levetiracetam / fenobarbital (anticonvulsivantes)',
+    'Amoxicilina / cefalexina / azitromicina (antibióticos em uso)',
+    'Insulina regular / NPH',
+    'Tacrolimo / ciclosporina / metotrexato (imunossupressores)',
   ];
   static const List<String> _neonatalMedicationOptions = [
     'Cafeína',
-    'Antibiótico',
-    'Diurético',
-    'Anticonvulsivante',
-    'Vasoativo',
-    'Sedação/analgesia contínua',
+    'Ampicilina / gentamicina / amicacina (antibióticos)',
+    'Furosemida (diurético)',
+    'Fenobarbital / levetiracetam / midazolam (anticonvulsivantes)',
+    'Dobutamina / dopamina / adrenalina (vasoativos)',
+    'Fentanil / midazolam (sedação/analgesia contínua)',
   ];
   static const List<String> _adultAgePresetOptions = [
     '18',
@@ -2238,6 +2238,60 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     );
   }
 
+  Widget _buildInputWithQuickPresets({
+    required TextEditingController controller,
+    required String label,
+    required List<String> options,
+    required String selectedValue,
+    required ValueChanged<String> onSelected,
+    String? hintText,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+    Color color = const Color(0xFF169653),
+  }) {
+    if (options.isEmpty) {
+      return _buildAdaptiveInputField(
+        controller: controller,
+        label: label,
+        hintText: hintText,
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildAdaptiveInputField(
+          controller: controller,
+          label: label,
+          hintText: hintText,
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
+        ),
+        const SizedBox(height: 8),
+        const Padding(
+          padding: EdgeInsets.only(left: 4),
+          child: Text(
+            'Valores rápidos',
+            style: TextStyle(
+              color: Color(0xFF5F7288),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        _buildSingleSelectButtons(
+          options: options,
+          selectedValue: selectedValue,
+          onSelected: onSelected,
+          color: color,
+        ),
+      ],
+    );
+  }
+
   void _saveAndReturn() {
     _syncAirwayPredictors();
     final medications = [
@@ -2458,66 +2512,33 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'Valores rápidos',
-                  style: TextStyle(
-                    color: Color(0xFF17324D),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                SelectionGridSection(
-                  options: _profileAgePresetOptions,
-                  searchEnabled: false,
-                  isSelected: (option) =>
-                      (_selectedPopulation == PatientPopulation.neonatal
-                              ? _postnatalAgeController
-                              : _ageController)
-                          .text
-                          .trim() ==
-                      option,
-                  onToggle: (option) {
-                    setState(() {
-                      (_selectedPopulation == PatientPopulation.neonatal
-                                  ? _postnatalAgeController
-                                  : _ageController)
-                              .text =
-                          option;
-                    });
-                  },
-                ),
-                const SizedBox(height: 10),
-                SelectionGridSection(
-                  options: _profileWeightPresetOptions,
-                  searchEnabled: false,
-                  isSelected: (option) =>
-                      _weightController.text.trim() == option,
-                  onToggle: (option) {
-                    setState(() => _weightController.text = option);
-                  },
-                ),
-                const SizedBox(height: 10),
-                SelectionGridSection(
-                  options: _profileHeightPresetOptions,
-                  searchEnabled: false,
-                  isSelected: (option) =>
-                      _heightController.text.trim() == option,
-                  onToggle: (option) {
-                    setState(() => _heightController.text = option);
-                  },
-                ),
-                const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
-                      child: _buildAdaptiveInputField(
+                      child: _buildInputWithQuickPresets(
                         controller:
                             _selectedPopulation == PatientPopulation.neonatal
-                            ? _postnatalAgeController
-                            : _ageController,
+                                ? _postnatalAgeController
+                                : _ageController,
                         label: _selectedPopulation == PatientPopulation.neonatal
                             ? 'Idade pós-natal (dias)'
                             : 'Idade (anos)',
+                        options: _profileAgePresetOptions,
+                        selectedValue:
+                            (_selectedPopulation == PatientPopulation.neonatal
+                                    ? _postnatalAgeController
+                                    : _ageController)
+                                .text
+                                .trim(),
+                        onSelected: (option) {
+                          setState(() {
+                            (_selectedPopulation == PatientPopulation.neonatal
+                                        ? _postnatalAgeController
+                                        : _ageController)
+                                    .text =
+                                option;
+                          });
+                        },
                         keyboardType: TextInputType.number,
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
@@ -2526,9 +2547,14 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: _buildAdaptiveInputField(
+                      child: _buildInputWithQuickPresets(
                         controller: _weightController,
                         label: 'Peso (kg)',
+                        options: _profileWeightPresetOptions,
+                        selectedValue: _weightController.text.trim(),
+                        onSelected: (option) {
+                          setState(() => _weightController.text = option);
+                        },
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
@@ -2536,9 +2562,14 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: _buildAdaptiveInputField(
+                      child: _buildInputWithQuickPresets(
                         controller: _heightController,
                         label: 'Altura (cm)',
+                        options: _profileHeightPresetOptions,
+                        selectedValue: _heightController.text.trim(),
+                        onSelected: (option) {
+                          setState(() => _heightController.text = option);
+                        },
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
@@ -2565,30 +2596,17 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                 ],
                 if (_selectedPopulation == PatientPopulation.neonatal) ...[
                   const SizedBox(height: 12),
-                  const Text(
-                    'Peso ao nascer',
-                    style: TextStyle(
-                      color: Color(0xFF17324D),
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  SelectionGridSection(
-                    options: _profileBirthWeightPresetOptions,
-                    searchEnabled: false,
-                    isSelected: (option) =>
-                        _birthWeightController.text.trim() == option,
-                    onToggle: (option) {
-                      setState(() => _birthWeightController.text = option);
-                    },
-                  ),
-                  const SizedBox(height: 12),
                   Row(
                     children: [
                       Expanded(
-                        child: _buildAdaptiveInputField(
+                        child: _buildInputWithQuickPresets(
                           controller: _birthWeightController,
                           label: 'Peso ao nascer (kg)',
+                          options: _profileBirthWeightPresetOptions,
+                          selectedValue: _birthWeightController.text.trim(),
+                          onSelected: (option) {
+                            setState(() => _birthWeightController.text = option);
+                          },
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
@@ -2601,9 +2619,16 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _buildAdaptiveInputField(
+                        child: _buildInputWithQuickPresets(
                           controller: _gestationalAgeController,
                           label: 'IG ao nascer (semanas)',
+                          options: _profileGestationalAgePresetOptions,
+                          selectedValue: _gestationalAgeController.text.trim(),
+                          onSelected: (option) {
+                            setState(
+                              () => _gestationalAgeController.text = option,
+                            );
+                          },
                           keyboardType: TextInputType.number,
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
@@ -2613,51 +2638,22 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    'Valores rápidos da IG ao nascer',
-                    style: TextStyle(
-                      color: Color(0xFF17324D),
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  SelectionGridSection(
-                    options: _profileGestationalAgePresetOptions,
-                    searchEnabled: false,
-                    isSelected: (option) =>
-                        _gestationalAgeController.text.trim() == option,
-                    onToggle: (option) {
-                      setState(() => _gestationalAgeController.text = option);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Valores rápidos da IG corrigida',
-                    style: TextStyle(
-                      color: Color(0xFF17324D),
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  SelectionGridSection(
-                    options: _profileCorrectedGestationalAgePresetOptions,
-                    searchEnabled: false,
-                    isSelected: (option) =>
-                        _correctedGestationalAgeController.text.trim() ==
-                        option,
-                    onToggle: (option) {
-                      setState(
-                        () => _correctedGestationalAgeController.text = option,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
                   Row(
                     children: [
                       Expanded(
-                        child: _buildAdaptiveInputField(
+                        child: _buildInputWithQuickPresets(
                           controller: _correctedGestationalAgeController,
                           label: 'IG corrigida (semanas)',
+                          options: _profileCorrectedGestationalAgePresetOptions,
+                          selectedValue:
+                              _correctedGestationalAgeController.text.trim(),
+                          onSelected: (option) {
+                            setState(
+                              () =>
+                                  _correctedGestationalAgeController.text =
+                                      option,
+                            );
+                          },
                           keyboardType: TextInputType.number,
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
@@ -2697,7 +2693,6 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                             _selectedProcedures.add(value);
                           }
                         });
-                        _surgerySectionController.collapse();
                       },
                     ),
                     const SizedBox(height: 14),
@@ -3132,7 +3127,11 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
           ),
           _SectionCard(
             title: 'Alergias',
-            isCompleted: _hasAllergyContent,
+            isCompleted: true,
+            summary: _allergySummary(),
+            tone: _allergyController.text.trim().isEmpty
+                ? _SectionCardTone.completed
+                : _SectionCardTone.alert,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -3186,6 +3185,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
           ),
           _SectionCard(
             title: _contextSectionTitle,
+            isCompleted: _hasHabitsContent,
+            summary: _habitsSummary(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -3220,9 +3221,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
           ),
           _SectionCard(
             title: _functionalSectionTitle,
-            isCompleted:
-                _selectedMets.isNotEmpty ||
-                _metsNotesController.text.trim().isNotEmpty,
+            isCompleted: _hasFunctionalContent,
+            summary: _functionalSummary(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -3339,7 +3339,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
           ),
           _SectionCard(
             title: 'Classificação ASA',
-            isCompleted: _selectedAsa.isNotEmpty,
+            isCompleted: _hasAsaContent,
+            summary: _asaSummary(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -3389,6 +3390,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
           _SectionCard(
             title: _physicalExamSectionTitle,
             isCompleted: _hasPhysicalExamContent,
+            summary: _physicalExamSummary(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -3433,60 +3435,28 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   ],
                 ),
                 const SizedBox(height: 14),
-                const Text(
-                  'Valores rápidos',
-                  style: TextStyle(
-                    color: Color(0xFF17324D),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                SelectionGridSection(
-                  options: _profileAcPresetOptions,
-                  searchEnabled: false,
-                  isSelected: (option) => _acController.text.trim() == option,
-                  onToggle: (option) =>
-                      setState(() => _acController.text = option),
-                ),
-                const SizedBox(height: 8),
-                SelectionGridSection(
-                  options: _profileFcPresetOptions,
-                  searchEnabled: false,
-                  isSelected: (option) => _fcController.text.trim() == option,
-                  onToggle: (option) =>
-                      setState(() => _fcController.text = option),
-                ),
-                const SizedBox(height: 8),
-                SelectionGridSection(
-                  options: _profilePasPresetOptions,
-                  searchEnabled: false,
-                  isSelected: (option) => _pasController.text.trim() == option,
-                  onToggle: (option) =>
-                      setState(() => _pasController.text = option),
-                ),
-                const SizedBox(height: 8),
-                SelectionGridSection(
-                  options: _profilePadPresetOptions,
-                  searchEnabled: false,
-                  isSelected: (option) => _padController.text.trim() == option,
-                  onToggle: (option) =>
-                      setState(() => _padController.text = option),
-                ),
-                const SizedBox(height: 14),
                 Row(
                   children: [
                     Expanded(
-                      child: _buildAdaptiveInputField(
+                      child: _buildInputWithQuickPresets(
                         controller: _acController,
                         label: 'AC',
+                        options: _profileAcPresetOptions,
+                        selectedValue: _acController.text.trim(),
+                        onSelected: (option) =>
+                            setState(() => _acController.text = option),
                         hintText: _acHint,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: _buildAdaptiveInputField(
+                      child: _buildInputWithQuickPresets(
                         controller: _fcController,
                         label: 'FC',
+                        options: _profileFcPresetOptions,
+                        selectedValue: _fcController.text.trim(),
+                        onSelected: (option) =>
+                            setState(() => _fcController.text = option),
                         hintText: _fcHint,
                         keyboardType: TextInputType.number,
                         inputFormatters: [
@@ -3500,17 +3470,25 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: _buildAdaptiveInputField(
+                      child: _buildInputWithQuickPresets(
                         controller: _pasController,
                         label: 'PAS',
+                        options: _profilePasPresetOptions,
+                        selectedValue: _pasController.text.trim(),
+                        onSelected: (option) =>
+                            setState(() => _pasController.text = option),
                         hintText: 'Pressão sistólica',
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: _buildAdaptiveInputField(
+                      child: _buildInputWithQuickPresets(
                         controller: _padController,
                         label: 'PAD',
+                        options: _profilePadPresetOptions,
+                        selectedValue: _padController.text.trim(),
+                        onSelected: (option) =>
+                            setState(() => _padController.text = option),
                         hintText: 'Pressão diastólica',
                       ),
                     ),
@@ -3535,6 +3513,13 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
           ),
           _SectionCard(
             title: 'Avaliação de via aérea',
+            isCompleted: _hasAirwayContent,
+            summary: _airwaySummary(),
+            tone: _hasAirwayRisk
+                ? _SectionCardTone.alert
+                : (_hasAirwayContent
+                      ? _SectionCardTone.completed
+                      : _SectionCardTone.neutral),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -3985,6 +3970,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
           ),
           _SectionCard(
             title: _strategicReserveSectionTitle,
+            isCompleted: _hasPostoperativePlanningContent,
+            summary: _postoperativePlanningSummary(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -4045,6 +4032,11 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
           ),
           _SectionCard(
             title: _restrictionSectionTitle,
+            isCompleted: _hasRestrictionContent,
+            summary: _restrictionSummary(),
+            tone: _hasRestrictionContent
+                ? _SectionCardTone.alert
+                : _SectionCardTone.neutral,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -4107,6 +4099,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
             isCompleted:
                 _selectedPreAnestheticOrientationItems.isNotEmpty ||
                 _preAnestheticOrientationNotesController.text.trim().isNotEmpty,
+            summary: _preAnestheticOrientationSummary(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -4298,8 +4291,6 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     };
   }
 
-  bool get _hasAllergyContent => _allergyController.text.trim().isNotEmpty;
-
   bool get _hasPhysicalExamContent =>
       _acController.text.trim().isNotEmpty ||
       _fcController.text.trim().isNotEmpty ||
@@ -4317,6 +4308,54 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       _selectedLiquidFasting.isNotEmpty ||
       _selectedBreastMilkFasting.isNotEmpty ||
       _fastingNotesController.text.trim().isNotEmpty;
+
+  bool get _hasHabitsContent =>
+      _smokingStatus.isNotEmpty ||
+      _alcoholStatus.isNotEmpty ||
+      _otherHabitsController.text.trim().isNotEmpty;
+
+  bool get _hasFunctionalContent =>
+      _selectedMets.isNotEmpty || _metsNotesController.text.trim().isNotEmpty;
+
+  bool get _hasAsaContent =>
+      _selectedAsa.isNotEmpty || _asaNotesController.text.trim().isNotEmpty;
+
+  bool get _hasAirwayContent =>
+      _selectedMallampati.isNotEmpty ||
+      _selectedMouthOpening.isNotEmpty ||
+      _selectedNeckMobility.isNotEmpty ||
+      _selectedDentition.isNotEmpty ||
+      _selectedDifficultAirwayPredictors.isNotEmpty ||
+      _selectedDifficultVentilationPredictors.isNotEmpty ||
+      _otherDifficultAirwayPredictorsController.text.trim().isNotEmpty ||
+      _otherDifficultVentilationPredictorsController.text.trim().isNotEmpty ||
+      _otherAirwayController.text.trim().isNotEmpty;
+
+  bool get _hasAirwayRisk =>
+      _selectedMallampati == 'III' ||
+      _selectedMallampati == 'IV' ||
+      _selectedMouthOpening == '< 2 dedos (< 3 cm)' ||
+      _selectedMouthOpening == 'Reduzida' ||
+      _selectedMouthOpening == 'Muito reduzida' ||
+      _selectedNeckMobility == 'Limitada' ||
+      _selectedNeckMobility == 'Muito limitada' ||
+      _selectedDentition == 'Prótese móvel' ||
+      _selectedDentition == 'Dentição frágil' ||
+      _selectedDentition == 'Dente móvel' ||
+      _selectedDentition == 'Aparelho ortodôntico' ||
+      _selectedDifficultAirwayPredictors.isNotEmpty ||
+      _selectedDifficultVentilationPredictors.isNotEmpty ||
+      _otherDifficultAirwayPredictorsController.text.trim().isNotEmpty ||
+      _otherDifficultVentilationPredictorsController.text.trim().isNotEmpty ||
+      _otherAirwayController.text.trim().isNotEmpty;
+
+  bool get _hasPostoperativePlanningContent =>
+      _selectedPostoperativePlanningItems.isNotEmpty ||
+      _otherPostoperativePlanningController.text.trim().isNotEmpty;
+
+  bool get _hasRestrictionContent =>
+      _selectedRestrictions.isNotEmpty ||
+      _otherRestrictionsController.text.trim().isNotEmpty;
 
   Widget _buildAdaptiveInputField({
     required TextEditingController controller,
@@ -4654,6 +4693,105 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     return summary.isEmpty ? 'Selecione medicações em uso' : summary;
   }
 
+  String _allergySummary() {
+    final summary = _allergyController.text.trim();
+    return summary.isEmpty ? 'Sem alergias' : summary;
+  }
+
+  String _habitsSummary() {
+    final parts = [
+      _smokingStatus,
+      _alcoholStatus,
+      _joinSummaryParts(_lines(_otherHabitsController.text)),
+    ];
+    final summary = _joinSummaryParts(parts);
+    return summary.isEmpty ? 'Selecione hábitos relevantes' : summary;
+  }
+
+  String _functionalSummary() {
+    final parts = [
+      _selectedMets,
+      _joinSummaryParts(_lines(_metsNotesController.text)),
+    ];
+    final summary = _joinSummaryParts(parts);
+    return summary.isEmpty ? 'Selecione a capacidade funcional' : summary;
+  }
+
+  String _asaSummary() {
+    final parts = [
+      _selectedAsa,
+      _joinSummaryParts(_lines(_asaNotesController.text)),
+    ];
+    final summary = _joinSummaryParts(parts);
+    return summary.isEmpty ? 'Selecione a classificação ASA' : summary;
+  }
+
+  String _physicalExamSummary() {
+    final parts = <String>[
+      if (_acController.text.trim().isNotEmpty)
+        'AC ${_acController.text.trim()}',
+      if (_fcController.text.trim().isNotEmpty)
+        'FC ${_fcController.text.trim()}',
+      if (_pasController.text.trim().isNotEmpty)
+        'PAS ${_pasController.text.trim()}',
+      if (_padController.text.trim().isNotEmpty)
+        'PAD ${_padController.text.trim()}',
+      if (_apController.text.trim().isNotEmpty)
+        'AP ${_apController.text.trim()}',
+      _joinSummaryParts(_lines(_physicalExamController.text)),
+    ];
+    final summary = _joinSummaryParts(parts);
+    return summary.isEmpty ? 'Preencha o exame físico' : summary;
+  }
+
+  String _airwaySummary() {
+    final parts = [
+      if (_selectedMallampati.isNotEmpty) 'Mallampati $_selectedMallampati',
+      if (_selectedMouthOpening.isNotEmpty)
+        '$_mouthOpeningLabel: $_selectedMouthOpening',
+      if (_selectedNeckMobility.isNotEmpty)
+        'Mobilidade cervical: $_selectedNeckMobility',
+      if (_selectedDentition.isNotEmpty)
+        '$_dentitionLabel: $_selectedDentition',
+      _joinSummaryParts(_selectedDifficultAirwayPredictors),
+      _joinSummaryParts(_lines(_otherDifficultAirwayPredictorsController.text)),
+      _joinSummaryParts(_selectedDifficultVentilationPredictors),
+      _joinSummaryParts(
+        _lines(_otherDifficultVentilationPredictorsController.text),
+      ),
+      _joinSummaryParts(_lines(_otherAirwayController.text)),
+    ];
+    final summary = _joinSummaryParts(parts);
+    return summary.isEmpty ? 'Selecione os achados da via aérea' : summary;
+  }
+
+  String _postoperativePlanningSummary() {
+    final parts = [
+      _joinSummaryParts(_selectedPostoperativePlanningItems),
+      _joinSummaryParts(_lines(_otherPostoperativePlanningController.text)),
+    ];
+    final summary = _joinSummaryParts(parts);
+    return summary.isEmpty ? 'Selecione o planejamento pós-operatório' : summary;
+  }
+
+  String _restrictionSummary() {
+    final parts = [
+      _joinSummaryParts(_selectedRestrictions),
+      _joinSummaryParts(_lines(_otherRestrictionsController.text)),
+    ];
+    final summary = _joinSummaryParts(parts);
+    return summary.isEmpty ? 'Selecione restrições ou preferências' : summary;
+  }
+
+  String _preAnestheticOrientationSummary() {
+    final parts = [
+      _joinSummaryParts(_selectedPreAnestheticOrientationItems),
+      _joinSummaryParts(_lines(_preAnestheticOrientationNotesController.text)),
+    ];
+    final summary = _joinSummaryParts(parts);
+    return summary.isEmpty ? 'Selecione as orientações pré-anestésicas' : summary;
+  }
+
   String _complementaryExamsSummary() {
     final selected = _selectedExamItems.isEmpty
         ? ''
@@ -4679,7 +4817,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   }
 }
 
-class _SectionCard extends StatelessWidget {
+enum _SectionCardTone { neutral, completed, alert }
+
+class _SectionCard extends StatefulWidget {
   const _SectionCard({
     required this.title,
     required this.child,
@@ -4687,6 +4827,7 @@ class _SectionCard extends StatelessWidget {
     this.isCompleted = false,
     this.controller,
     this.summary,
+    this.tone,
   });
 
   final String title;
@@ -4695,55 +4836,92 @@ class _SectionCard extends StatelessWidget {
   final bool isCompleted;
   final ExpansibleController? controller;
   final String? summary;
+  final _SectionCardTone? tone;
+
+  @override
+  State<_SectionCard> createState() => _SectionCardState();
+}
+
+class _SectionCardState extends State<_SectionCard> {
+  ExpansibleController? _ownedController;
+
+  ExpansibleController get _effectiveController =>
+      widget.controller ?? (_ownedController ??= ExpansibleController());
+
+  @override
+  void dispose() {
+    _ownedController?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final completed = isCompleted;
-    final borderColor = completed
-        ? const Color(0xFF8DD0A3)
-        : const Color(0xFFDCE6F2);
-    final headerColor = completed
-        ? const Color(0xFFE7F6EC)
-        : const Color(0xFFF5F7FC);
-    final titleColor = completed
-        ? const Color(0xFF177245)
-        : const Color(0xFF17324D);
+    final tone = widget.tone ??
+        (widget.isCompleted
+            ? _SectionCardTone.completed
+            : _SectionCardTone.neutral);
+    final borderColor = switch (tone) {
+      _SectionCardTone.completed => const Color(0xFF8DD0A3),
+      _SectionCardTone.alert => const Color(0xFFE29B9B),
+      _SectionCardTone.neutral => const Color(0xFFDCE6F2),
+    };
+    final headerColor = switch (tone) {
+      _SectionCardTone.completed => const Color(0xFFE7F6EC),
+      _SectionCardTone.alert => const Color(0xFFFFF1F1),
+      _SectionCardTone.neutral => const Color(0xFFF5F7FC),
+    };
+    final titleColor = switch (tone) {
+      _SectionCardTone.completed => const Color(0xFF177245),
+      _SectionCardTone.alert => const Color(0xFFB04141),
+      _SectionCardTone.neutral => const Color(0xFF17324D),
+    };
+    final cardColor = switch (tone) {
+      _SectionCardTone.completed => const Color(0xFFF4FBF6),
+      _SectionCardTone.alert => const Color(0xFFFFF7F7),
+      _SectionCardTone.neutral => null,
+    };
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: BorderSide(color: borderColor),
-      ),
-      color: completed ? const Color(0xFFF4FBF6) : null,
-      elevation: 0,
-      child: ExpansionTile(
-        initiallyExpanded: initiallyExpanded,
-        controller: controller,
-        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        childrenPadding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        expandedCrossAxisAlignment: CrossAxisAlignment.start,
-        backgroundColor: headerColor,
-        collapsedBackgroundColor: headerColor,
-        iconColor: titleColor,
-        collapsedIconColor: titleColor,
-        title: Text(
-          title,
-          style: TextStyle(fontWeight: FontWeight.w800, color: titleColor),
+    return TapRegion(
+      onTapOutside: (_) {
+        FocusManager.instance.primaryFocus?.unfocus();
+        _effectiveController.collapse();
+      },
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 12),
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: borderColor),
         ),
-        subtitle: summary == null || summary!.trim().isEmpty
-            ? null
-            : Text(
-                summary!,
-                style: TextStyle(
-                  color: titleColor.withAlpha(180),
-                  fontWeight: FontWeight.w600,
+        color: cardColor,
+        elevation: 0,
+        child: ExpansionTile(
+          initiallyExpanded: widget.initiallyExpanded,
+          controller: _effectiveController,
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          childrenPadding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          expandedCrossAxisAlignment: CrossAxisAlignment.start,
+          backgroundColor: headerColor,
+          collapsedBackgroundColor: headerColor,
+          iconColor: titleColor,
+          collapsedIconColor: titleColor,
+          title: Text(
+            widget.title,
+            style: TextStyle(fontWeight: FontWeight.w800, color: titleColor),
+          ),
+          subtitle: widget.summary == null || widget.summary!.trim().isEmpty
+              ? null
+              : Text(
+                  widget.summary!,
+                  style: TextStyle(
+                    color: titleColor.withAlpha(180),
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-        children: [child],
+          children: [widget.child],
+        ),
       ),
     );
   }
