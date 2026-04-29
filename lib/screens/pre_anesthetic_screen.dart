@@ -541,27 +541,6 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     'Confirmar equipe / responsável',
     'Confirmar termorregulação / glicemia / suporte neonatal',
   ];
-  static const List<String> _adultPreAnestheticOrientationNoteOptions = [
-    'Suspender medicações de risco',
-    'Trazer lista de medicações',
-    'Trazer exames / laudos',
-    'Cumprir jejum recomendado',
-    'Confirmar acompanhante / contato',
-  ];
-  static const List<String> _pediatricPreAnestheticOrientationNoteOptions = [
-    'Trazer lista de medicações',
-    'Trazer exames / laudos',
-    'Cumprir jejum recomendado',
-    'Orientar responsável / consentimento',
-    'Avisar febre / IVAS / sintomas respiratórios',
-  ];
-  static const List<String> _neonatalPreAnestheticOrientationNoteOptions = [
-    'Trazer lista de medicações',
-    'Trazer exames / laudos',
-    'Cumprir jejum recomendado',
-    'Confirmar equipe / responsável',
-    'Confirmar termorregulação / glicemia / suporte neonatal',
-  ];
   static const List<String> _anesthesiaTeamRequestOptions = [
     'Avaliação cardiológica',
     'Avaliação pneumológica',
@@ -1283,17 +1262,6 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         return _pediatricPreAnestheticOrientationOptions;
       case PatientPopulation.neonatal:
         return _neonatalPreAnestheticOrientationOptions;
-    }
-  }
-
-  List<String> get _profilePreAnestheticOrientationNoteOptions {
-    switch (_selectedPopulation) {
-      case PatientPopulation.adult:
-        return _adultPreAnestheticOrientationNoteOptions;
-      case PatientPopulation.pediatric:
-        return _pediatricPreAnestheticOrientationNoteOptions;
-      case PatientPopulation.neonatal:
-        return _neonatalPreAnestheticOrientationNoteOptions;
     }
   }
 
@@ -2151,31 +2119,13 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     required ValueChanged<String> onToggle,
     Color color = const Color(0xFF2B76D2),
   }) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: options.map((option) {
-        final selected = selectedValues.contains(option);
-        return OutlinedButton.icon(
-          onPressed: () => onToggle(option),
-          icon: Icon(
-            selected ? Icons.check_circle : Icons.add_circle_outline,
-            size: 18,
-            color: selected ? color : const Color(0xFF7A8EA5),
-          ),
-          label: Text(option),
-          style: OutlinedButton.styleFrom(
-            backgroundColor: selected ? color.withAlpha(18) : Colors.white,
-            side: BorderSide(color: selected ? color : const Color(0xFFD6E1ED)),
-            foregroundColor: selected ? color : const Color(0xFF4F6378),
-            textStyle: const TextStyle(fontWeight: FontWeight.w700),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          ),
-        );
-      }).toList(),
+    return _buildOptionCardGrid(
+      options: options,
+      isSelected: selectedValues.contains,
+      onTap: onToggle,
+      color: color,
+      selectedIcon: Icons.check_rounded,
+      unselectedIcon: Icons.add_circle_outline,
     );
   }
 
@@ -2185,38 +2135,115 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     required ValueChanged<String> onSelected,
     Color color = const Color(0xFF169653),
   }) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: options.map((option) {
-        final selected = selectedValue == option;
-        return OutlinedButton(
-          onPressed: () => onSelected(option),
-          style: OutlinedButton.styleFrom(
-            backgroundColor: selected ? color.withAlpha(18) : Colors.white,
-            side: BorderSide(color: selected ? color : const Color(0xFFD6E1ED)),
-            foregroundColor: selected ? color : const Color(0xFF4F6378),
-            textStyle: const TextStyle(fontWeight: FontWeight.w700),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                selected
-                    ? Icons.radio_button_checked
-                    : Icons.radio_button_off_outlined,
-                size: 18,
+    return _buildOptionCardGrid(
+      options: options,
+      isSelected: (option) => selectedValue == option,
+      onTap: onSelected,
+      color: color,
+      selectedIcon: Icons.radio_button_checked,
+      unselectedIcon: Icons.radio_button_off_outlined,
+    );
+  }
+
+  Widget _buildOptionCardGrid({
+    required List<String> options,
+    required bool Function(String option) isSelected,
+    required ValueChanged<String> onTap,
+    required Color color,
+    required IconData selectedIcon,
+    required IconData unselectedIcon,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 900 ? 2 : 1;
+        final columnChildren = List.generate(columns, (_) => <Widget>[]);
+
+        for (var i = 0; i < options.length; i++) {
+          final option = options[i];
+          final selected = isSelected(option);
+          columnChildren[i % columns].add(
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _buildOptionCard(
+                label: option,
+                selected: selected,
+                onTap: () => onTap(option),
+                color: color,
+                selectedIcon: selectedIcon,
+                unselectedIcon: unselectedIcon,
               ),
-              const SizedBox(width: 8),
-              Text(option),
+            ),
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var i = 0; i < columns; i++) ...[
+              Expanded(child: Column(children: columnChildren[i])),
+              if (i != columns - 1) const SizedBox(width: 16),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildOptionCard({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+    required Color color,
+    required IconData selectedIcon,
+    required IconData unselectedIcon,
+  }) {
+    final borderColor = selected ? color : const Color(0xFFD5E4F7);
+    final backgroundColor = selected ? color.withAlpha(12) : Colors.white;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          width: double.infinity,
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: borderColor, width: selected ? 1.4 : 1),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0A17324D),
+                blurRadius: 14,
+                offset: Offset(0, 4),
+              ),
             ],
           ),
-        );
-      }).toList(),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                selected ? selectedIcon : unselectedIcon,
+                color: selected ? color : const Color(0xFF6A7E94),
+                size: 22,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    color: Color(0xFF26384A),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -4131,26 +4158,6 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   },
                 ),
                 const SizedBox(height: 14),
-                const Text(
-                  'Orientações complementares rápidas',
-                  style: TextStyle(
-                    color: Color(0xFF17324D),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                SelectionGridSection(
-                  options: _profilePreAnestheticOrientationNoteOptions,
-                  searchEnabled: false,
-                  isSelected: (option) =>
-                      _preAnestheticOrientationNotesController.text
-                          .split('\n')
-                          .map((line) => line.trim())
-                          .where((line) => line.isNotEmpty)
-                          .contains(option),
-                  onToggle: _togglePreAnestheticOrientationNoteOption,
-                ),
-                const SizedBox(height: 14),
                 TextField(
                   controller: _preAnestheticOrientationNotesController,
                   minLines: 3,
@@ -4421,25 +4428,6 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       ),
       child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
     );
-  }
-
-  void _togglePreAnestheticOrientationNoteOption(String option) {
-    final lines = _preAnestheticOrientationNotesController.text
-        .split('\n')
-        .map((line) => line.trim())
-        .where((line) => line.isNotEmpty)
-        .toList();
-    if (lines.contains(option)) {
-      lines.remove(option);
-    } else {
-      lines.add(option);
-    }
-    _preAnestheticOrientationNotesController.text = lines.join('\n');
-    _preAnestheticOrientationNotesController.selection =
-        TextSelection.collapsed(
-          offset: _preAnestheticOrientationNotesController.text.length,
-        );
-    setState(() {});
   }
 
   void _toggleSurgeryClearanceNoteOption(String option) {
@@ -4882,49 +4870,13 @@ class _ExpandablePresetFieldCardState extends State<_ExpandablePresetFieldCard> 
                   ),
                 ),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: widget.presetOptions.map((option) {
-                    final selected = text == option;
-                    return OutlinedButton(
-                      onPressed: () => widget.onSelected(option),
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: selected
-                            ? widget.color.withAlpha(18)
-                            : Colors.white,
-                        side: BorderSide(
-                          color: selected
-                              ? widget.color
-                              : const Color(0xFFD6E1ED),
-                        ),
-                        foregroundColor: selected
-                            ? widget.color
-                            : const Color(0xFF4F6378),
-                        textStyle: const TextStyle(fontWeight: FontWeight.w700),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            selected
-                                ? Icons.radio_button_checked
-                                : Icons.radio_button_off_outlined,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(option),
-                        ],
-                      ),
-                    );
-                  }).toList(),
+                _buildPresetOptionCardGrid(
+                  options: widget.presetOptions,
+                  isSelected: (option) => text == option,
+                  onTap: widget.onSelected,
+                  color: widget.color,
+                  selectedIcon: Icons.radio_button_checked,
+                  unselectedIcon: Icons.radio_button_off_outlined,
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -4957,6 +4909,108 @@ class _ExpandablePresetFieldCardState extends State<_ExpandablePresetFieldCard> 
           ),
         );
       },
+    );
+  }
+
+  Widget _buildPresetOptionCardGrid({
+    required List<String> options,
+    required bool Function(String option) isSelected,
+    required ValueChanged<String> onTap,
+    required Color color,
+    required IconData selectedIcon,
+    required IconData unselectedIcon,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 900 ? 2 : 1;
+        final columnChildren = List.generate(columns, (_) => <Widget>[]);
+
+        for (var i = 0; i < options.length; i++) {
+          final option = options[i];
+          final selected = isSelected(option);
+          columnChildren[i % columns].add(
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _buildPresetOptionCard(
+                label: option,
+                selected: selected,
+                onTap: () => onTap(option),
+                color: color,
+                selectedIcon: selectedIcon,
+                unselectedIcon: unselectedIcon,
+              ),
+            ),
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var i = 0; i < columns; i++) ...[
+              Expanded(child: Column(children: columnChildren[i])),
+              if (i != columns - 1) const SizedBox(width: 16),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildPresetOptionCard({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+    required Color color,
+    required IconData selectedIcon,
+    required IconData unselectedIcon,
+  }) {
+    final borderColor = selected ? color : const Color(0xFFD5E4F7);
+    final backgroundColor = selected ? color.withAlpha(12) : Colors.white;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          width: double.infinity,
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: borderColor, width: selected ? 1.4 : 1),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0A17324D),
+                blurRadius: 14,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                selected ? selectedIcon : unselectedIcon,
+                color: selected ? color : const Color(0xFF6A7E94),
+                size: 22,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    color: Color(0xFF26384A),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
