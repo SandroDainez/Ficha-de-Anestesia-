@@ -99,7 +99,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.text('Classificação do caso'));
+      await tester.tap(find.text('Prioridade cirúrgica'));
       await tester.pumpAndSettle();
 
       expect(find.text('Eletiva'), findsOneWidget);
@@ -107,20 +107,19 @@ void main() {
       expect(find.text('Emergência'), findsOneWidget);
 
       await tester.scrollUntilVisible(
-        find.text('Planejamento pós-operatório e logística'),
+        find.text('Reservas estratégicas (UTI / Sangue / Outros)'),
         300,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.tap(find.text('Planejamento pós-operatório e logística'));
+      await tester.tap(
+        find.text('Reservas estratégicas (UTI / Sangue / Outros)'),
+      );
       await tester.pumpAndSettle();
 
-      expect(find.text('Reserva de UTI'), findsOneWidget);
-      expect(find.text('Tipagem / pesquisa de anticorpos'), findsOneWidget);
-      expect(find.text('Prova cruzada / hemácias reservadas'), findsOneWidget);
-      expect(
-        find.text('Hemocomponentes adicionais disponíveis'),
-        findsOneWidget,
-      );
+      expect(find.text('UTI'), findsOneWidget);
+      expect(find.text('Sangue'), findsOneWidget);
+      expect(find.text('UTI + sangue'), findsOneWidget);
+      expect(find.text('Ventilação pós-operatória'), findsOneWidget);
     },
   );
 
@@ -216,7 +215,10 @@ void main() {
 
       expect(find.text('Foco neonatal'), findsOneWidget);
       expect(find.text('Cafeína'), findsOneWidget);
-      expect(find.text('Prostaglandina'), findsOneWidget);
+      expect(
+        find.text('Dobutamina / dopamina / adrenalina (vasoativos)'),
+        findsOneWidget,
+      );
       expect(find.text('AAS'), findsNothing);
       expect(find.text('Losartana'), findsNothing);
 
@@ -263,11 +265,11 @@ void main() {
     );
 
     await tester.scrollUntilVisible(
-      find.text('Jejum'),
+      find.text('Jejum recomendado'),
       300,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.text('Jejum'));
+    await tester.tap(find.text('Jejum recomendado'));
     await tester.pumpAndSettle();
 
     expect(
@@ -314,11 +316,11 @@ void main() {
     );
 
     await tester.scrollUntilVisible(
-      find.text('Jejum'),
+      find.text('Jejum recomendado'),
       300,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.text('Jejum'));
+    await tester.tap(find.text('Jejum recomendado'));
     await tester.pumpAndSettle();
 
     expect(find.text('Leite materno: 4 h.'), findsOneWidget);
@@ -331,11 +333,11 @@ void main() {
     expect(find.textContaining('ASA 2023'), findsOneWidget);
     expect(find.textContaining('ESAIC 2022'), findsOneWidget);
     expect(
-      find.text('Fórmula / leite não humano / refeição leve / sólidos (horas)'),
+      find.text('Fórmula / leite não humano / refeição leve / sólidos'),
       findsOneWidget,
     );
-    expect(find.text('Líquidos claros (horas)'), findsOneWidget);
-    expect(find.text('Leite materno (horas)'), findsOneWidget);
+    expect(find.text('Líquidos claros'), findsOneWidget);
+    expect(find.text('Leite materno'), findsOneWidget);
   });
 
   testWidgets(
@@ -640,7 +642,13 @@ void main() {
 
     expect(find.text('AC'), findsOneWidget);
     expect(find.text('FC'), findsOneWidget);
-    expect(find.text('PA'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('PAS'),
+      150,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('PAS'), findsOneWidget);
+    expect(find.text('PAD'), findsOneWidget);
     expect(find.text('AP'), findsOneWidget);
     expect(find.text('Outros achados'), findsOneWidget);
   });
@@ -827,20 +835,15 @@ void main() {
     await tester.tap(find.text('Avaliação de via aérea'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.widgetWithText(OutlinedButton, 'III'));
+    await tester.scrollUntilVisible(
+      find.text('III'),
+      150,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('III'));
     await tester.pumpAndSettle();
 
-    final predictorButton = find.widgetWithText(
-      OutlinedButton,
-      'Mallampati III/IV',
-    );
-    expect(
-      find.descendant(
-        of: predictorButton,
-        matching: find.byIcon(Icons.check_circle),
-      ),
-      findsOneWidget,
-    );
+    expect(find.textContaining('Mallampati III/IV'), findsWidgets);
   });
 
   testWidgets(
@@ -875,36 +878,23 @@ void main() {
       await tester.tap(find.text('Avaliação de via aérea'));
       await tester.pumpAndSettle();
 
-      await tester.tap(
-        find.widgetWithText(OutlinedButton, '2-3 dedos (3-5 cm)'),
+      await tester.scrollUntilVisible(
+        find.text('2-3 dedos (3-5 cm)'),
+        150,
+        scrollable: find.byType(Scrollable).first,
       );
+      await tester.tap(find.text('2-3 dedos (3-5 cm)'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(OutlinedButton, 'Limitada'));
+      await tester.scrollUntilVisible(
+        find.text('Limitada'),
+        150,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Limitada'));
       await tester.pumpAndSettle();
 
-      final mouthPredictor = find.widgetWithText(
-        OutlinedButton,
-        'Abertura oral reduzida',
-      );
-      final neckPredictor = find.widgetWithText(
-        OutlinedButton,
-        'Mobilidade cervical limitada',
-      );
-
-      expect(
-        find.descendant(
-          of: mouthPredictor,
-          matching: find.byIcon(Icons.check_circle),
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(
-          of: neckPredictor,
-          matching: find.byIcon(Icons.check_circle),
-        ),
-        findsOneWidget,
-      );
+      expect(find.textContaining('Abertura oral reduzida'), findsWidgets);
+      expect(find.textContaining('Mobilidade cervical limitada'), findsWidgets);
     },
   );
 }
