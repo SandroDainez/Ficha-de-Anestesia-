@@ -512,8 +512,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   static const List<String> _preAnestheticOrientationOptions = [
     'Suspender medicações de risco',
     'Manter demais medicações',
-    'Revisar anticoagulantes / antiagregantes',
-    'Revisar antidiabéticos / insulina / GLP-1',
+    'Suspender ou ajustar anticoagulantes / antiagregantes conforme orientação',
+    'Suspender ou ajustar antidiabéticos / insulina / GLP-1 conforme orientação',
     'Trazer lista de medicações',
     'Trazer exames / laudos',
     'Cumprir jejum recomendado',
@@ -523,7 +523,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   static const List<String> _pediatricPreAnestheticOrientationOptions = [
     'Suspender medicações de risco',
     'Manter demais medicações',
-    'Revisar anticoagulantes / antiagregantes',
+    'Suspender ou ajustar anticoagulantes / antiagregantes conforme orientação',
     'Trazer lista de medicações',
     'Trazer exames / laudos',
     'Cumprir jejum recomendado',
@@ -647,6 +647,16 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   late PatientPopulation _selectedPopulation;
   late final List<TextEditingController> _identificationControllers;
   late final Map<String, _ComplementaryExamEntry> _complementaryExamEntries;
+
+  String _normalizePreAnestheticOrientationItem(String item) {
+    return switch (item.trim()) {
+      'Revisar anticoagulantes / antiagregantes' =>
+        'Suspender ou ajustar anticoagulantes / antiagregantes conforme orientação',
+      'Revisar antidiabéticos / insulina / GLP-1' =>
+        'Suspender ou ajustar antidiabéticos / insulina / GLP-1 conforme orientação',
+      final normalized => normalized,
+    };
+  }
 
   void _onIdentificationChanged() {
     if (!mounted) return;
@@ -1948,6 +1958,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         .toSet();
     _selectedPreAnestheticOrientationItems = assessment
         .preAnestheticOrientationItems
+        .map(_normalizePreAnestheticOrientationItem)
         .where(_profilePreAnestheticOrientationOptions.contains)
         .toSet();
     _selectedAnesthesiaTeamRequestItems = assessment.anesthesiaTeamRequestItems
@@ -3965,6 +3976,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
             title: _strategicReserveSectionTitle,
             isCompleted: _hasPostoperativePlanningContent,
             summary: _postoperativePlanningSummary(),
+            tone: _hasPostoperativePlanningContent
+                ? _SectionCardTone.alert
+                : _SectionCardTone.neutral,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
