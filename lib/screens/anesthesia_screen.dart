@@ -3411,6 +3411,28 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return _formatDateTimeLabel(now);
   }
 
+  DateTime? _parseDateTimeLabel(String value) {
+    final match = RegExp(
+      r'^(\d{2})/(\d{2})/(\d{4}) (\d{2}):(\d{2})$',
+    ).firstMatch(value.trim());
+    if (match == null) return null;
+
+    final day = int.tryParse(match.group(1) ?? '');
+    final month = int.tryParse(match.group(2) ?? '');
+    final year = int.tryParse(match.group(3) ?? '');
+    final hour = int.tryParse(match.group(4) ?? '');
+    final minute = int.tryParse(match.group(5) ?? '');
+    if (day == null ||
+        month == null ||
+        year == null ||
+        hour == null ||
+        minute == null) {
+      return null;
+    }
+
+    return DateTime(year, month, day, hour, minute);
+  }
+
   String _formatDateTimeLabel(DateTime value) {
     final day = value.day.toString().padLeft(2, '0');
     final month = value.month.toString().padLeft(2, '0');
@@ -3445,6 +3467,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     final hasPreAnesthetic =
         _record.preAnestheticAssessment.asaClassification.trim().isNotEmpty ||
         _record.preAnestheticAssessment.anestheticPlan.trim().isNotEmpty ||
+        _record.preAnestheticAssessment.surgeryDescription.trim().isNotEmpty ||
         _record.preAnestheticAssessment.comorbidities.isNotEmpty ||
         _record.preAnestheticAssessment.currentMedications.isNotEmpty ||
         _record.preAnestheticAssessment.allergyDescription.trim().isNotEmpty;
@@ -3837,19 +3860,31 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Future<void> _editPreAnestheticDate() async {
-    final result = await showDialog<String>(
+    final currentValue =
+        _parseDateTimeLabel(_preAnestheticDate) ?? DateTime.now();
+    final selectedDate = await showDatePicker(
       context: context,
-      builder: (_) => SingleFieldDialog(
-        title: 'Data da consulta pré-anestésica',
-        label: 'Consulta pré-anestésica',
-        initialValue: _preAnestheticDate.trim().isEmpty
-            ? _nowLabel()
-            : _preAnestheticDate,
-        hintText: 'dd/mm/aaaa hh:mm',
+      initialDate: currentValue,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (selectedDate == null || !mounted) return;
+
+    final selectedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(currentValue),
+    );
+    if (selectedTime == null || !mounted) return;
+
+    final result = _formatDateTimeLabel(
+      DateTime(
+        selectedDate.year,
+        selectedDate.month,
+        selectedDate.day,
+        selectedTime.hour,
+        selectedTime.minute,
       ),
     );
-
-    if (result == null) return;
     setState(() {
       _preAnestheticDate = result.trim();
     });
@@ -3857,19 +3892,30 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Future<void> _editAnesthesiaDate() async {
-    final result = await showDialog<String>(
+    final currentValue = _parseDateTimeLabel(_anesthesiaDate) ?? DateTime.now();
+    final selectedDate = await showDatePicker(
       context: context,
-      builder: (_) => SingleFieldDialog(
-        title: 'Data da anestesia / cirurgia',
-        label: 'Anestesia / cirurgia',
-        initialValue: _anesthesiaDate.trim().isEmpty
-            ? _nowLabel()
-            : _anesthesiaDate,
-        hintText: 'dd/mm/aaaa hh:mm',
+      initialDate: currentValue,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (selectedDate == null || !mounted) return;
+
+    final selectedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(currentValue),
+    );
+    if (selectedTime == null || !mounted) return;
+
+    final result = _formatDateTimeLabel(
+      DateTime(
+        selectedDate.year,
+        selectedDate.month,
+        selectedDate.day,
+        selectedTime.hour,
+        selectedTime.minute,
       ),
     );
-
-    if (result == null) return;
     setState(() {
       _anesthesiaDate = result.trim();
     });
@@ -7865,6 +7911,14 @@ class _EmergenceDialogState extends State<_EmergenceDialog> {
     'Mantido em dispositivo supraglótico / máscara',
     'Sem via aérea avançada',
   ];
+  static const List<String> _noteOptions = [
+    'Desperto',
+    'Ventilando espontaneamente',
+    'Sem broncoespasmo',
+    'Secreções aspiradas',
+    'Hemodinamicamente estável',
+    'TOF > 0,9',
+  ];
 
   late String _selectedStatus;
   late final TextEditingController _notesController;
@@ -7884,8 +7938,32 @@ class _EmergenceDialogState extends State<_EmergenceDialog> {
     super.dispose();
   }
 
+  void _toggleNoteOption(String option) {
+    final lines = _notesController.text
+        .split('\n')
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toList();
+    if (lines.contains(option)) {
+      lines.remove(option);
+    } else {
+      lines.add(option);
+    }
+    _notesController.text = lines.join('\n');
+    _notesController.selection = TextSelection.collapsed(
+      offset: _notesController.text.length,
+    );
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
+    final selectedNoteLines = _notesController.text
+        .split('\n')
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toSet();
+
     return AlertDialog(
       title: const Text('Despertar / extubação'),
       content: SizedBox(
@@ -7914,6 +7992,21 @@ class _EmergenceDialogState extends State<_EmergenceDialog> {
                 },
               ),
               const SizedBox(height: 14),
+              const Text(
+                'Achados pós-extubação',
+                style: TextStyle(
+                  color: Color(0xFF17324D),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SelectionGridSection(
+                options: _noteOptions,
+                searchEnabled: false,
+                isSelected: (option) => selectedNoteLines.contains(option),
+                onToggle: _toggleNoteOption,
+              ),
+              const SizedBox(height: 14),
               if (widget.patientDestination.trim().isNotEmpty)
                 Container(
                   width: double.infinity,
@@ -7939,9 +8032,9 @@ class _EmergenceDialogState extends State<_EmergenceDialog> {
                 minLines: 4,
                 maxLines: 7,
                 decoration: const InputDecoration(
-                  labelText: 'Condições pós-extubação / observações',
+                  labelText: 'Observações complementares',
                   hintText:
-                      'Ex: TOF > 90%, aspiradas secreções, desperto, ventilando adequadamente, sem broncoespasmo, segue para RPA/UTI.',
+                      'Ex: critérios específicos, intercorrências, destino final, necessidade de suporte ou condutas adicionais.',
                 ),
               ),
             ],
@@ -7989,6 +8082,13 @@ class MechanicalVentilationDialog extends StatefulWidget {
 
 class _MechanicalVentilationDialogState
     extends State<MechanicalVentilationDialog> {
+  static const List<String> _targetEtco2Options = [
+    '35-40',
+    '30-35',
+    '40-45',
+    'Conforme necessidade',
+  ];
+
   late final TextEditingController _modeController;
   late final TextEditingController _fio2Controller;
   late final TextEditingController _tidalVolumeMlController;
@@ -8274,6 +8374,24 @@ class _MechanicalVentilationDialogState
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Meta de ETCO₂',
+                style: TextStyle(
+                  color: Color(0xFF17324D),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SelectionGridSection(
+                options: _targetEtco2Options,
+                searchEnabled: false,
+                isSelected: (option) =>
+                    _targetEtco2Controller.text.trim() == option,
+                onToggle: (option) {
+                  setState(() => _targetEtco2Controller.text = option);
+                },
               ),
               const SizedBox(height: 12),
               TextField(

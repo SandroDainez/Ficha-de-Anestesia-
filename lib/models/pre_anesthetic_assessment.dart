@@ -24,11 +24,16 @@ class PreAnestheticAssessment {
     required this.complementaryExamItems,
     required this.complementaryExams,
     required this.otherComplementaryExams,
+    this.surgeryDescription = '',
+    this.anesthesiaTeamRequestItems = const [],
+    this.anesthesiaTeamRequestNotes = '',
     required this.fastingSolids,
     required this.fastingLiquids,
     this.fastingBreastMilk = '',
     required this.fastingNotes,
     this.surgeryPriority = '',
+    this.surgeryClearanceStatus = '',
+    this.surgeryClearanceNotes = '',
     required this.asaClassification,
     required this.asaNotes,
     required this.anestheticPlan,
@@ -36,49 +41,58 @@ class PreAnestheticAssessment {
     this.postoperativePlanningItems = const [],
     this.otherPostoperativePlanning = '',
     this.planningNotes = '',
+    required this.preAnestheticOrientationItems,
+    required this.preAnestheticOrientationNotes,
     required this.restrictionItems,
     required this.patientRestrictions,
     required this.otherRestrictions,
   });
 
   const PreAnestheticAssessment.empty()
-      : comorbidities = const [],
-        otherComorbidities = '',
-        currentMedications = const [],
-        otherMedications = '',
-        allergyDescription = '',
-        smokingStatus = '',
-        alcoholStatus = '',
-        otherHabits = '',
-        mets = '',
-        physicalExam = '',
-        airway = const Airway.empty(),
-        mouthOpening = '',
-        neckMobility = '',
-        dentition = '',
-        difficultAirwayPredictors = const [],
-        otherDifficultAirwayPredictors = '',
-        difficultVentilationPredictors = const [],
-        otherDifficultVentilationPredictors = '',
-        otherAirwayDetails = '',
-        complementaryExamItems = const [],
-        complementaryExams = '',
-        otherComplementaryExams = '',
-        fastingSolids = '',
-        fastingLiquids = '',
-        fastingBreastMilk = '',
-        fastingNotes = '',
-        surgeryPriority = '',
-        asaClassification = '',
-        asaNotes = '',
-        anestheticPlan = '',
-        otherAnestheticPlan = '',
-        postoperativePlanningItems = const [],
-        otherPostoperativePlanning = '',
-        planningNotes = '',
-        restrictionItems = const [],
-        patientRestrictions = '',
-        otherRestrictions = '';
+    : comorbidities = const [],
+      otherComorbidities = '',
+      currentMedications = const [],
+      otherMedications = '',
+      allergyDescription = '',
+      smokingStatus = '',
+      alcoholStatus = '',
+      otherHabits = '',
+      mets = '',
+      physicalExam = '',
+      airway = const Airway.empty(),
+      mouthOpening = '',
+      neckMobility = '',
+      dentition = '',
+      difficultAirwayPredictors = const [],
+      otherDifficultAirwayPredictors = '',
+      difficultVentilationPredictors = const [],
+      otherDifficultVentilationPredictors = '',
+      otherAirwayDetails = '',
+      complementaryExamItems = const [],
+      complementaryExams = '',
+      otherComplementaryExams = '',
+      surgeryDescription = '',
+      anesthesiaTeamRequestItems = const [],
+      anesthesiaTeamRequestNotes = '',
+      fastingSolids = '',
+      fastingLiquids = '',
+      fastingBreastMilk = '',
+      fastingNotes = '',
+      surgeryPriority = '',
+      surgeryClearanceStatus = '',
+      surgeryClearanceNotes = '',
+      asaClassification = '',
+      asaNotes = '',
+      anestheticPlan = '',
+      otherAnestheticPlan = '',
+      postoperativePlanningItems = const [],
+      otherPostoperativePlanning = '',
+      planningNotes = '',
+      preAnestheticOrientationItems = const [],
+      preAnestheticOrientationNotes = '',
+      restrictionItems = const [],
+      patientRestrictions = '',
+      otherRestrictions = '';
 
   final List<String> comorbidities;
   final String otherComorbidities;
@@ -102,11 +116,16 @@ class PreAnestheticAssessment {
   final List<String> complementaryExamItems;
   final String complementaryExams;
   final String otherComplementaryExams;
+  final String surgeryDescription;
+  final List<String> anesthesiaTeamRequestItems;
+  final String anesthesiaTeamRequestNotes;
   final String fastingSolids;
   final String fastingLiquids;
   final String fastingBreastMilk;
   final String fastingNotes;
   final String surgeryPriority;
+  final String surgeryClearanceStatus;
+  final String surgeryClearanceNotes;
   final String asaClassification;
   final String asaNotes;
   final String anestheticPlan;
@@ -114,6 +133,8 @@ class PreAnestheticAssessment {
   final List<String> postoperativePlanningItems;
   final String otherPostoperativePlanning;
   final String planningNotes;
+  final List<String> preAnestheticOrientationItems;
+  final String preAnestheticOrientationNotes;
   final List<String> restrictionItems;
   final String patientRestrictions;
   final String otherRestrictions;
@@ -141,11 +162,16 @@ class PreAnestheticAssessment {
     List<String>? complementaryExamItems,
     String? complementaryExams,
     String? otherComplementaryExams,
+    String? surgeryDescription,
+    List<String>? anesthesiaTeamRequestItems,
+    String? anesthesiaTeamRequestNotes,
     String? fastingSolids,
     String? fastingLiquids,
     String? fastingBreastMilk,
     String? fastingNotes,
     String? surgeryPriority,
+    String? surgeryClearanceStatus,
+    String? surgeryClearanceNotes,
     String? asaClassification,
     String? asaNotes,
     String? anestheticPlan,
@@ -153,6 +179,8 @@ class PreAnestheticAssessment {
     List<String>? postoperativePlanningItems,
     String? otherPostoperativePlanning,
     String? planningNotes,
+    List<String>? preAnestheticOrientationItems,
+    String? preAnestheticOrientationNotes,
     List<String>? restrictionItems,
     String? patientRestrictions,
     String? otherRestrictions,
@@ -174,24 +202,33 @@ class PreAnestheticAssessment {
       dentition: dentition ?? this.dentition,
       difficultAirwayPredictors:
           difficultAirwayPredictors ?? this.difficultAirwayPredictors,
-      otherDifficultAirwayPredictors: otherDifficultAirwayPredictors ??
-          this.otherDifficultAirwayPredictors,
-      difficultVentilationPredictors: difficultVentilationPredictors ??
-          this.difficultVentilationPredictors,
+      otherDifficultAirwayPredictors:
+          otherDifficultAirwayPredictors ?? this.otherDifficultAirwayPredictors,
+      difficultVentilationPredictors:
+          difficultVentilationPredictors ?? this.difficultVentilationPredictors,
       otherDifficultVentilationPredictors:
           otherDifficultVentilationPredictors ??
-              this.otherDifficultVentilationPredictors,
+          this.otherDifficultVentilationPredictors,
       otherAirwayDetails: otherAirwayDetails ?? this.otherAirwayDetails,
       complementaryExamItems:
           complementaryExamItems ?? this.complementaryExamItems,
       complementaryExams: complementaryExams ?? this.complementaryExams,
       otherComplementaryExams:
           otherComplementaryExams ?? this.otherComplementaryExams,
+      surgeryDescription: surgeryDescription ?? this.surgeryDescription,
+      anesthesiaTeamRequestItems:
+          anesthesiaTeamRequestItems ?? this.anesthesiaTeamRequestItems,
+      anesthesiaTeamRequestNotes:
+          anesthesiaTeamRequestNotes ?? this.anesthesiaTeamRequestNotes,
       fastingSolids: fastingSolids ?? this.fastingSolids,
       fastingLiquids: fastingLiquids ?? this.fastingLiquids,
       fastingBreastMilk: fastingBreastMilk ?? this.fastingBreastMilk,
       fastingNotes: fastingNotes ?? this.fastingNotes,
       surgeryPriority: surgeryPriority ?? this.surgeryPriority,
+      surgeryClearanceStatus:
+          surgeryClearanceStatus ?? this.surgeryClearanceStatus,
+      surgeryClearanceNotes:
+          surgeryClearanceNotes ?? this.surgeryClearanceNotes,
       asaClassification: asaClassification ?? this.asaClassification,
       asaNotes: asaNotes ?? this.asaNotes,
       anestheticPlan: anestheticPlan ?? this.anestheticPlan,
@@ -201,6 +238,10 @@ class PreAnestheticAssessment {
       otherPostoperativePlanning:
           otherPostoperativePlanning ?? this.otherPostoperativePlanning,
       planningNotes: planningNotes ?? this.planningNotes,
+      preAnestheticOrientationItems:
+          preAnestheticOrientationItems ?? this.preAnestheticOrientationItems,
+      preAnestheticOrientationNotes:
+          preAnestheticOrientationNotes ?? this.preAnestheticOrientationNotes,
       restrictionItems: restrictionItems ?? this.restrictionItems,
       patientRestrictions: patientRestrictions ?? this.patientRestrictions,
       otherRestrictions: otherRestrictions ?? this.otherRestrictions,
@@ -232,11 +273,16 @@ class PreAnestheticAssessment {
       'complementaryExamItems': complementaryExamItems,
       'complementaryExams': complementaryExams,
       'otherComplementaryExams': otherComplementaryExams,
+      'surgeryDescription': surgeryDescription,
+      'anesthesiaTeamRequestItems': anesthesiaTeamRequestItems,
+      'anesthesiaTeamRequestNotes': anesthesiaTeamRequestNotes,
       'fastingSolids': fastingSolids,
       'fastingLiquids': fastingLiquids,
       'fastingBreastMilk': fastingBreastMilk,
       'fastingNotes': fastingNotes,
       'surgeryPriority': surgeryPriority,
+      'surgeryClearanceStatus': surgeryClearanceStatus,
+      'surgeryClearanceNotes': surgeryClearanceNotes,
       'asaClassification': asaClassification,
       'asaNotes': asaNotes,
       'anestheticPlan': anestheticPlan,
@@ -244,6 +290,8 @@ class PreAnestheticAssessment {
       'postoperativePlanningItems': postoperativePlanningItems,
       'otherPostoperativePlanning': otherPostoperativePlanning,
       'planningNotes': planningNotes,
+      'preAnestheticOrientationItems': preAnestheticOrientationItems,
+      'preAnestheticOrientationNotes': preAnestheticOrientationNotes,
       'restrictionItems': restrictionItems,
       'patientRestrictions': patientRestrictions,
       'otherRestrictions': otherRestrictions,
@@ -280,8 +328,7 @@ class PreAnestheticAssessment {
       otherDifficultAirwayPredictors:
           json['otherDifficultAirwayPredictors'] as String? ?? '',
       difficultVentilationPredictors:
-          (json['difficultVentilationPredictors'] as List<dynamic>? ??
-                  const [])
+          (json['difficultVentilationPredictors'] as List<dynamic>? ?? const [])
               .map((item) => item.toString())
               .toList(),
       otherDifficultVentilationPredictors:
@@ -292,13 +339,21 @@ class PreAnestheticAssessment {
               .map((item) => item.toString())
               .toList(),
       complementaryExams: json['complementaryExams'] as String? ?? '',
-      otherComplementaryExams:
-          json['otherComplementaryExams'] as String? ?? '',
+      otherComplementaryExams: json['otherComplementaryExams'] as String? ?? '',
+      surgeryDescription: json['surgeryDescription'] as String? ?? '',
+      anesthesiaTeamRequestItems:
+          (json['anesthesiaTeamRequestItems'] as List<dynamic>? ?? const [])
+              .map((item) => item.toString())
+              .toList(),
+      anesthesiaTeamRequestNotes:
+          json['anesthesiaTeamRequestNotes'] as String? ?? '',
       fastingSolids: json['fastingSolids'] as String? ?? '',
       fastingLiquids: json['fastingLiquids'] as String? ?? '',
       fastingBreastMilk: json['fastingBreastMilk'] as String? ?? '',
       fastingNotes: json['fastingNotes'] as String? ?? '',
       surgeryPriority: json['surgeryPriority'] as String? ?? '',
+      surgeryClearanceStatus: json['surgeryClearanceStatus'] as String? ?? '',
+      surgeryClearanceNotes: json['surgeryClearanceNotes'] as String? ?? '',
       asaClassification: json['asaClassification'] as String? ?? '',
       asaNotes: json['asaNotes'] as String? ?? '',
       anestheticPlan: json['anestheticPlan'] as String? ?? '',
@@ -310,6 +365,12 @@ class PreAnestheticAssessment {
       otherPostoperativePlanning:
           json['otherPostoperativePlanning'] as String? ?? '',
       planningNotes: json['planningNotes'] as String? ?? '',
+      preAnestheticOrientationItems:
+          (json['preAnestheticOrientationItems'] as List<dynamic>? ?? const [])
+              .map((item) => item.toString())
+              .toList(),
+      preAnestheticOrientationNotes:
+          json['preAnestheticOrientationNotes'] as String? ?? '',
       restrictionItems: (json['restrictionItems'] as List<dynamic>? ?? const [])
           .map((item) => item.toString())
           .toList(),

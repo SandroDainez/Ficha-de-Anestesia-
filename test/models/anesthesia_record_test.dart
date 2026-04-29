@@ -55,6 +55,8 @@ void main() {
         fastingLiquids: '>4h',
         fastingNotes: '',
         surgeryPriority: 'Eletiva',
+        surgeryClearanceStatus: 'Cirurgia liberada',
+        surgeryClearanceNotes: '',
         asaClassification: 'II',
         asaNotes: '',
         anestheticPlan: 'Anestesia geral balanceada',
@@ -62,6 +64,10 @@ void main() {
         postoperativePlanningItems: ['Reserva de UTI'],
         otherPostoperativePlanning: 'Sangue reservado',
         planningNotes: 'Chegou compensada.',
+        preAnestheticOrientationItems: [],
+        preAnestheticOrientationNotes: '',
+        anesthesiaTeamRequestItems: [],
+        anesthesiaTeamRequestNotes: '',
         restrictionItems: ['Nao aceita transfusao'],
         patientRestrictions: 'Nao aceita transfusao',
         otherRestrictions: '',
@@ -94,9 +100,7 @@ void main() {
           spo2: '99',
         ),
       ],
-      hemodynamicPoints: [
-        HemodynamicPoint(type: 'FC', value: 78, time: 5),
-      ],
+      hemodynamicPoints: [HemodynamicPoint(type: 'FC', value: 78, time: 5)],
       hemodynamicMarkers: [
         HemodynamicMarker(
           label: 'Inicio da anestesia',
@@ -137,10 +141,15 @@ void main() {
     expect(restored.patient.informedConsentStatus, 'Assinado');
     expect(restored.preAnestheticAssessment.asaClassification, 'II');
     expect(restored.preAnestheticAssessment.surgeryPriority, 'Eletiva');
-    expect(restored.preAnestheticAssessment.postoperativePlanningItems, ['Reserva de UTI']);
+    expect(restored.preAnestheticAssessment.postoperativePlanningItems, [
+      'Reserva de UTI',
+    ]);
     expect(restored.airway.tubeNumber, '7.5');
     expect(restored.fluidBalance.totalBalance, 1000);
-    expect(restored.hemodynamicEntries.single.formattedBloodPressure, '120 / 70');
+    expect(
+      restored.hemodynamicEntries.single.formattedBloodPressure,
+      '120 / 70',
+    );
     expect(restored.hemodynamicPoints.single.type, 'FC');
     expect(restored.hemodynamicMarkers.single.clockTime, '08:00:00');
     expect(restored.events, ['Inducao sem intercorrencias']);
@@ -151,7 +160,10 @@ void main() {
     expect(restored.monitoringItems, ['ECG (5 derivações)', 'SpO₂']);
     expect(restored.surgeryPriority, 'Eletiva');
     expect(restored.patientDestination, 'RPA');
-    expect(restored.operationalNotes, 'Paciente chegou de enfermaria sem intercorrências.');
+    expect(
+      restored.operationalNotes,
+      'Paciente chegou de enfermaria sem intercorrências.',
+    );
     expect(restored.timeOutCompleted, isTrue);
   });
 }

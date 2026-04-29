@@ -29,6 +29,79 @@ class SurgeryInfoDialogResult {
   final bool timeOutCompleted;
 }
 
+const List<String> commonProcedureOptions = [
+  'Histerectomia por vídeo',
+  'Histerectomia',
+  'Histerectomia abdominal',
+  'Histerectomia vaginal',
+  'Miomectomia',
+  'Vídeo colecistectomia',
+  'Colecistectomia',
+  'Bariátrica sleeve',
+  'Bariátrica by pass',
+  'Nefrectomia por vídeo direita',
+  'Nefrectomia por vídeo esquerda',
+  'Nefrectomia direita',
+  'Nefrectomia esquerda',
+  'Herniorrafia umbilical',
+  'Herniorrafia incisional',
+  'Herniorrafia inguinal direita',
+  'Herniorrafia inguinal esquerda',
+  'Herniorrafia inguinal bilateral',
+  'Herniorrafia inguinal direita por vídeo',
+  'Herniorrafia inguinal esquerda por vídeo',
+  'Herniorrafia inguinal bilateral por vídeo',
+  'Hernioplastia ventral',
+  'Hernioplastia epigástrica',
+  'Fratura de fêmur direito',
+  'Fratura de fêmur esquerdo',
+  'Fratura de rádio distal direito',
+  'Fratura de rádio distal esquerdo',
+  'Fratura de tornozelo direito',
+  'Fratura de tornozelo esquerdo',
+  'Apendicectomia por vídeo',
+  'Apendicectomia',
+  'Cesárea',
+  'Mastectomia',
+  'Quadrantectomia',
+  'Setorectomia de mama',
+  'Prótese de mama',
+  'Troca de prótese de mama',
+  'Mamoplastia redutora',
+  'Mastopexia',
+  'Abdominoplastia',
+  'Lipoaspiração',
+  'Lipoescultura',
+  'Ritidoplastia',
+  'Blefaroplastia',
+  'Rinoplastia',
+  'Septoplastia',
+  'Sinusectomia endoscópica',
+  'Artroscopia de joelho',
+  'Artroscopia de ombro',
+  'Artroplastia total de joelho',
+  'Artroplastia total de quadril',
+  'Fixação de fratura de rádio distal',
+  'Osteossíntese de tíbia',
+  'Tireoidectomia',
+  'Paratireoidectomia',
+  'Amigdalectomia',
+  'Adenoidectomia',
+  'Hemorroidectomia',
+  'Fissurectomia anal',
+  'Colecistostomia',
+  'Laparotomia exploradora',
+  'Videolaparoscopia diagnóstica',
+  'RTU de bexiga',
+  'Varicocelectomia',
+  'Orquidopexia',
+  'RTU de próstata',
+  'Cistoscopia',
+  'Ureterolitotripsia',
+  'Postectomia',
+  'Vasectomia',
+];
+
 enum SurgeryInfoSection {
   all,
   description,
@@ -76,78 +149,6 @@ class SurgeryInfoDialog extends StatefulWidget {
 }
 
 class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
-  static const List<String> _commonProcedureOptions = [
-    'Histerectomia por vídeo',
-    'Histerectomia',
-    'Histerectomia abdominal',
-    'Histerectomia vaginal',
-    'Miomectomia',
-    'Vídeo colecistectomia',
-    'Colecistectomia',
-    'Bariátrica sleeve',
-    'Bariátrica by pass',
-    'Nefrectomia por vídeo direita',
-    'Nefrectomia por vídeo esquerda',
-    'Nefrectomia direita',
-    'Nefrectomia esquerda',
-    'Herniorrafia umbilical',
-    'Herniorrafia incisional',
-    'Herniorrafia inguinal direita',
-    'Herniorrafia inguinal esquerda',
-    'Herniorrafia inguinal bilateral',
-    'Herniorrafia inguinal direita por vídeo',
-    'Herniorrafia inguinal esquerda por vídeo',
-    'Herniorrafia inguinal bilateral por vídeo',
-    'Hernioplastia ventral',
-    'Hernioplastia epigástrica',
-    'Fratura de fêmur direito',
-    'Fratura de fêmur esquerdo',
-    'Fratura de rádio distal direito',
-    'Fratura de rádio distal esquerdo',
-    'Fratura de tornozelo direito',
-    'Fratura de tornozelo esquerdo',
-    'Apendicectomia por vídeo',
-    'Apendicectomia',
-    'Cesárea',
-    'Mastectomia',
-    'Quadrantectomia',
-    'Setorectomia de mama',
-    'Prótese de mama',
-    'Troca de prótese de mama',
-    'Mamoplastia redutora',
-    'Mastopexia',
-    'Abdominoplastia',
-    'Lipoaspiração',
-    'Lipoescultura',
-    'Ritidoplastia',
-    'Blefaroplastia',
-    'Rinoplastia',
-    'Septoplastia',
-    'Sinusectomia endoscópica',
-    'Artroscopia de joelho',
-    'Artroscopia de ombro',
-    'Artroplastia total de joelho',
-    'Artroplastia total de quadril',
-    'Fixação de fratura de rádio distal',
-    'Osteossíntese de tíbia',
-    'Tireoidectomia',
-    'Paratireoidectomia',
-    'Amigdalectomia',
-    'Adenoidectomia',
-    'Hemorroidectomia',
-    'Fissurectomia anal',
-    'Colecistostomia',
-    'Laparotomia exploradora',
-    'Videolaparoscopia diagnóstica',
-    'RTU de bexiga',
-    'Varicocelectomia',
-    'Orquidopexia',
-    'RTU de próstata',
-    'Cistoscopia',
-    'Ureterolitotripsia',
-    'Postectomia',
-    'Vasectomia',
-  ];
   static const List<String> _priorityOptions = [
     'Eletiva',
     'Urgência',
@@ -216,10 +217,10 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
     super.initState();
     final initialProcedures = _lines(widget.initialDescription);
     final selectedProcedures = initialProcedures
-        .where(_commonProcedureOptions.contains)
+        .where(commonProcedureOptions.contains)
         .toSet();
     final otherProcedures = initialProcedures
-        .where((item) => !_commonProcedureOptions.contains(item))
+        .where((item) => !commonProcedureOptions.contains(item))
         .join('\n');
 
     _otherProceduresController = TextEditingController(text: otherProcedures);
@@ -259,7 +260,7 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
 
   List<String> _buildProcedureLines() {
     return [
-      ..._commonProcedureOptions.where(_selectedProcedures.contains),
+      ...commonProcedureOptions.where(_selectedProcedures.contains),
       ..._lines(_otherProceduresController.text),
     ];
   }
@@ -324,7 +325,7 @@ class _SurgeryInfoDialogState extends State<SurgeryInfoDialog> {
               if (showDescription) const SizedBox(height: 8),
               if (showDescription)
                 SelectionGridSection(
-                  options: _commonProcedureOptions,
+                  options: commonProcedureOptions,
                   color: const Color(0xFF2B76D2),
                   isSelected: (item) => _selectedProcedures.contains(item),
                   onToggle: (item) {

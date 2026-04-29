@@ -26,6 +26,10 @@ class RecordStorageService {
   static const String _legacyRecordKey = 'current_record';
   static const String _casesKey = 'saved_cases';
   static const Uuid _uuid = Uuid();
+  static final RegExp _uuidPattern = RegExp(
+    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-'
+    r'[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$',
+  );
 
   bool _initialized = false;
 
@@ -52,6 +56,8 @@ class RecordStorageService {
   }
 
   String createCaseId() => _uuid.v4();
+
+  bool _isUuid(String value) => _uuidPattern.hasMatch(value.trim());
 
   Future<List<AnesthesiaCase>> loadCases() async {
     Box<dynamic>? box;
@@ -120,7 +126,7 @@ class RecordStorageService {
   }
 
   Future<AnesthesiaCase?> loadCase(String caseId) async {
-    if (await _ensureRemote()) {
+    if (_isUuid(caseId) && await _ensureRemote()) {
       try {
         final response = await _client!
             .from('anesthesia_cases')
@@ -142,8 +148,11 @@ class RecordStorageService {
 
   Future<void> upsertCase(AnesthesiaCase caseFile) async {
     final remoteReady = await _ensureRemote();
+    final normalizedCase = _isUuid(caseFile.id)
+        ? caseFile
+        : caseFile.copyWith(id: createCaseId());
     if (remoteReady) {
-      await _upsertRemoteCase(caseFile);
+      await _upsertRemoteCase(normalizedCase);
     }
     if (kIsWeb && !remoteReady) {
       throw const RecordStorageException(
@@ -153,18 +162,18 @@ class RecordStorageService {
     if (kIsWeb) return;
     final cases = await loadCases();
     final updated = List<AnesthesiaCase>.from(cases);
-    final index = updated.indexWhere((item) => item.id == caseFile.id);
+    final index = updated.indexWhere((item) => item.id == normalizedCase.id);
     if (index >= 0) {
-      updated[index] = caseFile;
+      updated[index] = normalizedCase;
     } else {
-      updated.add(caseFile);
+      updated.add(normalizedCase);
     }
     updated.sort((a, b) => b.updatedAtIso.compareTo(a.updatedAtIso));
     await saveCases(updated);
   }
 
   Future<void> deleteCase(String caseId) async {
-    final remoteReady = await _ensureRemote();
+    final remoteReady = _isUuid(caseId) && await _ensureRemote();
     if (remoteReady) {
       await _deleteRemoteCase(caseId);
     }

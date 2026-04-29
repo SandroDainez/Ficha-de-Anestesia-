@@ -52,6 +52,38 @@ class MaintenanceEntryEditResult {
   final bool remove;
 }
 
+TimeOfDay? _parseClockLabel(String value) {
+  final match = RegExp(r'^(\d{1,2}):(\d{2})$').firstMatch(value.trim());
+  if (match == null) return null;
+
+  final hour = int.tryParse(match.group(1) ?? '');
+  final minute = int.tryParse(match.group(2) ?? '');
+  if (hour == null || minute == null) return null;
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+
+  return TimeOfDay(hour: hour, minute: minute);
+}
+
+String _formatClockLabel(TimeOfDay value) {
+  final hour = value.hour.toString().padLeft(2, '0');
+  final minute = value.minute.toString().padLeft(2, '0');
+  return '$hour:$minute';
+}
+
+Future<void> _pickClockLabel(
+  BuildContext context,
+  TextEditingController controller,
+) async {
+  final initialTime =
+      _parseClockLabel(controller.text) ?? const TimeOfDay(hour: 8, minute: 0);
+  final selected = await showTimePicker(
+    context: context,
+    initialTime: initialTime,
+  );
+  if (selected == null) return;
+  controller.text = _formatClockLabel(selected);
+}
+
 class MaintenanceEntryEditDialog extends StatefulWidget {
   const MaintenanceEntryEditDialog({
     super.key,
@@ -444,9 +476,11 @@ class _MedicationEntryEditDialogState extends State<MedicationEntryEditDialog> {
               const SizedBox(height: 12),
               TextField(
                 controller: _timeController,
+                onTap: () => _pickClockLabel(context, _timeController),
                 decoration: const InputDecoration(
                   labelText: 'Horário da 1ª dose',
                   hintText: 'Ex: 08:30',
+                  suffixIcon: Icon(Icons.schedule_outlined),
                 ),
               ),
               const SizedBox(height: 12),
@@ -953,6 +987,7 @@ class _EventsDialogState extends State<EventsDialog> {
                     child: TextField(
                       key: const Key('event-time-field'),
                       controller: _timeController,
+                      onTap: () => _pickClockLabel(context, _timeController),
                       decoration: const InputDecoration(labelText: 'Horário'),
                     ),
                   ),
@@ -1211,9 +1246,14 @@ class _AdjunctsDialogState extends State<AdjunctsDialog> {
                             child: TextField(
                               key: Key('catalog-time-field-$name'),
                               controller: _timeControllers[name],
+                              onTap: () => _pickClockLabel(
+                                context,
+                                _timeControllers[name]!,
+                              ),
                               decoration: const InputDecoration(
                                 labelText: 'Horário da 1ª dose',
                                 hintText: 'Ex: 08:30',
+                                suffixIcon: Icon(Icons.schedule_outlined),
                               ),
                             ),
                           ),
@@ -1607,9 +1647,14 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
                             child: TextField(
                               key: Key('catalog-time-field-$name'),
                               controller: _timeControllers[name],
+                              onTap: () => _pickClockLabel(
+                                context,
+                                _timeControllers[name]!,
+                              ),
                               decoration: const InputDecoration(
                                 labelText: 'Horário da 1ª dose',
                                 hintText: 'Ex: 08:30',
+                                suffixIcon: Icon(Icons.schedule_outlined),
                               ),
                             ),
                           ),
@@ -1835,9 +1880,14 @@ class _VasoactiveDrugsDialogState extends State<VasoactiveDrugsDialog> {
                             child: TextField(
                               key: Key('vasoactive-time-field-$name'),
                               controller: _timeControllers[name],
+                              onTap: () => _pickClockLabel(
+                                context,
+                                _timeControllers[name]!,
+                              ),
                               decoration: const InputDecoration(
                                 labelText: 'Horário',
                                 hintText: '08:30',
+                                suffixIcon: Icon(Icons.schedule_outlined),
                               ),
                             ),
                           ),
