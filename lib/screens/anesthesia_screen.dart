@@ -5916,15 +5916,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        _monitoringItems.contains(entry.value)
-                            ? Icons.check_circle_rounded
-                            : Icons.radio_button_unchecked_rounded,
-                        color: _monitoringItems.contains(entry.value)
-                            ? const Color(0xFF2B76D2)
-                            : const Color(0xFF8CA0B5),
-                      ),
                     ],
                   ),
                 ),

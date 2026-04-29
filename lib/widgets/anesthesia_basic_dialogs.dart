@@ -188,10 +188,6 @@ class _DialogOptionCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (selected) ...[
-                Icon(Icons.check_rounded, color: color, size: 22),
-                const SizedBox(width: 12),
-              ],
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

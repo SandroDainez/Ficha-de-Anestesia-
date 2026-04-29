@@ -2124,8 +2124,6 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       isSelected: selectedValues.contains,
       onTap: onToggle,
       color: color,
-      selectedIcon: Icons.check_rounded,
-      unselectedIcon: Icons.add_circle_outline,
     );
   }
 
@@ -2140,8 +2138,6 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       isSelected: (option) => selectedValue == option,
       onTap: onSelected,
       color: color,
-      selectedIcon: Icons.radio_button_checked,
-      unselectedIcon: Icons.radio_button_off_outlined,
     );
   }
 
@@ -2150,8 +2146,6 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     required bool Function(String option) isSelected,
     required ValueChanged<String> onTap,
     required Color color,
-    required IconData selectedIcon,
-    required IconData unselectedIcon,
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -2169,8 +2163,6 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                 selected: selected,
                 onTap: () => onTap(option),
                 color: color,
-                selectedIcon: selectedIcon,
-                unselectedIcon: unselectedIcon,
               ),
             ),
           );
@@ -2194,8 +2186,6 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     required bool selected,
     required VoidCallback onTap,
     required Color color,
-    required IconData selectedIcon,
-    required IconData unselectedIcon,
   }) {
     final borderColor = selected ? color : const Color(0xFFD5E4F7);
     final backgroundColor = selected ? color.withAlpha(12) : Colors.white;
@@ -2224,12 +2214,6 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                selected ? selectedIcon : unselectedIcon,
-                color: selected ? color : const Color(0xFF6A7E94),
-                size: 22,
-              ),
-              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   label,
@@ -2559,8 +2543,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                       child: _buildExpandableInputWithQuickPresets(
                         controller:
                             _selectedPopulation == PatientPopulation.neonatal
-                                ? _postnatalAgeController
-                                : _ageController,
+                            ? _postnatalAgeController
+                            : _ageController,
                         label: _selectedPopulation == PatientPopulation.neonatal
                             ? 'Idade pós-natal (dias)'
                             : 'Idade (anos)',
@@ -2637,7 +2621,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                           label: 'Peso ao nascer (kg)',
                           presetOptions: _profileBirthWeightPresetOptions,
                           onSelected: (option) {
-                            setState(() => _birthWeightController.text = option);
+                            setState(
+                              () => _birthWeightController.text = option,
+                            );
                           },
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
@@ -2679,9 +2665,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                               _profileCorrectedGestationalAgePresetOptions,
                           onSelected: (option) {
                             setState(
-                              () =>
-                                  _correctedGestationalAgeController.text =
-                                      option,
+                              () => _correctedGestationalAgeController.text =
+                                  option,
                             );
                           },
                           keyboardType: TextInputType.number,
@@ -3326,23 +3311,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                selected
-                                    ? Icons.radio_button_checked
-                                    : Icons.radio_button_off_outlined,
-                                size: 18,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                option.value,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
+                          Text(
+                            option.value,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -4714,7 +4685,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       _joinSummaryParts(_lines(_otherPostoperativePlanningController.text)),
     ];
     final summary = _joinSummaryParts(parts);
-    return summary.isEmpty ? 'Selecione o planejamento pós-operatório' : summary;
+    return summary.isEmpty
+        ? 'Selecione o planejamento pós-operatório'
+        : summary;
   }
 
   String _restrictionSummary() {
@@ -4732,7 +4705,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       _joinSummaryParts(_lines(_preAnestheticOrientationNotesController.text)),
     ];
     final summary = _joinSummaryParts(parts);
-    return summary.isEmpty ? 'Selecione as orientações pré-anestésicas' : summary;
+    return summary.isEmpty
+        ? 'Selecione as orientações pré-anestésicas'
+        : summary;
   }
 
   String _complementaryExamsSummary() {
@@ -4788,7 +4763,8 @@ class _ExpandablePresetFieldCard extends StatefulWidget {
       _ExpandablePresetFieldCardState();
 }
 
-class _ExpandablePresetFieldCardState extends State<_ExpandablePresetFieldCard> {
+class _ExpandablePresetFieldCardState
+    extends State<_ExpandablePresetFieldCard> {
   late final ExpansibleController _controller;
 
   @override
@@ -4847,7 +4823,10 @@ class _ExpandablePresetFieldCardState extends State<_ExpandablePresetFieldCard> 
               collapsedIconColor: titleColor,
               title: Text(
                 widget.label,
-                style: TextStyle(fontWeight: FontWeight.w800, color: titleColor),
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: titleColor,
+                ),
               ),
               subtitle: Text(
                 hasContent ? text : 'Toque para selecionar ou digitar',
@@ -4875,8 +4854,6 @@ class _ExpandablePresetFieldCardState extends State<_ExpandablePresetFieldCard> 
                   isSelected: (option) => text == option,
                   onTap: widget.onSelected,
                   color: widget.color,
-                  selectedIcon: Icons.radio_button_checked,
-                  unselectedIcon: Icons.radio_button_off_outlined,
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -4917,8 +4894,6 @@ class _ExpandablePresetFieldCardState extends State<_ExpandablePresetFieldCard> 
     required bool Function(String option) isSelected,
     required ValueChanged<String> onTap,
     required Color color,
-    required IconData selectedIcon,
-    required IconData unselectedIcon,
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -4936,8 +4911,6 @@ class _ExpandablePresetFieldCardState extends State<_ExpandablePresetFieldCard> 
                 selected: selected,
                 onTap: () => onTap(option),
                 color: color,
-                selectedIcon: selectedIcon,
-                unselectedIcon: unselectedIcon,
               ),
             ),
           );
@@ -4961,8 +4934,6 @@ class _ExpandablePresetFieldCardState extends State<_ExpandablePresetFieldCard> 
     required bool selected,
     required VoidCallback onTap,
     required Color color,
-    required IconData selectedIcon,
-    required IconData unselectedIcon,
   }) {
     final borderColor = selected ? color : const Color(0xFFD5E4F7);
     final backgroundColor = selected ? color.withAlpha(12) : Colors.white;
@@ -4991,12 +4962,6 @@ class _ExpandablePresetFieldCardState extends State<_ExpandablePresetFieldCard> 
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                selected ? selectedIcon : unselectedIcon,
-                color: selected ? color : const Color(0xFF6A7E94),
-                size: 22,
-              ),
-              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   label,
@@ -5052,7 +5017,8 @@ class _SectionCardState extends State<_SectionCard> {
 
   @override
   Widget build(BuildContext context) {
-    final tone = widget.tone ??
+    final tone =
+        widget.tone ??
         (widget.isCompleted
             ? _SectionCardTone.completed
             : _SectionCardTone.neutral);

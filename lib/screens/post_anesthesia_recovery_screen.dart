@@ -189,19 +189,12 @@ class _PostAnesthesiaRecoveryScreenState
         runSpacing: 8,
         children: options
             .map(
-              (item) => OutlinedButton.icon(
+              (item) => OutlinedButton(
                 onPressed: () {
                   setState(() {
                     _toggleItem(selected, item, onChanged);
                   });
                 },
-                icon: Icon(
-                  selected.contains(item)
-                      ? Icons.check_circle
-                      : Icons.add_circle_outline,
-                  size: 18,
-                ),
-                label: Text(item),
                 style: OutlinedButton.styleFrom(
                   backgroundColor: selected.contains(item)
                       ? const Color(0xFF2B76D2).withAlpha(16)
@@ -223,6 +216,7 @@ class _PostAnesthesiaRecoveryScreenState
                     vertical: 12,
                   ),
                 ),
+                child: Text(item),
               ),
             )
             .toList(),
