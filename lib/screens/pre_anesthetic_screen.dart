@@ -2872,11 +2872,24 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                 isCompleted:
                     _selectedSurgeryClearanceStatus.isNotEmpty ||
                     _surgeryClearanceNotesController.text.trim().isNotEmpty,
+                tone: _hasSurgeryClearanceAlert
+                    ? _SectionCardTone.alert
+                    : _selectedSurgeryClearanceStatus == 'Cirurgia liberada'
+                    ? _SectionCardTone.completed
+                    : _SectionCardTone.neutral,
                 summary: _clearanceSummary(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSummaryBanner(_clearanceSummary()),
+                    _buildSummaryBanner(
+                      _clearanceSummary(),
+                      tone: _hasSurgeryClearanceAlert
+                          ? _SectionCardTone.alert
+                          : _selectedSurgeryClearanceStatus ==
+                                'Cirurgia liberada'
+                          ? _SectionCardTone.completed
+                          : _SectionCardTone.neutral,
+                    ),
                     const SizedBox(height: 14),
                     Container(
                       width: double.infinity,
@@ -4361,6 +4374,10 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       _selectedRestrictions.isNotEmpty ||
       _otherRestrictionsController.text.trim().isNotEmpty;
 
+  bool get _hasSurgeryClearanceAlert =>
+      _selectedSurgeryClearanceStatus.isNotEmpty &&
+      _selectedSurgeryClearanceStatus != 'Cirurgia liberada';
+
   Widget _buildAdaptiveInputField({
     required TextEditingController controller,
     required String label,
@@ -4461,21 +4478,37 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     setState(() {});
   }
 
-  Widget _buildSummaryBanner(String summary) {
+  Widget _buildSummaryBanner(
+    String summary, {
+    _SectionCardTone tone = _SectionCardTone.completed,
+  }) {
+    final backgroundColor = switch (tone) {
+      _SectionCardTone.completed => const Color(0xFFF4FBF6),
+      _SectionCardTone.alert => const Color(0xFFFFF1F1),
+      _SectionCardTone.neutral => const Color(0xFFF5F7FC),
+    };
+    final borderColor = switch (tone) {
+      _SectionCardTone.completed => const Color(0xFFBFE3C9),
+      _SectionCardTone.alert => const Color(0xFFE29B9B),
+      _SectionCardTone.neutral => const Color(0xFFDCE6F2),
+    };
+    final textColor = switch (tone) {
+      _SectionCardTone.completed => const Color(0xFF177245),
+      _SectionCardTone.alert => const Color(0xFFB04141),
+      _SectionCardTone.neutral => const Color(0xFF17324D),
+    };
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF4FBF6),
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFBFE3C9)),
+        border: Border.all(color: borderColor),
       ),
       child: Text(
         summary,
-        style: const TextStyle(
-          color: Color(0xFF177245),
-          fontWeight: FontWeight.w700,
-        ),
+        style: TextStyle(color: textColor, fontWeight: FontWeight.w700),
       ),
     );
   }

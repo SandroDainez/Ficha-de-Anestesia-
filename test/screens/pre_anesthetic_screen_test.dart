@@ -1,3 +1,4 @@
+import 'package:anestesia_app/models/airway.dart';
 import 'package:anestesia_app/models/patient.dart';
 import 'package:anestesia_app/models/pre_anesthetic_assessment.dart';
 import 'package:anestesia_app/screens/pre_anesthetic_screen.dart';
@@ -643,6 +644,156 @@ void main() {
     expect(find.text('AP'), findsOneWidget);
     expect(find.text('Outros achados'), findsOneWidget);
   });
+
+  testWidgets('shows surgery clearance as alert when surgery is not released', (
+    WidgetTester tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PreAnestheticScreen(
+          patient: const Patient(
+            name: 'Adulto',
+            age: 40,
+            weightKg: 70,
+            heightMeters: 1.7,
+            asa: 'II',
+            allergies: [],
+            restrictions: [],
+            medications: [],
+          ),
+          initialAssessment: const PreAnestheticAssessment(
+            comorbidities: [],
+            otherComorbidities: '',
+            currentMedications: [],
+            otherMedications: '',
+            allergyDescription: '',
+            smokingStatus: '',
+            alcoholStatus: '',
+            otherHabits: '',
+            mets: '',
+            physicalExam: '',
+            airway: Airway.empty(),
+            mouthOpening: '',
+            neckMobility: '',
+            dentition: '',
+            difficultAirwayPredictors: [],
+            otherDifficultAirwayPredictors: '',
+            difficultVentilationPredictors: [],
+            otherDifficultVentilationPredictors: '',
+            otherAirwayDetails: '',
+            complementaryExamItems: [],
+            complementaryExams: '',
+            otherComplementaryExams: '',
+            fastingSolids: '',
+            fastingLiquids: '',
+            fastingNotes: '',
+            asaClassification: '',
+            asaNotes: '',
+            anestheticPlan: '',
+            otherAnestheticPlan: '',
+            preAnestheticOrientationItems: [],
+            preAnestheticOrientationNotes: '',
+            restrictionItems: [],
+            patientRestrictions: '',
+            otherRestrictions: '',
+            surgeryClearanceStatus: 'Pendente para liberação',
+            surgeryClearanceNotes: 'Pendente de exame',
+          ),
+          initialConsultationDate: '',
+        ),
+      ),
+    );
+
+    expect(
+      find.text('Pendente para liberação • Pendente de exame'),
+      findsOneWidget,
+    );
+
+    final card = tester.widget<Card>(
+      find.ancestor(
+        of: find.text('Situação da cirurgia'),
+        matching: find.byType(Card),
+      ),
+    );
+
+    expect(card.color, const Color(0xFFFFF7F7));
+  });
+
+  testWidgets(
+    'shows surgery clearance as completed only when surgery is released',
+    (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 1800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PreAnestheticScreen(
+            patient: const Patient(
+              name: 'Adulto',
+              age: 40,
+              weightKg: 70,
+              heightMeters: 1.7,
+              asa: 'II',
+              allergies: [],
+              restrictions: [],
+              medications: [],
+            ),
+            initialAssessment: const PreAnestheticAssessment(
+              comorbidities: [],
+              otherComorbidities: '',
+              currentMedications: [],
+              otherMedications: '',
+              allergyDescription: '',
+              smokingStatus: '',
+              alcoholStatus: '',
+              otherHabits: '',
+              mets: '',
+              physicalExam: '',
+              airway: Airway.empty(),
+              mouthOpening: '',
+              neckMobility: '',
+              dentition: '',
+              difficultAirwayPredictors: [],
+              otherDifficultAirwayPredictors: '',
+              difficultVentilationPredictors: [],
+              otherDifficultVentilationPredictors: '',
+              otherAirwayDetails: '',
+              complementaryExamItems: [],
+              complementaryExams: '',
+              otherComplementaryExams: '',
+              fastingSolids: '',
+              fastingLiquids: '',
+              fastingNotes: '',
+              asaClassification: '',
+              asaNotes: '',
+              anestheticPlan: '',
+              otherAnestheticPlan: '',
+              preAnestheticOrientationItems: [],
+              preAnestheticOrientationNotes: '',
+              restrictionItems: [],
+              patientRestrictions: '',
+              otherRestrictions: '',
+              surgeryClearanceStatus: 'Cirurgia liberada',
+              surgeryClearanceNotes: '',
+            ),
+            initialConsultationDate: '',
+          ),
+        ),
+      );
+
+      expect(find.text('Cirurgia liberada'), findsOneWidget);
+
+      final card = tester.widget<Card>(
+        find.ancestor(
+          of: find.text('Situação da cirurgia'),
+          matching: find.byType(Card),
+        ),
+      );
+
+      expect(card.color, const Color(0xFFF4FBF6));
+    },
+  );
 
   testWidgets('syncs Mallampati III/IV with difficult airway predictor', (
     WidgetTester tester,
