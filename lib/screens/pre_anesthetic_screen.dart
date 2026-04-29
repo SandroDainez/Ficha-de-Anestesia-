@@ -2458,6 +2458,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
             title: 'Identificação do paciente',
             initiallyExpanded: true,
             isCompleted: _hasCompleteIdentification,
+            summary: _identificationSummary(),
             child: Column(
               children: [
                 Align(
@@ -4540,6 +4541,39 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     ];
     final summary = _joinSummaryParts(parts);
     return summary.isEmpty ? 'Selecione a cirurgia' : summary;
+  }
+
+  String _identificationSummary() {
+    final ageLabel = _selectedPopulation == PatientPopulation.neonatal
+        ? 'Idade pós-natal'
+        : 'Idade';
+    final ageValue = _selectedPopulation == PatientPopulation.neonatal
+        ? _postnatalAgeController.text.trim()
+        : _ageController.text.trim();
+    final parts = <String>[
+      _selectedPopulation.label,
+      _nameController.text.trim(),
+      _consultationDateController.text.trim(),
+      if (ageValue.isNotEmpty) '$ageLabel: $ageValue',
+      if (_weightController.text.trim().isNotEmpty)
+        'Peso: ${_weightController.text.trim()} kg',
+      if (_heightController.text.trim().isNotEmpty)
+        'Altura: ${_heightController.text.trim()} cm',
+      if (_selectedPopulation == PatientPopulation.pediatric &&
+          _postnatalAgeController.text.trim().isNotEmpty)
+        'Idade pós-natal: ${_postnatalAgeController.text.trim()}',
+      if (_selectedPopulation == PatientPopulation.neonatal &&
+          _birthWeightController.text.trim().isNotEmpty)
+        'Peso ao nascer: ${_birthWeightController.text.trim()} kg',
+      if (_selectedPopulation == PatientPopulation.neonatal &&
+          _gestationalAgeController.text.trim().isNotEmpty)
+        'IG: ${_gestationalAgeController.text.trim()}',
+      if (_selectedPopulation == PatientPopulation.neonatal &&
+          _correctedGestationalAgeController.text.trim().isNotEmpty)
+        'IG corrigida: ${_correctedGestationalAgeController.text.trim()}',
+    ];
+    final summary = _joinSummaryParts(parts);
+    return summary.isEmpty ? 'Preencha a identificação do paciente' : summary;
   }
 
   String _prioritySummary() {
