@@ -437,6 +437,48 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     '40 mmHg',
     '50 mmHg',
   ];
+  static const List<String> _adultApPresetOptions = [
+    'Sem ruídos adventícios',
+    'MV reduzido bilateral',
+    'Estertores',
+    'Sibilos',
+    'Roncos',
+    'MV audível, esforço aumentado',
+  ];
+  static const List<String> _pediatricApPresetOptions = [
+    'Sem ruídos adventícios',
+    'Sibilos',
+    'Estertores',
+    'Secreção / rinorreia',
+    'Esforço respiratório aumentado',
+  ];
+  static const List<String> _neonatalApPresetOptions = [
+    'MV audível simétrico',
+    'Estertores',
+    'Roncos',
+    'Grunhidos',
+    'Esforço respiratório aumentado',
+  ];
+  static const List<String> _adultConsciousnessPresetOptions = [
+    'Consciente e orientado',
+    'Consciente, desorientado',
+    'Sonolento',
+    'Estupor',
+    'Coma / não responde',
+  ];
+  static const List<String> _pediatricConsciousnessPresetOptions = [
+    'Consciente, interage adequadamente',
+    'Irritado / choroso',
+    'Letárgico',
+    'Hiporresponsivo',
+    'Não responde',
+  ];
+  static const List<String> _neonatalConsciousnessPresetOptions = [
+    'Ativo, responde ao manejo',
+    'Hipoativo',
+    'Letárgico',
+    'Não responde',
+  ];
   static const List<String> _smokingOptions = ['Não', 'Ex-tabagista', 'Sim'];
   static const List<String> _alcoholOptions = ['Não', 'Social', 'Frequente'];
   static const List<_OptionDetail> _metsOptions = [
@@ -693,8 +735,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     'Eletrólitos',
     'Ecocardiograma',
   ];
-  static const List<String> _solidFastingOptions = ['6 horas', '8 horas'];
+  static const List<String> _solidFastingOptions = ['8 horas'];
   static const List<String> _liquidFastingOptions = ['2 horas'];
+  static const String _pendingRequestPrefix = 'Pendência da anestesia: ';
   static const List<String> _breastMilkFastingOptions = ['4 horas'];
   static const List<String> _asaOptions = ['I', 'II', 'III', 'IV', 'V', 'VI'];
   static const List<String> _surgeryPriorityOptions = [
@@ -745,6 +788,81 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     'Sangue compatibilizado',
     'Ventilação pós-operatória',
     'Monitorização de apneia/bradicardia',
+  ];
+  static const List<_MedicationOrientationGroupDefinition>
+  _adultMedicationOrientationGroups = [
+    _MedicationOrientationGroupDefinition(
+      title: 'Anti-hipertensivos',
+      options: [
+        'Manter todos, inclusive no dia da cirurgia',
+        'Manter com atenção à PA e volemia',
+        'Reforçar protocolo: não suspender anti-hipertensivos',
+      ],
+      otherHint: 'Ex: manter losartana e diurético, monitorar hipotensão',
+    ),
+    _MedicationOrientationGroupDefinition(
+      title: 'Anticoagulantes orais',
+      options: [
+        'Varfarina: suspender 5 dias antes',
+        'DOAC: suspender 24-72 h conforme risco',
+        'Avaliar ponte com heparina se alto risco trombótico',
+      ],
+      otherHint: 'Ex: apixabana 48 h, INR alvo < 1,5',
+    ),
+    _MedicationOrientationGroupDefinition(
+      title: 'Antiagregantes',
+      options: [
+        'AAS: manter na maioria das cirurgias',
+        'Clopidogrel: suspender 5-7 dias antes',
+        'Discutir com cardio se stent recente',
+      ],
+      otherHint: 'Ex: suspender AAS em neuro/oftalmo intraocular',
+    ),
+    _MedicationOrientationGroupDefinition(
+      title: 'Antidiabéticos orais',
+      options: [
+        'Metformina: suspender 24-48 h antes',
+        'SGLT2: suspender 3 dias antes',
+        'Sulfonilureia: não tomar na manhã da cirurgia',
+      ],
+      otherHint: 'Ex: sitagliptina suspender no dia do procedimento',
+    ),
+    _MedicationOrientationGroupDefinition(
+      title: 'GLP-1',
+      options: [
+        'Sem uso de GLP-1',
+        'GLP-1 semanal: suspender 1 semana antes',
+        'GLP-1 diário: suspender 24-48 h antes',
+      ],
+      otherHint: 'Ex: Ozempic, Mounjaro, Victoza',
+    ),
+    _MedicationOrientationGroupDefinition(
+      title: 'Insulina',
+      options: [
+        'Basal: reduzir para 50-80% na véspera e no dia',
+        'Rápida/regular: suspender enquanto estiver em jejum',
+        'Usar correção conforme glicemia capilar',
+      ],
+      otherHint: 'Ex: NPH 50% pela manhã do procedimento',
+    ),
+    _MedicationOrientationGroupDefinition(
+      title: 'Psicotrópicos e antiepilépticos',
+      options: [
+        'Manter antidepressivos, benzodiazepínicos e antiepilépticos',
+        'Manter antipsicóticos com monitorização de QT/PA',
+        'IMAO: discutir caso a caso com anestesia',
+      ],
+      otherHint: 'Ex: reduzir benzodiazepínico pré-op se sedação excessiva',
+    ),
+    _MedicationOrientationGroupDefinition(
+      title: 'Outros relevantes',
+      options: [
+        'Corticoide crônico: manter e avaliar dose de estresse',
+        'AINEs: suspender 3-5 dias antes se risco hemorrágico/renal',
+        'Fitoterápicos e suplementos: suspender 7 dias antes',
+      ],
+      otherHint: 'Ex: anticoncepcional em grande porte, biológico, ômega-3',
+    ),
   ];
   static const List<String> _preAnestheticOrientationOptions = [
     'Manter medicações de uso contínuo; suspender somente as que foram orientadas',
@@ -1006,6 +1124,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   late final TextEditingController _pasController;
   late final TextEditingController _padController;
   late final TextEditingController _apController;
+  late final TextEditingController _consciousnessLevelController;
   late final TextEditingController _otherAirwayController;
   late final TextEditingController _otherDifficultAirwayPredictorsController;
   late final TextEditingController
@@ -1027,6 +1146,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   late final TextEditingController _otherRestrictionsController;
   late final TextEditingController _consultationDateController;
   late final ExpansibleController _surgerySectionController;
+  late final Map<String, TextEditingController>
+  _preAnestheticOrientationOtherControllers;
 
   late Set<String> _selectedComorbidities;
   late Set<String> _selectedMedications;
@@ -1073,6 +1194,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   late PatientPopulation _selectedPopulation;
   late final List<TextEditingController> _identificationControllers;
   late final Map<String, _ComplementaryExamEntry> _complementaryExamEntries;
+  late final Map<String, String> _selectedPreAnestheticOrientationByGroup;
 
   String _normalizePreAnestheticOrientationItem(String item) {
     return switch (item.trim()) {
@@ -1094,6 +1216,187 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   void _onIdentificationChanged() {
     if (!mounted) return;
     setState(() {});
+  }
+
+  bool get _usesMedicationOrientationCards =>
+      _selectedPopulation == PatientPopulation.adult;
+
+  List<String> _adultMedicationOrientationSummaryLines() {
+    final lines = <String>[];
+    for (final group in _adultMedicationOrientationGroups) {
+      final selected =
+          _selectedPreAnestheticOrientationByGroup[group.title]?.trim() ?? '';
+      if (selected.isNotEmpty) {
+        lines.add('${group.title}: $selected');
+      }
+      final other =
+          _preAnestheticOrientationOtherControllers[group.title]?.text.trim() ??
+          '';
+      if (other.isNotEmpty) {
+        lines.add('${group.title} - outros: $other');
+      }
+    }
+    return lines;
+  }
+
+  void _restoreAdultMedicationOrientation(PreAnestheticAssessment assessment) {
+    final unmatchedItemLines = <String>[];
+    for (final item in assessment.preAnestheticOrientationItems) {
+      final normalized = item.trim();
+      final parts = normalized.split(':');
+      if (parts.length < 2) {
+        switch (_normalizePreAnestheticOrientationItem(normalized)) {
+          case 'Manter demais medicações':
+            _selectedPreAnestheticOrientationByGroup['Anti-hipertensivos'] =
+                'Reforçar protocolo: não suspender anti-hipertensivos';
+          case 'Suspender ou ajustar anticoagulantes / antiagregantes conforme orientação':
+            _selectedPreAnestheticOrientationByGroup['Anticoagulantes orais'] =
+                'DOAC: suspender 24-72 h conforme risco';
+          case 'Suspender ou ajustar antidiabéticos / insulina / GLP-1 conforme orientação':
+            _selectedPreAnestheticOrientationByGroup['Antidiabéticos orais'] =
+                'Metformina: suspender 24-48 h antes';
+          default:
+            unmatchedItemLines.add(normalized);
+        }
+        continue;
+      }
+      final title = parts.first.trim();
+      if (!_preAnestheticOrientationOtherControllers.containsKey(title)) {
+        unmatchedItemLines.add(normalized);
+        continue;
+      }
+      _selectedPreAnestheticOrientationByGroup[title] = parts
+          .sublist(1)
+          .join(':')
+          .trim();
+    }
+
+    final unmatchedNoteLines = <String>[...unmatchedItemLines];
+    for (final line in _lines(assessment.preAnestheticOrientationNotes)) {
+      final lower = line.toLowerCase();
+      if (lower.startsWith('observações gerais:') ||
+          lower.startsWith('observacoes gerais:')) {
+        _preAnestheticOrientationNotesController.text = line
+            .split(':')
+            .sublist(1)
+            .join(':')
+            .trim();
+        continue;
+      }
+
+      var matchedGroup = false;
+      for (final group in _adultMedicationOrientationGroups) {
+        final prefix = '${group.title} - outros:'.toLowerCase();
+        if (lower.startsWith(prefix)) {
+          _preAnestheticOrientationOtherControllers[group.title]?.text = line
+              .substring('${group.title} - outros:'.length)
+              .trim();
+          matchedGroup = true;
+          break;
+        }
+      }
+      if (!matchedGroup &&
+          _preAnestheticOrientationNotesController.text.isEmpty) {
+        unmatchedNoteLines.add(line);
+      }
+    }
+
+    if (_preAnestheticOrientationNotesController.text.isEmpty &&
+        unmatchedNoteLines.isNotEmpty) {
+      _preAnestheticOrientationNotesController.text = unmatchedNoteLines.join(
+        '\n',
+      );
+    }
+  }
+
+  List<String> _buildPreAnestheticOrientationItemsForSave() {
+    if (!_usesMedicationOrientationCards) {
+      return _selectedPreAnestheticOrientationItems.toList();
+    }
+
+    return _adultMedicationOrientationGroups
+        .map((group) {
+          final selected =
+              _selectedPreAnestheticOrientationByGroup[group.title]?.trim() ??
+              '';
+          return selected.isEmpty ? '' : '${group.title}: $selected';
+        })
+        .where((item) => item.isNotEmpty)
+        .toList();
+  }
+
+  String _buildPreAnestheticOrientationNotesForSave() {
+    if (!_usesMedicationOrientationCards) {
+      return _preAnestheticOrientationNotesController.text.trim();
+    }
+
+    final lines = <String>[
+      ..._adultMedicationOrientationGroups.map((group) {
+        final other =
+            _preAnestheticOrientationOtherControllers[group.title]?.text
+                .trim() ??
+            '';
+        return other.isEmpty ? '' : '${group.title} - outros: $other';
+      }),
+    ].where((item) => item.isNotEmpty).toList();
+
+    final generalNotes = _preAnestheticOrientationNotesController.text.trim();
+    if (generalNotes.isNotEmpty) {
+      lines.add('Observações gerais: $generalNotes');
+    }
+    return lines.join('\n');
+  }
+
+  Widget _buildMedicationOrientationGroupCard(
+    _MedicationOrientationGroupDefinition group,
+  ) {
+    final selected =
+        _selectedPreAnestheticOrientationByGroup[group.title]?.trim() ?? '';
+    final controller = _preAnestheticOrientationOtherControllers[group.title]!;
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xFFDCE6F2)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              group.title,
+              style: const TextStyle(
+                color: Color(0xFF17324D),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildSingleSelectButtons(
+              options: group.options,
+              selectedValue: selected,
+              color: const Color(0xFF2B76D2),
+              onSelected: (value) {
+                setState(() {
+                  _selectedPreAnestheticOrientationByGroup[group.title] = value;
+                });
+              },
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              minLines: 2,
+              maxLines: 3,
+              decoration: InputDecoration(
+                labelText: 'Outros',
+                hintText: group.otherHint,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   String _defaultNowLabel() {
@@ -1166,58 +1469,27 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   }
 
   String get _solidFastingLabel {
-    return switch (_selectedPopulation) {
-      PatientPopulation.adult => 'Sólidos / refeição leve',
-      PatientPopulation.pediatric =>
-        'Fórmula / leite não humano / refeição leve / sólidos',
-      PatientPopulation.neonatal => 'Fórmula / leite não humano',
-    };
+    return 'Jejum para alimentos';
   }
 
   String get _liquidFastingLabel {
-    return switch (_selectedPopulation) {
-      _ => 'Líquidos claros',
-    };
+    return 'Líquido claro (água)';
   }
 
-  bool get _showBreastMilkFastingSection =>
-      _selectedPopulation != PatientPopulation.adult;
+  bool get _showBreastMilkFastingSection => false;
 
   String get _breastMilkFastingLabel => 'Leite materno';
 
   List<String> get _fastingGuidanceLines {
-    switch (_selectedPopulation) {
-      case PatientPopulation.adult:
-        return const [
-          'Líquidos claros: até 2 h.',
-          'Refeição leve: 6 h.',
-          'Refeição gordurosa ou carne: 8 h ou mais.',
-        ];
-      case PatientPopulation.pediatric:
-        return const [
-          'Líquidos claros: até 2 h.',
-          'Leite materno: 4 h.',
-          'Fórmula infantil e leite não humano: 6 h.',
-          'Criança maior: refeição leve ou sólidos leves 6 h; refeição gordurosa 8 h ou mais.',
-        ];
-      case PatientPopulation.neonatal:
-        return const [
-          'RN estável em cirurgia eletiva: líquidos claros até 2 h.',
-          'Leite materno: 4 h.',
-          'Fórmula infantil ou leite não humano: 6 h.',
-          'Prematuro, RN internado/UTI, com suporte ventilatório, distensão abdominal ou risco metabólico: individualizar o plano de jejum.',
-        ];
-    }
+    return const [
+      'Padronizar 8 horas para alimentos.',
+      'Padronizar 2 horas para líquido claro (água).',
+      'Use o campo Outros quando precisar individualizar a orientação.',
+    ];
   }
 
   String? get _fastingReferenceText {
-    return switch (_selectedPopulation) {
-      PatientPopulation.adult => null,
-      PatientPopulation.pediatric =>
-        'Base usada nesta tela: esquema conservador 2-4-6. Referências: ASA 2023 (PMID 36629465) e ESAIC 2022 (PMID 34857683). Alguns serviços pediátricos adotam 1 h para líquidos claros em casos eletivos conforme protocolo local.',
-      PatientPopulation.neonatal =>
-        'Base usada nesta tela: esquema conservador 2-4-6 para RN estáveis em contexto eletivo. As diretrizes ASA 2023 (PMID 36629465) se aplicam a pacientes saudáveis submetidos a procedimentos eletivos, e a ESAIC 2022 (PMID 34857683) traz recomendações pediátricas com regime mais liberal em cenários selecionados. Em prematuridade, internação/UTI, suporte ventilatório, sepse, distensão abdominal, risco metabólico ou urgência, individualizar conforme contexto clínico e protocolo institucional.',
-    };
+    return null;
   }
 
   List<String> get _profileComorbidityOptions {
@@ -1410,6 +1682,25 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     };
   }
 
+  String get _functionalSelectionLabel {
+    return switch (_selectedPopulation) {
+      PatientPopulation.adult => 'METs',
+      PatientPopulation.pediatric => 'Reserva funcional',
+      PatientPopulation.neonatal => 'Reserva clínica',
+    };
+  }
+
+  String get _functionalReferenceHeading {
+    return switch (_selectedPopulation) {
+      PatientPopulation.adult =>
+        'Referencia rapida de METs (classe e significado)',
+      PatientPopulation.pediatric =>
+        'Referencia rapida da reserva funcional pediátrica',
+      PatientPopulation.neonatal =>
+        'Referencia rapida da reserva clínica neonatal',
+    };
+  }
+
   List<String> get _profileComplementaryExamOptions {
     switch (_selectedPopulation) {
       case PatientPopulation.adult:
@@ -1577,7 +1868,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
 
   String get _physicalExamSectionTitle {
     return switch (_selectedPopulation) {
-      PatientPopulation.adult => 'Exame físico',
+      PatientPopulation.adult => 'Exame clínico',
       PatientPopulation.pediatric => 'Exame clínico pediátrico',
       PatientPopulation.neonatal => 'Exame clínico neonatal',
     };
@@ -1608,6 +1899,14 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     };
   }
 
+  String get _consciousnessHint {
+    return switch (_selectedPopulation) {
+      PatientPopulation.adult => 'Nível de alerta e orientação',
+      PatientPopulation.pediatric => 'Interação, choro, resposta a estímulos',
+      PatientPopulation.neonatal => 'Atividade, choro, resposta a estímulos',
+    };
+  }
+
   String get _physicalOtherHint {
     return switch (_selectedPopulation) {
       PatientPopulation.adult =>
@@ -1616,6 +1915,14 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         'Estado geral, hidratação, febre, esforço respiratório e outros achados',
       PatientPopulation.neonatal =>
         'Tônus, perfusão, temperatura, glicemia, acessos e outros achados neonatais',
+    };
+  }
+
+  String get _defaultConsciousnessForNormalExam {
+    return switch (_selectedPopulation) {
+      PatientPopulation.adult => 'Consciente e orientado',
+      PatientPopulation.pediatric => 'Consciente, interage adequadamente',
+      PatientPopulation.neonatal => 'Ativo, responde ao manejo',
     };
   }
 
@@ -1824,6 +2131,28 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     }
   }
 
+  List<String> get _profileApPresetOptions {
+    switch (_selectedPopulation) {
+      case PatientPopulation.adult:
+        return _adultApPresetOptions;
+      case PatientPopulation.pediatric:
+        return _pediatricApPresetOptions;
+      case PatientPopulation.neonatal:
+        return _neonatalApPresetOptions;
+    }
+  }
+
+  List<String> get _profileConsciousnessPresetOptions {
+    switch (_selectedPopulation) {
+      case PatientPopulation.adult:
+        return _adultConsciousnessPresetOptions;
+      case PatientPopulation.pediatric:
+        return _pediatricConsciousnessPresetOptions;
+      case PatientPopulation.neonatal:
+        return _neonatalConsciousnessPresetOptions;
+    }
+  }
+
   String get _preAnestheticOrientationSectionTitle =>
       'Orientações de pré-anestésico';
 
@@ -2010,7 +2339,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         .where((line) => line.isNotEmpty)
         .where(
           (line) => !RegExp(
-            r'^(AC|FC|PAS|PAD|PA|AP)\s*:',
+            r'^(AC|FC|PAS|PAD|PA|AP|NC|Nível de consciência|Nivel de consciencia)\s*:',
             caseSensitive: false,
           ).hasMatch(line),
         )
@@ -2037,6 +2366,33 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       return value;
     }
     return legacyValues[value.trim().toLowerCase()] ?? '';
+  }
+
+  void _syncSurgeryClearanceWithRequests() {
+    final manualLines = _lines(
+      _surgeryClearanceNotesController.text,
+    ).where((line) => !line.startsWith(_pendingRequestPrefix)).toList();
+    final requestLines = _selectedAnesthesiaTeamRequestItems
+        .map((item) => '$_pendingRequestPrefix$item')
+        .toList();
+    final mergedLines = [...requestLines, ...manualLines];
+
+    final nextText = mergedLines.join('\n');
+    if (_surgeryClearanceNotesController.text != nextText) {
+      _surgeryClearanceNotesController.text = nextText;
+      _surgeryClearanceNotesController.selection = TextSelection.collapsed(
+        offset: _surgeryClearanceNotesController.text.length,
+      );
+    }
+
+    if (_selectedAnesthesiaTeamRequestItems.isNotEmpty) {
+      _selectedSurgeryClearanceStatus = 'Pendente para liberação';
+    }
+  }
+
+  void _setFixedFastingDefaults() {
+    _selectedSolidFasting = '8 horas';
+    _selectedLiquidFasting = '2 horas';
   }
 
   void _restoreComplementaryExamEntries(String source) {
@@ -2196,6 +2552,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         'PAD: ${_padController.text.trim()}',
       if (_apController.text.trim().isNotEmpty)
         'AP: ${_apController.text.trim()}',
+      if (_consciousnessLevelController.text.trim().isNotEmpty)
+        'NC: ${_consciousnessLevelController.text.trim()}',
       if (_physicalExamController.text.trim().isNotEmpty)
         _physicalExamController.text.trim(),
     ];
@@ -2341,6 +2699,13 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     _apController = TextEditingController(
       text: _physicalExamField(['AP'], assessment.physicalExam),
     );
+    _consciousnessLevelController = TextEditingController(
+      text: _physicalExamField([
+        'NC',
+        'Nível de consciência',
+        'Nivel de consciencia',
+      ], assessment.physicalExam),
+    );
     _physicalExamController = TextEditingController(
       text: _physicalExamOther(assessment.physicalExam),
     );
@@ -2381,9 +2746,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     _otherPostoperativePlanningController = TextEditingController(
       text: assessment.otherPostoperativePlanning,
     );
-    _preAnestheticOrientationNotesController = TextEditingController(
-      text: assessment.preAnestheticOrientationNotes,
-    );
+    _preAnestheticOrientationNotesController = TextEditingController(text: '');
     _orientationFreeTextControllers = {
       for (final field in _allOrientationFreeTextFields)
         field.prefix: TextEditingController(
@@ -2392,6 +2755,10 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
             prefix: field.prefix,
           ),
         ),
+    };
+    _preAnestheticOrientationOtherControllers = {
+      for (final group in _adultMedicationOrientationGroups)
+        group.title: TextEditingController(),
     };
     _anesthesiaTeamRequestNotesController = TextEditingController(
       text: assessment.anesthesiaTeamRequestNotes,
@@ -2444,6 +2811,15 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         .map(_normalizePreAnestheticOrientationItem)
         .where(_profilePreAnestheticOrientationOptions.contains)
         .toSet();
+    _selectedPreAnestheticOrientationByGroup = {
+      for (final group in _adultMedicationOrientationGroups) group.title: '',
+    };
+    if (_selectedPopulation == PatientPopulation.adult) {
+      _restoreAdultMedicationOrientation(assessment);
+    } else {
+      _preAnestheticOrientationNotesController.text =
+          assessment.preAnestheticOrientationNotes;
+    }
     _selectedAnesthesiaTeamRequestItems = assessment.anesthesiaTeamRequestItems
         .where(_anesthesiaTeamRequestOptions.contains)
         .toSet();
@@ -2502,13 +2878,19 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     _selectedSolidFasting = _normalizeFastingValue(
       assessment.fastingSolids,
       _solidFastingOptions,
-      const {'6h': '6 horas', '8h': '8 horas'},
+      const {'6h': '8 horas', '8h': '8 horas'},
     );
+    if (_selectedSolidFasting.isEmpty) {
+      _selectedSolidFasting = '8 horas';
+    }
     _selectedLiquidFasting = _normalizeFastingValue(
       assessment.fastingLiquids,
       _liquidFastingOptions,
       const {'2h': '2 horas'},
     );
+    if (_selectedLiquidFasting.isEmpty) {
+      _selectedLiquidFasting = '2 horas';
+    }
     _selectedBreastMilkFasting = _normalizeFastingValue(
       assessment.fastingBreastMilk,
       _breastMilkFastingOptions,
@@ -2547,16 +2929,20 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       _pasController,
       _padController,
       _apController,
+      _consciousnessLevelController,
       _physicalExamController,
       _otherComplementaryExamsController,
       _fastingNotesController,
       _preAnestheticOrientationNotesController,
       _freeNotesController,
+      ..._preAnestheticOrientationOtherControllers.values,
     ];
     for (final controller in _identificationControllers) {
       controller.addListener(_onIdentificationChanged);
     }
+    _setFixedFastingDefaults();
     _syncAirwayPredictors();
+    _syncSurgeryClearanceWithRequests();
   }
 
   @override
@@ -2580,6 +2966,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     _pasController.dispose();
     _padController.dispose();
     _apController.dispose();
+    _consciousnessLevelController.dispose();
     _otherAirwayController.dispose();
     _otherDifficultAirwayPredictorsController.dispose();
     _otherDifficultVentilationPredictorsController.dispose();
@@ -2593,6 +2980,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     _otherAnestheticPlanController.dispose();
     _otherPostoperativePlanningController.dispose();
     _preAnestheticOrientationNotesController.dispose();
+    for (final controller in _preAnestheticOrientationOtherControllers.values) {
+      controller.dispose();
+    }
     for (final controller in _orientationFreeTextControllers.values) {
       controller.dispose();
     }
@@ -3072,6 +3462,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   }
 
   void _saveAndReturn() {
+    _setFixedFastingDefaults();
+    _syncSurgeryClearanceWithRequests();
     _syncAirwayPredictors();
     final medications = [
       ..._selectedMedications,
@@ -3183,13 +3575,14 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       otherPostoperativePlanning: _otherPostoperativePlanningController.text
           .trim(),
       planningNotes: _freeNotesController.text.trim(),
-      preAnestheticOrientationItems: [
-        ..._selectedPreAnestheticOrientationItems,
-        ..._orientationFreeTextItems,
-      ],
-      preAnestheticOrientationNotes: _preAnestheticOrientationNotesController
-          .text
-          .trim(),
+      preAnestheticOrientationItems:
+          _usesMedicationOrientationCards
+          ? _buildPreAnestheticOrientationItemsForSave()
+          : [..._selectedPreAnestheticOrientationItems, ..._orientationFreeTextItems],
+      preAnestheticOrientationNotes:
+          _usesMedicationOrientationCards
+          ? _buildPreAnestheticOrientationNotesForSave()
+          : _preAnestheticOrientationNotesController.text.trim(),
       restrictionItems: _selectedRestrictions.toList(),
       patientRestrictions: restrictionLines.join('\n'),
       otherRestrictions: _otherRestrictionsController.text.trim(),
@@ -3782,6 +4175,28 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
             ),
           ),
           _SectionCard(
+            title: 'Orientações pré-anestésicas',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  '• Suspender anticoagulantes e antiagregantes plaquetários orientados.',
+                ),
+                Text('• Manter todas as medicações orientadas.'),
+                Text('• Trazer exames e laudos.'),
+                Text(
+                  '• Comunicar na internação qualquer modificação clínica ou intercorrência pós‑consulta.',
+                ),
+                Text(
+                  '• Realizar avaliações solicitadas; caso não realizadas, considerar risco de suspensão do procedimento.',
+                ),
+                Text('• Trazer lista completa de medicações.'),
+                Text('• Realizar jejum recomendado.'),
+                Text('• Chegar ao hospital no horário orientado.'),
+              ],
+            ),
+          ),
+          _SectionCard(
             title: _contextSectionTitle,
             isCompleted: _hasHabitsContent,
             summary: _habitsSummary(),
@@ -3840,14 +4255,6 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        _functionalSectionTitle,
-                        style: const TextStyle(
-                          color: Color(0xFF2B76D2),
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
                       ..._functionalGuidanceLines.map(
                         (line) => Padding(
                           padding: const EdgeInsets.only(bottom: 2),
@@ -3864,64 +4271,38 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _profileFunctionalOptions.map((option) {
-                    final selected = _selectedMets == option.value;
-                    return OutlinedButton(
-                      onPressed: () {
-                        setState(() {
-                          _selectedMets = option.value;
-                        });
-                      },
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: selected
-                            ? const Color(0xFF2B76D2).withAlpha(18)
-                            : Colors.white,
-                        side: BorderSide(
-                          color: selected
-                              ? const Color(0xFF2B76D2)
-                              : const Color(0xFFD6E1ED),
-                        ),
-                        foregroundColor: selected
-                            ? const Color(0xFF2B76D2)
-                            : const Color(0xFF4F6378),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            option.value,
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            option.description,
-                            style: const TextStyle(fontSize: 11),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
+                _sectionLabel(_functionalSelectionLabel),
+                const SizedBox(height: 8),
+                _buildSingleSelectButtons(
+                  options: _profileFunctionalOptions
+                      .map((option) => option.value)
+                      .toList(),
+                  selectedValue: _selectedMets,
+                  onSelected: (value) => setState(() => _selectedMets = value),
+                  color: const Color(0xFF2B76D2),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  _functionalReferenceHeading,
+                  style: const TextStyle(
+                    color: Color(0xFF17324D),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ..._profileFunctionalOptions.map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _FunctionalReferenceCard(detail: item),
+                  ),
                 ),
                 const SizedBox(height: 14),
-                TextField(
+                _buildAdaptiveInputField(
                   controller: _metsNotesController,
+                  label: 'Outros',
+                  hintText: _functionalOtherHint,
                   minLines: 2,
                   maxLines: 4,
-                  decoration: InputDecoration(
-                    labelText: 'Outros',
-                    hintText: _functionalOtherHint,
-                  ),
                 ),
               ],
             ),
@@ -3999,7 +4380,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                           _fcController.text.trim().isNotEmpty ||
                           _pasController.text.trim().isNotEmpty ||
                           _padController.text.trim().isNotEmpty ||
-                          _apController.text.trim().isNotEmpty,
+                          _apController.text.trim().isNotEmpty ||
+                          _consciousnessLevelController.text.trim().isNotEmpty,
                       color: const Color(0xFF169653),
                       onPressed: () {
                         setState(() {
@@ -4008,6 +4390,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                           _pasController.text = '120 mmHg';
                           _padController.text = '80 mmHg';
                           _apController.text = 'Sem ruídos adventícios';
+                          _consciousnessLevelController.text =
+                              _defaultConsciousnessForNormalExam;
                         });
                       },
                     ),
@@ -4022,6 +4406,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                           _pasController.clear();
                           _padController.clear();
                           _apController.clear();
+                          _consciousnessLevelController.clear();
                           _physicalExamController.clear();
                         });
                       },
@@ -4089,18 +4474,55 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                _buildAdaptiveInputField(
+                _buildInputWithQuickPresets(
                   controller: _apController,
                   label: 'AP',
+                  options: _profileApPresetOptions,
+                  selectedValue: _apController.text.trim(),
+                  onSelected: (option) =>
+                      setState(() => _apController.text = option),
                   hintText: _apHint,
                 ),
                 const SizedBox(height: 12),
-                _buildAdaptiveInputField(
-                  controller: _physicalExamController,
-                  label: 'Outros achados',
-                  hintText: _physicalOtherHint,
-                  minLines: 2,
-                  maxLines: 4,
+                _buildInputWithQuickPresets(
+                  controller: _consciousnessLevelController,
+                  label: 'Nível de consciência',
+                  options: _profileConsciousnessPresetOptions,
+                  selectedValue: _consciousnessLevelController.text.trim(),
+                  onSelected: (option) => setState(
+                    () => _consciousnessLevelController.text = option,
+                  ),
+                  hintText: _consciousnessHint,
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFE),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE5ECF6)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Outros achados',
+                        style: TextStyle(
+                          color: Color(0xFF17324D),
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildAdaptiveInputField(
+                        controller: _physicalExamController,
+                        label: 'Escrita livre',
+                        hintText: _physicalOtherHint,
+                        minLines: 2,
+                        maxLines: 4,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -4416,7 +4838,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   options: _solidFastingOptions,
                   selectedValue: _selectedSolidFasting,
                   onSelected: (value) {
-                    setState(() => _selectedSolidFasting = value);
+                    setState(() => _selectedSolidFasting = '8 horas');
                   },
                   color: const Color(0xFFCC7A00),
                 ),
@@ -4427,7 +4849,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   options: _liquidFastingOptions,
                   selectedValue: _selectedLiquidFasting,
                   onSelected: (value) {
-                    setState(() => _selectedLiquidFasting = value);
+                    setState(() => _selectedLiquidFasting = '2 horas');
                   },
                 ),
                 if (_showBreastMilkFastingSection) ...[
@@ -4448,13 +4870,10 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   controller: _fastingNotesController,
                   minLines: 2,
                   maxLines: 4,
-                  decoration: InputDecoration(
-                    labelText: 'Observações do jejum',
-                    hintText: _selectedPopulation == PatientPopulation.adult
-                        ? 'Ex: jejum inadequado, horário da última refeição'
-                        : _selectedPopulation == PatientPopulation.pediatric
-                        ? 'Ex: discriminar se foi leite materno, fórmula ou refeição sólida conforme a idade'
-                        : 'Ex: horário da última mamada, fórmula, glicemia, risco de hipoglicemia',
+                  decoration: const InputDecoration(
+                    labelText: 'Outros',
+                    hintText:
+                        'Ex: exceção ao jejum padrão, horário da última ingestão, necessidade de individualização',
                   ),
                 ),
               ],
@@ -4658,8 +5077,10 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
           _SectionCard(
             title: _preAnestheticOrientationSectionTitle,
             isCompleted:
-                _selectedPreAnestheticOrientationItems.isNotEmpty ||
-                _orientationFreeTextItems.isNotEmpty ||
+                (_usesMedicationOrientationCards
+                    ? _adultMedicationOrientationSummaryLines().isNotEmpty
+                    : _selectedPreAnestheticOrientationItems.isNotEmpty ||
+                          _orientationFreeTextItems.isNotEmpty) ||
                 _preAnestheticOrientationNotesController.text.trim().isNotEmpty,
             summary: _preAnestheticOrientationSummary(),
             child: Column(
@@ -4692,16 +5113,31 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                _buildPreAnestheticOrientationGroups(),
+                if (_usesMedicationOrientationCards)
+                  Column(
+                    children: _adultMedicationOrientationGroups
+                        .map(
+                          (group) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _buildMedicationOrientationGroupCard(group),
+                          ),
+                        )
+                        .toList(),
+                  )
+                else
+                  _buildPreAnestheticOrientationGroups(),
                 const SizedBox(height: 14),
                 TextField(
                   controller: _preAnestheticOrientationNotesController,
                   minLines: 3,
                   maxLines: 5,
-                  decoration: const InputDecoration(
-                    labelText: 'Detalhes complementares',
-                    hintText:
-                        'Ex: suspender medicações específicas, horários, recontato, preparo adicional',
+                  decoration: InputDecoration(
+                    labelText: _usesMedicationOrientationCards
+                        ? 'Observações gerais'
+                        : 'Detalhes complementares',
+                    hintText: _usesMedicationOrientationCards
+                        ? 'Ex: horários, ponte com heparina, retorno, preparo adicional'
+                        : 'Ex: suspender medicações específicas, horários, recontato, preparo adicional',
                   ),
                 ),
               ],
@@ -4820,6 +5256,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       _pasController.text.trim().isNotEmpty ||
       _padController.text.trim().isNotEmpty ||
       _apController.text.trim().isNotEmpty ||
+      _consciousnessLevelController.text.trim().isNotEmpty ||
       _physicalExamController.text.trim().isNotEmpty;
 
   bool get _hasComplementaryExamsContent =>
@@ -5179,11 +5616,16 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   }
 
   Future<void> _printPatientRecommendations() async {
-    final orientationLines = <String>[
-      ..._selectedPreAnestheticOrientationItems,
-      ..._orientationFreeTextItems,
-      ..._lines(_preAnestheticOrientationNotesController.text),
-    ];
+    final orientationLines = _usesMedicationOrientationCards
+        ? <String>[
+            ..._buildPreAnestheticOrientationItemsForSave(),
+            ..._lines(_buildPreAnestheticOrientationNotesForSave()),
+          ]
+        : <String>[
+            ..._selectedPreAnestheticOrientationItems,
+            ..._orientationFreeTextItems,
+            ..._lines(_preAnestheticOrientationNotesController.text),
+          ];
     if (orientationLines.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -5540,8 +5982,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
 
   String _fastingSummary() {
     final parts = [
-      _selectedSolidFasting,
-      _selectedLiquidFasting,
+      if (_selectedSolidFasting.isNotEmpty) 'Alimentos: $_selectedSolidFasting',
+      if (_selectedLiquidFasting.isNotEmpty) 'Água: $_selectedLiquidFasting',
       _selectedBreastMilkFasting,
       _joinSummaryParts(_lines(_fastingNotesController.text)),
     ];
@@ -5621,10 +6063,12 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         'PAD ${_padController.text.trim()}',
       if (_apController.text.trim().isNotEmpty)
         'AP ${_apController.text.trim()}',
+      if (_consciousnessLevelController.text.trim().isNotEmpty)
+        'NC ${_consciousnessLevelController.text.trim()}',
       _joinSummaryParts(_lines(_physicalExamController.text)),
     ];
     final summary = _joinSummaryParts(parts);
-    return summary.isEmpty ? 'Preencha o exame físico' : summary;
+    return summary.isEmpty ? 'Preencha o exame clínico' : summary;
   }
 
   String _airwaySummary() {
@@ -5678,8 +6122,14 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
 
   String _preAnestheticOrientationSummary() {
     final parts = [
-      _joinSummaryParts(_selectedPreAnestheticOrientationItems),
-      _joinSummaryParts(_orientationFreeTextItems),
+      _joinSummaryParts(
+        _usesMedicationOrientationCards
+            ? _adultMedicationOrientationSummaryLines()
+            : [
+                ..._selectedPreAnestheticOrientationItems,
+                ..._orientationFreeTextItems,
+              ],
+      ),
       _joinSummaryParts(_lines(_preAnestheticOrientationNotesController.text)),
     ];
     final summary = _joinSummaryParts(parts);
@@ -5714,6 +6164,18 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
 }
 
 enum _SectionCardTone { neutral, completed, alert }
+
+class _MedicationOrientationGroupDefinition {
+  const _MedicationOrientationGroupDefinition({
+    required this.title,
+    required this.options,
+    required this.otherHint,
+  });
+
+  final String title;
+  final List<String> options;
+  final String otherHint;
+}
 
 class _ExpandablePresetFieldCard extends StatefulWidget {
   const _ExpandablePresetFieldCard({
@@ -6080,6 +6542,57 @@ class PreAnestheticScreenResult {
   final Patient patient;
   final PreAnestheticAssessment assessment;
   final String consultationDate;
+}
+
+class _FunctionalReferenceCard extends StatelessWidget {
+  const _FunctionalReferenceCard({required this.detail});
+
+  final _OptionDetail detail;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFE),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5ECF6)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2B76D2).withAlpha(22),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  detail.value,
+                  style: const TextStyle(
+                    color: Color(0xFF2B76D2),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            detail.description,
+            style: const TextStyle(
+              color: Color(0xFF5D7288),
+              fontWeight: FontWeight.w600,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _AirwayReferenceCard extends StatelessWidget {

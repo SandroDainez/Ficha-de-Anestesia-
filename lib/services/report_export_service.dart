@@ -319,7 +319,7 @@ class ReportExportService {
               _orDash(record.preAnestheticAssessment.mets),
             ),
             _field(
-              'Exame físico',
+              'Exame clínico',
               _orDash(record.preAnestheticAssessment.physicalExam),
             ),
             _field(

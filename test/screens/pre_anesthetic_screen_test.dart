@@ -227,72 +227,19 @@ void main() {
     await tester.tap(find.text('Orientações de pré-anestésico'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Medicações a manter'), findsOneWidget);
-    expect(find.text('Suspender'), findsOneWidget);
-    expect(find.text('Anticoagulantes / antiagregantes'), findsOneWidget);
-    expect(find.text('Antidiabéticos / insulina / GLP-1'), findsNothing);
+    expect(find.text('Anti-hipertensivos'), findsOneWidget);
+    expect(find.text('Anticoagulantes orais'), findsOneWidget);
+    expect(find.text('Antiagregantes'), findsOneWidget);
+    expect(find.text('GLP-1'), findsOneWidget);
 
-    await tester.tap(find.text('Medicações a manter'));
+    await tester.tap(find.text('Anti-hipertensivos'));
     await tester.pumpAndSettle();
 
     expect(
-      find.text(
-        'Manter medicações de uso contínuo; suspender somente as que foram orientadas',
-      ),
+      find.text('Manter todos, inclusive no dia da cirurgia'),
       findsOneWidget,
     );
-    expect(find.text('Outro - medicações a manter'), findsNothing);
-
-    await tester.tap(
-      find.text(
-        'Manter medicações de uso contínuo; suspender somente as que foram orientadas',
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('1 opção(ões) selecionada(s)'), findsOneWidget);
-
-    await tester.tap(find.text('Medicações a manter'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Suspender'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Medicações a suspender'), findsOneWidget);
-    expect(
-      find.text('Suspender IECA/ARB no dia da cirurgia se indicado'),
-      findsNothing,
-    );
-    expect(
-      find.text('Suspender varfarina 5 dias antes e confirmar INR conforme protocolo local'),
-      findsNothing,
-    );
-    expect(find.text('Suspender clopidogrel 5 dias antes'), findsNothing);
-    expect(
-      find.text(
-        'Suspender DOAC 24-72h conforme função renal, fármaco e risco de sangramento',
-      ),
-      findsNothing,
-    );
-
-    await tester.enterText(
-      find.widgetWithText(TextField, 'Medicações a suspender'),
-      'Semaglutida\nEmpagliflozina',
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('2 opção(ões) selecionada(s)'), findsOneWidget);
-
-    await tester.tap(find.text('Suspender'));
-    await tester.pumpAndSettle();
-
-    await tester.scrollUntilVisible(
-      find.text('Outras informações'),
-      800,
-      scrollable: find.byType(Scrollable).first,
-    );
-
-    expect(find.text('Avisar alergias / febre / IVAS'), findsNothing);
+    expect(find.text('Outros'), findsWidgets);
   });
 
   testWidgets(
@@ -356,7 +303,7 @@ void main() {
     },
   );
 
-  testWidgets('shows neonatal fasting individualization guidance', (
+  testWidgets('shows fixed fasting guidance in neonatal pre-anesthetic screen', (
     WidgetTester tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(1200, 2200));
@@ -392,25 +339,21 @@ void main() {
     await tester.tap(find.text('Jejum recomendado'));
     await tester.pumpAndSettle();
 
+    expect(find.text('Padronizar 8 horas para alimentos.'), findsOneWidget);
     expect(
-      find.text('RN estável em cirurgia eletiva: líquidos claros até 2 h.'),
+      find.text('Padronizar 2 horas para líquido claro (água).'),
       findsOneWidget,
     );
     expect(
       find.text(
-        'Prematuro, RN internado/UTI, com suporte ventilatório, distensão abdominal ou risco metabólico: individualizar o plano de jejum.',
+        'Use o campo Outros quando precisar individualizar a orientação.',
       ),
       findsOneWidget,
     );
-    expect(
-      find.textContaining(
-        'pacientes saudáveis submetidos a procedimentos eletivos',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Leite materno'), findsNothing);
   });
 
-  testWidgets('adapts fasting fields for pediatric intake types', (
+  testWidgets('uses fixed fasting fields for pediatric screen', (
     WidgetTester tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(1200, 2200));
@@ -443,21 +386,15 @@ void main() {
     await tester.tap(find.text('Jejum recomendado'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Leite materno: 4 h.'), findsOneWidget);
+    expect(find.text('Padronizar 8 horas para alimentos.'), findsOneWidget);
     expect(
-      find.text(
-        'Criança maior: refeição leve ou sólidos leves 6 h; refeição gordurosa 8 h ou mais.',
-      ),
+      find.text('Padronizar 2 horas para líquido claro (água).'),
       findsOneWidget,
     );
-    expect(find.textContaining('ASA 2023'), findsOneWidget);
-    expect(find.textContaining('ESAIC 2022'), findsOneWidget);
-    expect(
-      find.text('Fórmula / leite não humano / refeição leve / sólidos'),
-      findsOneWidget,
-    );
-    expect(find.text('Líquidos claros'), findsOneWidget);
-    expect(find.text('Leite materno'), findsOneWidget);
+    expect(find.text('Jejum para alimentos'), findsOneWidget);
+    expect(find.text('Líquido claro (água)'), findsOneWidget);
+    expect(find.text('Leite materno'), findsNothing);
+    expect(find.text('Outros'), findsWidgets);
   });
 
   testWidgets(
@@ -589,8 +526,8 @@ void main() {
       await tester.tap(find.text('Reserva funcional pediátrica'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Atividade preservada'), findsOneWidget);
-      expect(find.text('Limitação importante'), findsOneWidget);
+      expect(find.text('Atividade preservada'), findsWidgets);
+      expect(find.text('Limitação importante'), findsWidgets);
       expect(find.text('1 MET'), findsNothing);
     },
   );
@@ -643,8 +580,8 @@ void main() {
       await tester.tap(find.text('Reserva clínica neonatal'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Estável em ar ambiente'), findsOneWidget);
-      expect(find.text('Suporte ventilatório'), findsOneWidget);
+      expect(find.text('Estável em ar ambiente'), findsWidgets);
+      expect(find.text('Suporte ventilatório'), findsWidgets);
       expect(find.text('1 MET'), findsNothing);
     },
   );
@@ -753,11 +690,11 @@ void main() {
     );
 
     await tester.scrollUntilVisible(
-      find.text('Exame físico'),
+      find.text('Exame clínico'),
       300,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.text('Exame físico'));
+    await tester.tap(find.text('Exame clínico'));
     await tester.pumpAndSettle();
 
     expect(find.text('AC'), findsOneWidget);
@@ -770,7 +707,9 @@ void main() {
     expect(find.text('PAS'), findsOneWidget);
     expect(find.text('PAD'), findsOneWidget);
     expect(find.text('AP'), findsOneWidget);
+    expect(find.text('Nível de consciência'), findsOneWidget);
     expect(find.text('Outros achados'), findsOneWidget);
+    expect(find.text('Escrita livre'), findsOneWidget);
   });
 
   testWidgets('shows surgery clearance as alert when surgery is not released', (
