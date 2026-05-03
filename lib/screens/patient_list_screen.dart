@@ -121,13 +121,14 @@ class _PatientListScreenState extends State<PatientListScreen> {
   }
 
   Future<void> _openAnesthesiaRecord({AnesthesiaCase? caseFile}) async {
-    final now = DateTime.now().toIso8601String();
+    final now = DateTime.now();
+    final nowIso = now.toIso8601String();
     final targetCase =
         caseFile ??
         AnesthesiaCase(
           id: _storageService.createCaseId(),
-          createdAtIso: now,
-          updatedAtIso: now,
+          createdAtIso: nowIso,
+          updatedAtIso: nowIso,
           preAnestheticDate: '',
           anesthesiaDate: _nowLabel(),
           status: AnesthesiaCaseStatus.inProgress,
@@ -135,12 +136,32 @@ class _PatientListScreenState extends State<PatientListScreen> {
         );
 
     final caseWithDate = targetCase.copyWith(
+      updatedAtIso: nowIso,
       anesthesiaDate: targetCase.anesthesiaDate.trim().isEmpty
           ? _nowLabel()
           : targetCase.anesthesiaDate,
+      status: targetCase.status == AnesthesiaCaseStatus.finalized
+          ? AnesthesiaCaseStatus.finalized
+          : AnesthesiaCaseStatus.inProgress,
     );
     if (!mounted) return;
 
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await _storageService.upsertCase(caseWithDate);
+    } catch (error) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('$error'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 6),
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
         builder: (_) => AnesthesiaScreen(

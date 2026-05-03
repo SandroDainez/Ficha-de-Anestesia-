@@ -133,6 +133,7 @@ void main() {
     expect(find.text('Maria Souza'), findsOneWidget);
     expect(find.text('Colecistectomia'), findsOneWidget);
     expect(find.text('Time-out finalizado'), findsWidgets);
+    expect(find.text('Tela inicial'), findsOneWidget);
     expect(find.byKey(const Key('events-card')), findsOneWidget);
     expect(find.byKey(const Key('fluid-balance-card')), findsOneWidget);
     expect(find.text('VERIFICAR PENDÊNCIAS'), findsOneWidget);

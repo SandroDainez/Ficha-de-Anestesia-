@@ -36,6 +36,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Consulta pré-anestésica do adulto'), findsOneWidget);
+    expect(find.text('Tela inicial'), findsOneWidget);
   });
 
   testWidgets('shows pediatric antecedent guidance in pre-anesthetic screen', (
@@ -173,6 +174,75 @@ void main() {
     );
     expect(
       find.text('Use o sufixo E em urgencia/emergencia quando aplicavel.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('groups adult medications and pre-anesthetic orientations', (
+    WidgetTester tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PreAnestheticScreen(
+          patient: const Patient(
+            name: 'Adulto',
+            age: 52,
+            weightKg: 82,
+            heightMeters: 1.75,
+            asa: 'III',
+            allergies: [],
+            restrictions: [],
+            medications: [],
+          ),
+          initialAssessment: const PreAnestheticAssessment.empty(),
+          initialConsultationDate: '',
+        ),
+      ),
+    );
+
+    await tester.scrollUntilVisible(
+      find.text('Medicações em uso'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Medicações em uso'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Antidiabéticos'), findsOneWidget);
+    expect(find.text('Anticoagulantes'), findsOneWidget);
+    expect(find.text('IECA / ARB'), findsOneWidget);
+    expect(find.text('Metformina (antidiabético)'), findsOneWidget);
+    expect(find.text('Losartana (ARB)'), findsOneWidget);
+
+    await tester.tap(find.text('Medicações em uso'));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Orientações de pré-anestésico'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Orientações de pré-anestésico'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Medicações que geralmente manter'), findsOneWidget);
+    expect(
+      find.text('Medicações que geralmente suspender ou avaliar'),
+      findsOneWidget,
+    );
+    expect(find.text('Anticoagulantes / antiagregantes'), findsOneWidget);
+
+    await tester.tap(find.text('Antidiabéticos / insulina / GLP-1'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Suspender metformina no dia do procedimento'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Ajustar insulina basal na véspera/no dia conforme glicemia'),
       findsOneWidget,
     );
   });

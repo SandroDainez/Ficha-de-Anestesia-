@@ -14,6 +14,7 @@ class TopBarWidget extends StatelessWidget {
     required this.highlightMessage,
     required this.preAnestheticDateLabel,
     required this.anesthesiaDateLabel,
+    this.onHomeTap,
     this.onPreAnestheticDateTap,
     this.onAnesthesiaDateTap,
   });
@@ -25,6 +26,7 @@ class TopBarWidget extends StatelessWidget {
   final String highlightMessage;
   final String preAnestheticDateLabel;
   final String anesthesiaDateLabel;
+  final VoidCallback? onHomeTap;
   final VoidCallback? onPreAnestheticDateTap;
   final VoidCallback? onAnesthesiaDateTap;
 
@@ -94,6 +96,22 @@ class TopBarWidget extends StatelessWidget {
             runSpacing: UiSpace.xs,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
+              if (onHomeTap != null)
+                OutlinedButton.icon(
+                  onPressed: onHomeTap,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: UiColors.textPrimary,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(UiRadius.md),
+                    ),
+                  ),
+                  icon: const Icon(Icons.home_outlined, size: 16),
+                  label: const Text('Tela inicial'),
+                ),
               _TopBarPill(
                 label: recordStatus,
                 color: UiColors.success,

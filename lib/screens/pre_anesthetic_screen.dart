@@ -22,6 +22,20 @@ class PreAnestheticScreen extends StatefulWidget {
   State<PreAnestheticScreen> createState() => _PreAnestheticScreenState();
 }
 
+class _MedicationOptionGroup {
+  const _MedicationOptionGroup({required this.title, required this.options});
+
+  final String title;
+  final List<String> options;
+}
+
+class _OrientationOptionGroup {
+  const _OrientationOptionGroup({required this.title, required this.options});
+
+  final String title;
+  final List<String> options;
+}
+
 class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   static const List<String> _comorbiditiesOptions = [
     'HAS',
@@ -58,6 +72,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     'Enterocolite necrosante / cirurgia abdominal',
   ];
   static const List<String> _medicationOptions = [
+    'Metformina (antidiabético)',
+    'Insulina (antidiabético)',
+    'Glibenclamida (antidiabético)',
     'AAS (antiagregante)',
     'Clopidogrel (antiagregante)',
     'Varfarina (anticoagulante)',
@@ -66,51 +83,180 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     'Atenolol (betabloqueador)',
     'Metoprolol (betabloqueador)',
     'Propranolol (betabloqueador)',
-    'Captopril (IECA)',
-    'Enalapril (IECA)',
-    'Losartana (ARB)',
-    'Furosemida (diurético)',
-    'Hidroclorotiazida (diurético)',
-    'Metformina (antidiabético)',
-    'Insulina (antidiabético)',
-    'Glibenclamida (antidiabético)',
-    'Prednisona (corticoide)',
-    'Dexametasona (corticoide)',
     'Salbutamol (broncodilatador)',
     'Formoterol (broncodilatador)',
     'Ipratrópio (broncodilatador)',
+    'Prednisona (corticoide)',
+    'Dexametasona (corticoide)',
+    'Furosemida (diurético)',
+    'Hidroclorotiazida (diurético)',
+    'Captopril (IECA)',
+    'Enalapril (IECA)',
+    'Losartana (ARB)',
+  ];
+  static const List<_MedicationOptionGroup> _medicationOptionGroups = [
+    _MedicationOptionGroup(
+      title: 'Antidiabéticos',
+      options: [
+        'Metformina (antidiabético)',
+        'Insulina (antidiabético)',
+        'Glibenclamida (antidiabético)',
+      ],
+    ),
+    _MedicationOptionGroup(
+      title: 'Antiagregantes plaquetários',
+      options: ['AAS (antiagregante)', 'Clopidogrel (antiagregante)'],
+    ),
+    _MedicationOptionGroup(
+      title: 'Anticoagulantes',
+      options: [
+        'Varfarina (anticoagulante)',
+        'Rivaroxabana (anticoagulante)',
+        'Apixabana (anticoagulante)',
+      ],
+    ),
+    _MedicationOptionGroup(
+      title: 'Betabloqueadores',
+      options: [
+        'Atenolol (betabloqueador)',
+        'Metoprolol (betabloqueador)',
+        'Propranolol (betabloqueador)',
+      ],
+    ),
+    _MedicationOptionGroup(
+      title: 'Broncodilatadores',
+      options: [
+        'Salbutamol (broncodilatador)',
+        'Formoterol (broncodilatador)',
+        'Ipratrópio (broncodilatador)',
+      ],
+    ),
+    _MedicationOptionGroup(
+      title: 'Corticoides',
+      options: ['Prednisona (corticoide)', 'Dexametasona (corticoide)'],
+    ),
+    _MedicationOptionGroup(
+      title: 'Diuréticos',
+      options: ['Furosemida (diurético)', 'Hidroclorotiazida (diurético)'],
+    ),
+    _MedicationOptionGroup(
+      title: 'IECA / ARB',
+      options: ['Captopril (IECA)', 'Enalapril (IECA)', 'Losartana (ARB)'],
+    ),
   ];
   static const List<String> _pediatricMedicationOptions = [
+    'Amoxicilina (antibiótico em uso)',
+    'Cefalexina (antibiótico em uso)',
+    'Azitromicina (antibiótico em uso)',
+    'Valproato (anticonvulsivante)',
+    'Levetiracetam (anticonvulsivante)',
+    'Fenobarbital (anticonvulsivante)',
     'Salbutamol (broncodilatador)',
     'Ipratrópio (broncodilatador)',
     'Budesonida (corticoide inalatório)',
     'Fluticasona (corticoide inalatório)',
-    'Valproato (anticonvulsivante)',
-    'Levetiracetam (anticonvulsivante)',
-    'Fenobarbital (anticonvulsivante)',
-    'Amoxicilina (antibiótico em uso)',
-    'Cefalexina (antibiótico em uso)',
-    'Azitromicina (antibiótico em uso)',
     'Insulina regular',
     'Insulina NPH',
     'Tacrolimo (imunossupressor)',
     'Ciclosporina (imunossupressor)',
     'Metotrexato (imunossupressor)',
   ];
+  static const List<_MedicationOptionGroup> _pediatricMedicationOptionGroups = [
+    _MedicationOptionGroup(
+      title: 'Antibióticos em uso',
+      options: [
+        'Amoxicilina (antibiótico em uso)',
+        'Cefalexina (antibiótico em uso)',
+        'Azitromicina (antibiótico em uso)',
+      ],
+    ),
+    _MedicationOptionGroup(
+      title: 'Anticonvulsivantes',
+      options: [
+        'Valproato (anticonvulsivante)',
+        'Levetiracetam (anticonvulsivante)',
+        'Fenobarbital (anticonvulsivante)',
+      ],
+    ),
+    _MedicationOptionGroup(
+      title: 'Broncodilatadores',
+      options: ['Salbutamol (broncodilatador)', 'Ipratrópio (broncodilatador)'],
+    ),
+    _MedicationOptionGroup(
+      title: 'Corticoides inalatórios',
+      options: [
+        'Budesonida (corticoide inalatório)',
+        'Fluticasona (corticoide inalatório)',
+      ],
+    ),
+    _MedicationOptionGroup(
+      title: 'Insulinas',
+      options: ['Insulina regular', 'Insulina NPH'],
+    ),
+    _MedicationOptionGroup(
+      title: 'Imunossupressores',
+      options: [
+        'Tacrolimo (imunossupressor)',
+        'Ciclosporina (imunossupressor)',
+        'Metotrexato (imunossupressor)',
+      ],
+    ),
+  ];
   static const List<String> _neonatalMedicationOptions = [
-    'Cafeína',
     'Ampicilina (antibiótico)',
     'Gentamicina (antibiótico)',
     'Amicacina (antibiótico)',
-    'Furosemida (diurético)',
     'Fenobarbital (anticonvulsivante)',
     'Levetiracetam (anticonvulsivante)',
     'Midazolam (anticonvulsivante)',
+    'Furosemida (diurético)',
+    'Cafeína',
+    'Fentanil (sedação/analgesia contínua)',
+    'Midazolam (sedação/analgesia contínua)',
     'Dobutamina (vasoativo)',
     'Dopamina (vasoativo)',
     'Adrenalina (vasoativo)',
-    'Fentanil (sedação/analgesia contínua)',
-    'Midazolam (sedação/analgesia contínua)',
+  ];
+  static const List<_MedicationOptionGroup> _neonatalMedicationOptionGroups = [
+    _MedicationOptionGroup(
+      title: 'Antibióticos',
+      options: [
+        'Ampicilina (antibiótico)',
+        'Gentamicina (antibiótico)',
+        'Amicacina (antibiótico)',
+      ],
+    ),
+    _MedicationOptionGroup(
+      title: 'Anticonvulsivantes',
+      options: [
+        'Fenobarbital (anticonvulsivante)',
+        'Levetiracetam (anticonvulsivante)',
+        'Midazolam (anticonvulsivante)',
+      ],
+    ),
+    _MedicationOptionGroup(
+      title: 'Diuréticos',
+      options: ['Furosemida (diurético)'],
+    ),
+    _MedicationOptionGroup(
+      title: 'Estimulante respiratório',
+      options: ['Cafeína'],
+    ),
+    _MedicationOptionGroup(
+      title: 'Sedação / analgesia contínua',
+      options: [
+        'Fentanil (sedação/analgesia contínua)',
+        'Midazolam (sedação/analgesia contínua)',
+      ],
+    ),
+    _MedicationOptionGroup(
+      title: 'Vasoativos',
+      options: [
+        'Dobutamina (vasoativo)',
+        'Dopamina (vasoativo)',
+        'Adrenalina (vasoativo)',
+      ],
+    ),
   ];
   static const List<String> _adultAgePresetOptions = [
     '18',
@@ -577,36 +723,195 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     'Monitorização de apneia/bradicardia',
   ];
   static const List<String> _preAnestheticOrientationOptions = [
-    'Suspender medicações de risco',
-    'Manter demais medicações',
-    'Suspender ou ajustar anticoagulantes / antiagregantes conforme orientação',
-    'Suspender ou ajustar antidiabéticos / insulina / GLP-1 conforme orientação',
+    'Manter betabloqueador no dia da cirurgia',
+    'Manter broncodilatadores e corticoides inalatórios',
+    'Manter anticonvulsivantes',
+    'Manter corticoide crônico e avaliar dose de estresse',
+    'Suspender IECA/ARB no dia da cirurgia se indicado',
+    'Avaliar suspender diurético no dia da cirurgia',
+    'Evitar AINEs conforme risco de sangramento',
+    'Suspender clopidogrel 5-7 dias se liberado pela equipe assistente',
+    'Manter AAS quando alto risco trombótico ou prevenção secundária',
+    'Suspender varfarina 5 dias e checar INR conforme protocolo',
+    'Suspender DOAC 24-72h conforme função renal e risco de sangramento',
+    'Avaliar ponte anticoagulante em alto risco trombótico',
+    'Suspender metformina no dia do procedimento',
+    'Suspender sulfonilureia no dia do procedimento',
+    'Ajustar insulina basal na véspera/no dia conforme glicemia',
+    'Não aplicar insulina rápida se em jejum sem refeição',
+    'Suspender GLP-1 conforme protocolo institucional',
     'Trazer lista de medicações',
     'Trazer exames / laudos',
     'Cumprir jejum recomendado',
     'Avisar alergias / febre / IVAS',
     'Confirmar acompanhante / contato',
+    'Outro - medicações a manter',
+    'Outro - medicações a suspender',
+    'Outro - anticoagulantes / antiagregantes',
+    'Outro - antidiabéticos / insulina / GLP-1',
+    'Outro - orientação pré-anestésica',
+  ];
+  static const List<_OrientationOptionGroup> _preAnestheticOrientationGroups = [
+    _OrientationOptionGroup(
+      title: 'Medicações que geralmente manter',
+      options: [
+        'Manter betabloqueador no dia da cirurgia',
+        'Manter broncodilatadores e corticoides inalatórios',
+        'Manter anticonvulsivantes',
+        'Manter corticoide crônico e avaliar dose de estresse',
+        'Outro - medicações a manter',
+      ],
+    ),
+    _OrientationOptionGroup(
+      title: 'Medicações que geralmente suspender ou avaliar',
+      options: [
+        'Suspender IECA/ARB no dia da cirurgia se indicado',
+        'Avaliar suspender diurético no dia da cirurgia',
+        'Evitar AINEs conforme risco de sangramento',
+        'Outro - medicações a suspender',
+      ],
+    ),
+    _OrientationOptionGroup(
+      title: 'Anticoagulantes / antiagregantes',
+      options: [
+        'Suspender clopidogrel 5-7 dias se liberado pela equipe assistente',
+        'Manter AAS quando alto risco trombótico ou prevenção secundária',
+        'Suspender varfarina 5 dias e checar INR conforme protocolo',
+        'Suspender DOAC 24-72h conforme função renal e risco de sangramento',
+        'Avaliar ponte anticoagulante em alto risco trombótico',
+        'Outro - anticoagulantes / antiagregantes',
+      ],
+    ),
+    _OrientationOptionGroup(
+      title: 'Antidiabéticos / insulina / GLP-1',
+      options: [
+        'Suspender metformina no dia do procedimento',
+        'Suspender sulfonilureia no dia do procedimento',
+        'Ajustar insulina basal na véspera/no dia conforme glicemia',
+        'Não aplicar insulina rápida se em jejum sem refeição',
+        'Suspender GLP-1 conforme protocolo institucional',
+        'Outro - antidiabéticos / insulina / GLP-1',
+      ],
+    ),
+    _OrientationOptionGroup(
+      title: 'Documentos e exames',
+      options: ['Trazer lista de medicações', 'Trazer exames / laudos'],
+    ),
+    _OrientationOptionGroup(
+      title: 'Jejum e logística',
+      options: [
+        'Cumprir jejum recomendado',
+        'Confirmar acompanhante / contato',
+      ],
+    ),
+    _OrientationOptionGroup(
+      title: 'Avisos e recontato',
+      options: [
+        'Avisar alergias / febre / IVAS',
+        'Outro - orientação pré-anestésica',
+      ],
+    ),
   ];
   static const List<String> _pediatricPreAnestheticOrientationOptions = [
-    'Suspender medicações de risco',
-    'Manter demais medicações',
-    'Suspender ou ajustar anticoagulantes / antiagregantes conforme orientação',
+    'Manter anticonvulsivantes',
+    'Manter broncodilatadores e corticoides inalatórios',
+    'Manter corticoide crônico e avaliar dose de estresse',
+    'Suspender anticoagulantes / antiagregantes conforme equipe assistente',
+    'Ajustar insulina conforme glicemia e jejum',
     'Trazer lista de medicações',
     'Trazer exames / laudos',
     'Cumprir jejum recomendado',
     'Avisar febre / IVAS / sintomas respiratórios',
     'Confirmar acompanhante / contato',
     'Orientar responsável / consentimento',
+    'Outro - medicações pediátricas',
+    'Outro - orientação pediátrica',
+  ];
+  static const List<_OrientationOptionGroup>
+  _pediatricPreAnestheticOrientationGroups = [
+    _OrientationOptionGroup(
+      title: 'Medicações pediátricas',
+      options: [
+        'Manter anticonvulsivantes',
+        'Manter broncodilatadores e corticoides inalatórios',
+        'Manter corticoide crônico e avaliar dose de estresse',
+        'Suspender anticoagulantes / antiagregantes conforme equipe assistente',
+        'Ajustar insulina conforme glicemia e jejum',
+        'Outro - medicações pediátricas',
+      ],
+    ),
+    _OrientationOptionGroup(
+      title: 'Documentos e exames',
+      options: ['Trazer lista de medicações', 'Trazer exames / laudos'],
+    ),
+    _OrientationOptionGroup(
+      title: 'Jejum e responsável',
+      options: [
+        'Cumprir jejum recomendado',
+        'Confirmar acompanhante / contato',
+        'Orientar responsável / consentimento',
+      ],
+    ),
+    _OrientationOptionGroup(
+      title: 'Avisos e recontato',
+      options: [
+        'Avisar febre / IVAS / sintomas respiratórios',
+        'Outro - orientação pediátrica',
+      ],
+    ),
   ];
   static const List<String> _neonatalPreAnestheticOrientationOptions = [
-    'Suspender medicações de risco',
-    'Manter demais medicações',
+    'Manter cafeína conforme prescrição',
+    'Manter anticonvulsivantes conforme prescrição',
+    'Confirmar antibióticos em uso com equipe assistente',
+    'Confirmar vasoativos / infusões contínuas com UTI',
+    'Confirmar glicemia seriada conforme risco',
+    'Confirmar suporte ventilatório e transporte aquecido',
     'Trazer lista de medicações',
     'Trazer exames / laudos',
     'Cumprir jejum recomendado',
     'Avisar infecção / instabilidade clínica',
     'Confirmar equipe / responsável',
     'Confirmar termorregulação / glicemia / suporte neonatal',
+    'Outro - medicações neonatais',
+    'Outro - orientação neonatal',
+  ];
+  static const List<_OrientationOptionGroup>
+  _neonatalPreAnestheticOrientationGroups = [
+    _OrientationOptionGroup(
+      title: 'Medicações neonatais',
+      options: [
+        'Manter cafeína conforme prescrição',
+        'Manter anticonvulsivantes conforme prescrição',
+        'Confirmar antibióticos em uso com equipe assistente',
+        'Confirmar vasoativos / infusões contínuas com UTI',
+        'Outro - medicações neonatais',
+      ],
+    ),
+    _OrientationOptionGroup(
+      title: 'Suporte e segurança neonatal',
+      options: [
+        'Confirmar glicemia seriada conforme risco',
+        'Confirmar suporte ventilatório e transporte aquecido',
+        'Confirmar termorregulação / glicemia / suporte neonatal',
+      ],
+    ),
+    _OrientationOptionGroup(
+      title: 'Documentos, jejum e equipe',
+      options: [
+        'Trazer lista de medicações',
+        'Trazer exames / laudos',
+        'Cumprir jejum recomendado',
+        'Confirmar equipe / responsável',
+      ],
+    ),
+    _OrientationOptionGroup(
+      title: 'Avisos e recontato',
+      options: [
+        'Avisar infecção / instabilidade clínica',
+        'Outro - orientação neonatal',
+      ],
+    ),
   ];
   static const List<String> _anesthesiaTeamRequestOptions = [
     'Avaliação cardiológica',
@@ -719,10 +1024,17 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
 
   String _normalizePreAnestheticOrientationItem(String item) {
     return switch (item.trim()) {
+      'Suspender medicações de risco' =>
+        'Suspender IECA/ARB no dia da cirurgia se indicado',
+      'Manter demais medicações' => 'Manter betabloqueador no dia da cirurgia',
       'Revisar anticoagulantes / antiagregantes' =>
-        'Suspender ou ajustar anticoagulantes / antiagregantes conforme orientação',
+        'Suspender DOAC 24-72h conforme função renal e risco de sangramento',
+      'Suspender ou ajustar anticoagulantes / antiagregantes conforme orientação' =>
+        'Suspender DOAC 24-72h conforme função renal e risco de sangramento',
       'Revisar antidiabéticos / insulina / GLP-1' =>
-        'Suspender ou ajustar antidiabéticos / insulina / GLP-1 conforme orientação',
+        'Ajustar insulina basal na véspera/no dia conforme glicemia',
+      'Suspender ou ajustar antidiabéticos / insulina / GLP-1 conforme orientação' =>
+        'Ajustar insulina basal na véspera/no dia conforme glicemia',
       final normalized => normalized,
     };
   }
@@ -875,14 +1187,14 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     }.toList();
   }
 
-  List<String> get _profileMedicationOptions {
+  List<_MedicationOptionGroup> get _profileMedicationOptionGroups {
     switch (_selectedPopulation) {
       case PatientPopulation.adult:
-        return _medicationOptions;
+        return _medicationOptionGroups;
       case PatientPopulation.pediatric:
-        return _pediatricMedicationOptions;
+        return _pediatricMedicationOptionGroups;
       case PatientPopulation.neonatal:
-        return _neonatalMedicationOptions;
+        return _neonatalMedicationOptionGroups;
     }
   }
 
@@ -1357,6 +1669,17 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         return _pediatricPreAnestheticOrientationOptions;
       case PatientPopulation.neonatal:
         return _neonatalPreAnestheticOrientationOptions;
+    }
+  }
+
+  List<_OrientationOptionGroup> get _profilePreAnestheticOrientationGroups {
+    switch (_selectedPopulation) {
+      case PatientPopulation.adult:
+        return _preAnestheticOrientationGroups;
+      case PatientPopulation.pediatric:
+        return _pediatricPreAnestheticOrientationGroups;
+      case PatientPopulation.neonatal:
+        return _neonatalPreAnestheticOrientationGroups;
     }
   }
 
@@ -2253,6 +2576,114 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     );
   }
 
+  Widget _buildMedicationOptionGroups() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final group in _profileMedicationOptionGroups) ...[
+          _sectionLabel(group.title),
+          const SizedBox(height: 8),
+          _buildMultiSelectButtons(
+            options: group.options,
+            selectedValues: _selectedMedications,
+            onToggle: (value) {
+              setState(() {
+                if (_selectedMedications.contains(value)) {
+                  _selectedMedications.remove(value);
+                } else {
+                  _selectedMedications.add(value);
+                }
+              });
+            },
+          ),
+          const SizedBox(height: 14),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildPreAnestheticOrientationGroups() {
+    return Column(
+      children: [
+        for (final group in _profilePreAnestheticOrientationGroups)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _buildExpandableOptionGroup(
+              title: group.title,
+              options: group.options,
+              selectedValues: _selectedPreAnestheticOrientationItems,
+              color: const Color(0xFF2B76D2),
+              onToggle: (value) {
+                setState(() {
+                  if (_selectedPreAnestheticOrientationItems.contains(value)) {
+                    _selectedPreAnestheticOrientationItems.remove(value);
+                  } else {
+                    _selectedPreAnestheticOrientationItems.add(value);
+                  }
+                });
+              },
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildExpandableOptionGroup({
+    required String title,
+    required List<String> options,
+    required Set<String> selectedValues,
+    required ValueChanged<String> onToggle,
+    required Color color,
+  }) {
+    final selectedCount = options
+        .where((option) => selectedValues.contains(option))
+        .length;
+    final subtitle = selectedCount == 0
+        ? 'Toque para escolher opções'
+        : '$selectedCount opção(ões) selecionada(s)';
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: selectedCount == 0
+              ? const Color(0xFFD5E4F7)
+              : color.withValues(alpha: 0.65),
+          width: selectedCount == 0 ? 1 : 1.3,
+        ),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+          childrenPadding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
+          title: Text(
+            title,
+            style: const TextStyle(
+              color: Color(0xFF21364A),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          subtitle: Text(
+            subtitle,
+            style: TextStyle(
+              color: selectedCount == 0 ? const Color(0xFF5D7288) : color,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          children: [
+            _buildMultiSelectButtons(
+              options: options,
+              selectedValues: selectedValues,
+              onToggle: onToggle,
+              color: color,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildAirwayClassificationPanel({
     required String title,
     required Set<String> predictors,
@@ -2610,10 +3041,24 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     );
   }
 
+  void _navigateHome() {
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Consulta Pré-Anestésica')),
+      appBar: AppBar(
+        title: const Text('Consulta Pré-Anestésica'),
+        actions: [
+          TextButton.icon(
+            onPressed: _navigateHome,
+            icon: const Icon(Icons.home_outlined),
+            label: const Text('Tela inicial'),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -3292,20 +3737,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                _buildMultiSelectButtons(
-                  options: _profileMedicationOptions,
-                  selectedValues: _selectedMedications,
-                  onToggle: (value) {
-                    setState(() {
-                      if (_selectedMedications.contains(value)) {
-                        _selectedMedications.remove(value);
-                      } else {
-                        _selectedMedications.add(value);
-                      }
-                    });
-                  },
-                ),
-                const SizedBox(height: 14),
+                _buildMedicationOptionGroups(),
                 TextField(
                   controller: _otherMedicationsController,
                   minLines: 2,
@@ -4287,22 +4719,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                _buildMultiSelectButtons(
-                  options: _profilePreAnestheticOrientationOptions,
-                  selectedValues: _selectedPreAnestheticOrientationItems,
-                  color: const Color(0xFF2B76D2),
-                  onToggle: (value) {
-                    setState(() {
-                      if (_selectedPreAnestheticOrientationItems.contains(
-                        value,
-                      )) {
-                        _selectedPreAnestheticOrientationItems.remove(value);
-                      } else {
-                        _selectedPreAnestheticOrientationItems.add(value);
-                      }
-                    });
-                  },
-                ),
+                _buildPreAnestheticOrientationGroups(),
                 const SizedBox(height: 14),
                 TextField(
                   controller: _preAnestheticOrientationNotesController,
@@ -4321,7 +4738,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
           FilledButton.icon(
             onPressed: _saveAndReturn,
             icon: const Icon(Icons.save_outlined),
-            label: const Text('Salvar e enviar para ficha de anestesia'),
+            label: const Text('Salvar pré-anestésico no banco'),
             style: FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(56),
             ),

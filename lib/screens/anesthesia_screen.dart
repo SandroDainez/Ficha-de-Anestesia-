@@ -3482,7 +3482,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
 
   String get _topHighlightMessage {
     if (_caseStatus == AnesthesiaCaseStatus.finalized) {
-      return 'Caso finalizado e guardado no arquivo local.';
+      return 'Caso finalizado e salvo no banco de dados.';
     }
     if (_missingRequiredFields.isEmpty && !_hasPendingTimeOut) {
       return 'Registro pronto para condução e revisão.';
@@ -3692,6 +3692,10 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     }
   }
 
+  void _navigateHome() {
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
   void _startHemodynamicTickerIfNeeded() {
     _hemodynamicTicker?.cancel();
     if (_hemodynamicAnesthesiaStartAt == null) return;
@@ -3796,7 +3800,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       builder: (_) => AlertDialog(
         title: const Text('Finalizar caso'),
         content: const Text(
-          'A ficha será marcada como finalizada e ficará guardada no arquivo local para reabertura posterior.',
+          'A ficha será marcada como finalizada e ficará salva no banco de dados para reabertura posterior.',
         ),
         actions: [
           TextButton(
@@ -4806,6 +4810,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                 child: Column(
                   children: [
                     TopBarWidget(
+                      onHomeTap: _navigateHome,
                       onPreAnestheticTap: _showPreAnestheticDialog,
                       onRecoveryTap: _openPostAnesthesiaRecoveryScreen,
                       caseStage: _caseStageLabel,
