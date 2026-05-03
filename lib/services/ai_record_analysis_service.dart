@@ -22,7 +22,8 @@ class AiRecordAnalysisService {
     final findings = <String>[];
     final recommendations = <String>[];
 
-    if (record.airway.device == 'TOT' && record.airway.tubeNumber.trim().isEmpty) {
+    if (record.airway.device == 'TOT' &&
+        record.airway.tubeNumber.trim().isEmpty) {
       findings.add('Tubo orotraqueal selecionado sem número definido.');
     }
 
@@ -37,21 +38,29 @@ class AiRecordAnalysisService {
     }
 
     if (record.patient.allergies.isNotEmpty) {
-      recommendations.add('Confirmar alergias e restrições antes da finalização.');
+      recommendations.add(
+        'Confirmar alergias e restrições antes da finalização.',
+      );
     }
 
     if (record.anesthesiaTechnique.trim().isNotEmpty) {
-      recommendations.add('Checar coerência entre técnica, manutenção e drogas administradas.');
+      recommendations.add(
+        'Checar coerência entre técnica, manutenção e drogas administradas.',
+      );
     }
 
     if (record.drugs.isNotEmpty &&
         record.anesthesiaTechniqueDetails.trim().isEmpty) {
-      findings.add('Há medicações registradas sem descrição da técnica anestésica.');
+      findings.add(
+        'Há medicações registradas sem descrição da técnica anestésica.',
+      );
     }
 
     if (record.anesthesiaTechniqueDetails.trim().isNotEmpty &&
         record.drugs.isEmpty) {
-      findings.add('Há técnica anestésica descrita sem drogas/infusões registradas.');
+      findings.add(
+        'Há técnica anestésica descrita sem drogas/infusões registradas.',
+      );
     }
 
     if (!hasPreAnestheticData) {

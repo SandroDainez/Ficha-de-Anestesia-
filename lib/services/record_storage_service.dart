@@ -251,8 +251,10 @@ class RecordStorageService {
     final client = _client;
     if (client == null) return [];
     try {
-      final response =
-      await client.from('anesthesia_cases').select().order('updated_at', ascending: false);
+      final response = await client
+          .from('anesthesia_cases')
+          .select()
+          .order('updated_at', ascending: false);
       if (response is List) {
         return response
             .map((item) => _mapCase(item as Map<String, dynamic>))
@@ -299,10 +301,22 @@ class RecordStorageService {
   AnesthesiaCase _mapCase(Map<String, dynamic> data) {
     return AnesthesiaCase(
       id: data['id'] as String? ?? createCaseId(),
-      createdAtIso: data['created_at'] as String? ?? data['createdAtIso'] as String? ?? '',
-      updatedAtIso: data['updated_at'] as String? ?? data['updatedAtIso'] as String? ?? '',
-      preAnestheticDate: data['pre_anesthetic_date'] as String? ?? data['preAnestheticDate'] as String? ?? '',
-      anesthesiaDate: data['anesthesia_date'] as String? ?? data['anesthesiaDate'] as String? ?? '',
+      createdAtIso:
+          data['created_at'] as String? ??
+          data['createdAtIso'] as String? ??
+          '',
+      updatedAtIso:
+          data['updated_at'] as String? ??
+          data['updatedAtIso'] as String? ??
+          '',
+      preAnestheticDate:
+          data['pre_anesthetic_date'] as String? ??
+          data['preAnestheticDate'] as String? ??
+          '',
+      anesthesiaDate:
+          data['anesthesia_date'] as String? ??
+          data['anesthesiaDate'] as String? ??
+          '',
       status: AnesthesiaCaseStatusX.fromCode(data['status'] as String?),
       record: AnesthesiaRecord.fromJson(
         data['record'] as Map<dynamic, dynamic>? ?? const {},

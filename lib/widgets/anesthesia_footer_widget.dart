@@ -88,9 +88,7 @@ class PrimaryFooterButton extends StatelessWidget {
       style: FilledButton.styleFrom(
         backgroundColor: color,
         minimumSize: const Size.fromHeight(72),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -113,17 +111,15 @@ class PrimaryFooterButton extends StatelessWidget {
 }
 
 class RecordAnalysisDialog extends StatelessWidget {
-  const RecordAnalysisDialog({
-    super.key,
-    required this.analysis,
-  });
+  const RecordAnalysisDialog({super.key, required this.analysis});
 
   final RecordAnalysis analysis;
 
   @override
   Widget build(BuildContext context) {
-    final headerColor =
-        analysis.isComplete ? const Color(0xFF169653) : const Color(0xFFCC3D3D);
+    final headerColor = analysis.isComplete
+        ? const Color(0xFF169653)
+        : const Color(0xFFCC3D3D);
 
     return AlertDialog(
       backgroundColor: const Color(0xFFF9FBFE),
@@ -131,7 +127,9 @@ class RecordAnalysisDialog extends StatelessWidget {
       title: Row(
         children: [
           Icon(
-            analysis.isComplete ? Icons.check_circle : Icons.warning_amber_rounded,
+            analysis.isComplete
+                ? Icons.check_circle
+                : Icons.warning_amber_rounded,
             color: headerColor,
           ),
           const SizedBox(width: 8),
@@ -156,7 +154,9 @@ class RecordAnalysisDialog extends StatelessWidget {
                 const SizedBox(height: 16),
                 const _AnalysisSectionTitle(title: 'Campos pendentes'),
                 const SizedBox(height: 8),
-                ...analysis.missingFields.map((item) => _AnalysisBullet(text: item)),
+                ...analysis.missingFields.map(
+                  (item) => _AnalysisBullet(text: item),
+                ),
               ],
               if (analysis.findings.isNotEmpty) ...[
                 const SizedBox(height: 16),
@@ -168,8 +168,9 @@ class RecordAnalysisDialog extends StatelessWidget {
                 const SizedBox(height: 16),
                 const _AnalysisSectionTitle(title: 'Recomendações'),
                 const SizedBox(height: 8),
-                ...analysis.recommendations
-                    .map((item) => _AnalysisBullet(text: item)),
+                ...analysis.recommendations.map(
+                  (item) => _AnalysisBullet(text: item),
+                ),
               ],
             ],
           ),
@@ -186,9 +187,7 @@ class RecordAnalysisDialog extends StatelessWidget {
 }
 
 class _AnalysisSectionTitle extends StatelessWidget {
-  const _AnalysisSectionTitle({
-    required this.title,
-  });
+  const _AnalysisSectionTitle({required this.title});
 
   final String title;
 
@@ -205,9 +204,7 @@ class _AnalysisSectionTitle extends StatelessWidget {
 }
 
 class _AnalysisBullet extends StatelessWidget {
-  const _AnalysisBullet({
-    required this.text,
-  });
+  const _AnalysisBullet({required this.text});
 
   final String text;
 

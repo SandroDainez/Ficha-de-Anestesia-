@@ -22,25 +22,25 @@ class PostAnesthesiaRecovery {
   });
 
   const PostAnesthesiaRecovery.empty()
-      : admissionTime = '',
-        dischargeTime = '',
-        admissionCriteria = const [],
-        monitoringItems = const [],
-        dischargeCriteria = const [],
-        complications = const [],
-        interventions = const [],
-        admissionNotes = '',
-        dischargeNotes = '',
-        destinationAfterRecovery = '',
-        painScore = '',
-        nauseaScore = '',
-        sedationScale = '',
-        temperature = '',
-        aldreteActivity = 0,
-        aldreteRespiration = 0,
-        aldreteCirculation = 0,
-        aldreteConsciousness = 0,
-        aldreteSpo2 = 0;
+    : admissionTime = '',
+      dischargeTime = '',
+      admissionCriteria = const [],
+      monitoringItems = const [],
+      dischargeCriteria = const [],
+      complications = const [],
+      interventions = const [],
+      admissionNotes = '',
+      dischargeNotes = '',
+      destinationAfterRecovery = '',
+      painScore = '',
+      nauseaScore = '',
+      sedationScale = '',
+      temperature = '',
+      aldreteActivity = 0,
+      aldreteRespiration = 0,
+      aldreteCirculation = 0,
+      aldreteConsciousness = 0,
+      aldreteSpo2 = 0;
 
   final String admissionTime;
   final String dischargeTime;
@@ -159,15 +159,17 @@ class PostAnesthesiaRecovery {
     return PostAnesthesiaRecovery(
       admissionTime: json['admissionTime'] as String? ?? '',
       dischargeTime: json['dischargeTime'] as String? ?? '',
-      admissionCriteria: (json['admissionCriteria'] as List<dynamic>? ?? const [])
-          .map((item) => item.toString())
-          .toList(),
+      admissionCriteria:
+          (json['admissionCriteria'] as List<dynamic>? ?? const [])
+              .map((item) => item.toString())
+              .toList(),
       monitoringItems: (json['monitoringItems'] as List<dynamic>? ?? const [])
           .map((item) => item.toString())
           .toList(),
-      dischargeCriteria: (json['dischargeCriteria'] as List<dynamic>? ?? const [])
-          .map((item) => item.toString())
-          .toList(),
+      dischargeCriteria:
+          (json['dischargeCriteria'] as List<dynamic>? ?? const [])
+              .map((item) => item.toString())
+              .toList(),
       complications: (json['complications'] as List<dynamic>? ?? const [])
           .map((item) => item.toString())
           .toList(),

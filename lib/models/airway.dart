@@ -9,12 +9,12 @@ class Airway {
   });
 
   const Airway.empty()
-      : mallampati = '',
-        cormackLehane = '',
-        device = '',
-        tubeNumber = '',
-        technique = '',
-        observation = '';
+    : mallampati = '',
+      cormackLehane = '',
+      device = '',
+      tubeNumber = '',
+      technique = '',
+      observation = '';
 
   final String mallampati;
   final String cormackLehane;

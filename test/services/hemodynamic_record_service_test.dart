@@ -54,9 +54,7 @@ void main() {
   });
 
   test('adds and removes hemodynamic points in sorted order', () {
-    const existing = [
-      HemodynamicPoint(type: 'FC', value: 75, time: 4),
-    ];
+    const existing = [HemodynamicPoint(type: 'FC', value: 75, time: 4)];
     final updated = service.addPoint(
       points: existing,
       type: 'PAS',

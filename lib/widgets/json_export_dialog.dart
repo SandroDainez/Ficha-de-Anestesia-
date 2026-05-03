@@ -34,7 +34,10 @@ class JsonExportDialog extends StatelessWidget {
                 child: SingleChildScrollView(
                   child: SelectableText(
                     content,
-                    style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ),
@@ -48,7 +51,9 @@ class JsonExportDialog extends StatelessWidget {
           onPressed: () {
             Clipboard.setData(ClipboardData(text: content));
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Resumo copiado para a área de transferência')),
+              const SnackBar(
+                content: Text('Resumo copiado para a área de transferência'),
+              ),
             );
           },
           child: const Text('Copiar resumo'),

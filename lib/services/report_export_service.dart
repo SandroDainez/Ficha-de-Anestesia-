@@ -1,9 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 
 import '../models/anesthesia_case.dart';
 import '../models/anesthesia_record.dart';
@@ -58,8 +58,12 @@ class ReportExportService {
     String? caseId,
   }) async {
     final anesthesiologists = _resolveAnesthesiologists(record);
-    final regularFont = await PdfGoogleFonts.notoSansRegular();
-    final boldFont = await PdfGoogleFonts.notoSansBold();
+    final regularFont = pw.Font.ttf(
+      await rootBundle.load('assets/fonts/Roboto-Regular.ttf'),
+    );
+    final boldFont = pw.Font.ttf(
+      await rootBundle.load('assets/fonts/Roboto-Bold.ttf'),
+    );
 
     final pdf = pw.Document(
       title: 'Ficha de Anestesia',
@@ -231,7 +235,12 @@ class ReportExportService {
           _section('Eventos e hemodinâmica', [
             _field('Marcadores hemodinâmicos', _joinHemodynamicMarkers(record)),
           ]),
-          if (shouldIncludeHemodynamicChart(record)) _hemodynamicChart(record),
+          if (shouldIncludeHemodynamicChart(record))
+            _hemodynamicChart(
+              record,
+              regularFont: regularFont,
+              boldFont: boldFont,
+            ),
           if (record.hemodynamicPoints.isNotEmpty) _hemodynamicTable(record),
           _section('Recuperação pós-anestésica / pós-cirúrgica', [
             _field(
@@ -869,7 +878,11 @@ class ReportExportService {
     );
   }
 
-  pw.Widget _hemodynamicChart(AnesthesiaRecord record) {
+  pw.Widget _hemodynamicChart(
+    AnesthesiaRecord record, {
+    required pw.Font regularFont,
+    required pw.Font boldFont,
+  }) {
     return pw.Container(
       margin: const pw.EdgeInsets.only(bottom: 14),
       padding: const pw.EdgeInsets.all(12),
@@ -892,7 +905,14 @@ class ReportExportService {
           pw.Container(
             height: 240,
             width: double.infinity,
-            child: pw.SvgImage(svg: _hemodynamicChartSvg(record)),
+            child: pw.SvgImage(
+              svg: _hemodynamicChartSvg(record),
+              customFontLookup: (_, _, fontWeight) {
+                return fontWeight == '700' || fontWeight == 'bold'
+                    ? boldFont
+                    : regularFont;
+              },
+            ),
           ),
         ],
       ),
@@ -949,6 +969,62 @@ class ReportExportService {
           .replaceAll('>', '&gt;')
           .replaceAll('"', '&quot;')
           .replaceAll("'", '&apos;');
+    }
+
+    String asciiSvgText(String value) {
+      var text = value;
+      const replacements = {
+        'á': 'a',
+        'à': 'a',
+        'â': 'a',
+        'ã': 'a',
+        'ä': 'a',
+        'Á': 'A',
+        'À': 'A',
+        'Â': 'A',
+        'Ã': 'A',
+        'Ä': 'A',
+        'é': 'e',
+        'è': 'e',
+        'ê': 'e',
+        'ë': 'e',
+        'É': 'E',
+        'È': 'E',
+        'Ê': 'E',
+        'Ë': 'E',
+        'í': 'i',
+        'ì': 'i',
+        'î': 'i',
+        'ï': 'i',
+        'Í': 'I',
+        'Ì': 'I',
+        'Î': 'I',
+        'Ï': 'I',
+        'ó': 'o',
+        'ò': 'o',
+        'ô': 'o',
+        'õ': 'o',
+        'ö': 'o',
+        'Ó': 'O',
+        'Ò': 'O',
+        'Ô': 'O',
+        'Õ': 'O',
+        'Ö': 'O',
+        'ú': 'u',
+        'ù': 'u',
+        'û': 'u',
+        'ü': 'u',
+        'Ú': 'U',
+        'Ù': 'U',
+        'Û': 'U',
+        'Ü': 'U',
+        'ç': 'c',
+        'Ç': 'C',
+      };
+      for (final entry in replacements.entries) {
+        text = text.replaceAll(entry.key, entry.value);
+      }
+      return text.replaceAll(RegExp(r'[^\x20-\x7E]'), '?');
     }
 
     String symbolMarkupFor(
@@ -1084,9 +1160,11 @@ class ReportExportService {
           ? '#2b76d2'
           : '#169653';
       final label = escapeSvgText(
-        marker.clockTime.trim().isEmpty
-            ? marker.label
-            : '${marker.label} ${marker.clockTime}',
+        asciiSvgText(
+          marker.clockTime.trim().isEmpty
+              ? marker.label
+              : '${marker.label} ${marker.clockTime}',
+        ),
       );
       markers.writeln(
         "<line x1='${x.toStringAsFixed(1)}' y1='$top' x2='${x.toStringAsFixed(1)}' y2='${(height - bottom).toStringAsFixed(1)}' stroke='$color' stroke-width='1.2' />",
@@ -1124,7 +1202,7 @@ class ReportExportService {
     }
 
     return """
-<svg xmlns='http://www.w3.org/2000/svg' width='$width' height='$height' viewBox='0 0 $width $height'>
+<svg xmlns='http://www.w3.org/2000/svg' width='$width' height='$height' viewBox='0 0 $width $height' font-family='RobotoPdf'>
   <rect x='0' y='0' width='$width' height='$height' fill='white'/>
   ${grid.toString()}
   <line x1='$left' y1='$top' x2='$left' y2='${(height - bottom).toStringAsFixed(1)}' stroke='#8ea5bf' stroke-width='1.5' />

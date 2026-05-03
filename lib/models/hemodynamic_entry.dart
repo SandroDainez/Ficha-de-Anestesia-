@@ -26,9 +26,7 @@ class HemodynamicEntry {
   String get formattedMeanArterialPressure {
     final pam = meanArterialPressure;
     if (pam <= 0) return '--';
-    final number = pam.toStringAsFixed(
-      pam.truncateToDouble() == pam ? 0 : 1,
-    );
+    final number = pam.toStringAsFixed(pam.truncateToDouble() == pam ? 0 : 1);
     return '$number mmHg';
   }
 

@@ -9,7 +9,9 @@ void main() {
   const service = RecordValidationService();
 
   test('returns missing required sections for empty record', () {
-    final missing = service.validateRequiredFields(const AnesthesiaRecord.empty());
+    final missing = service.validateRequiredFields(
+      const AnesthesiaRecord.empty(),
+    );
 
     expect(missing, contains('Identificação do paciente'));
     expect(missing, contains('Via aérea'));

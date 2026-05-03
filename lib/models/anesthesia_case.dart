@@ -4,22 +4,22 @@ enum AnesthesiaCaseStatus { preAnesthetic, inProgress, finalized }
 
 extension AnesthesiaCaseStatusX on AnesthesiaCaseStatus {
   String get code => switch (this) {
-        AnesthesiaCaseStatus.preAnesthetic => 'pre_anesthetic',
-        AnesthesiaCaseStatus.inProgress => 'in_progress',
-        AnesthesiaCaseStatus.finalized => 'finalized',
-      };
+    AnesthesiaCaseStatus.preAnesthetic => 'pre_anesthetic',
+    AnesthesiaCaseStatus.inProgress => 'in_progress',
+    AnesthesiaCaseStatus.finalized => 'finalized',
+  };
 
   String get label => switch (this) {
-        AnesthesiaCaseStatus.preAnesthetic => 'Pré-anestésico salvo',
-        AnesthesiaCaseStatus.inProgress => 'Em andamento',
-        AnesthesiaCaseStatus.finalized => 'Finalizado',
-      };
+    AnesthesiaCaseStatus.preAnesthetic => 'Pré-anestésico salvo',
+    AnesthesiaCaseStatus.inProgress => 'Em andamento',
+    AnesthesiaCaseStatus.finalized => 'Finalizado',
+  };
 
   static AnesthesiaCaseStatus fromCode(String? code) => switch (code) {
-        'pre_anesthetic' => AnesthesiaCaseStatus.preAnesthetic,
-        'finalized' => AnesthesiaCaseStatus.finalized,
-        _ => AnesthesiaCaseStatus.inProgress,
-      };
+    'pre_anesthetic' => AnesthesiaCaseStatus.preAnesthetic,
+    'finalized' => AnesthesiaCaseStatus.finalized,
+    _ => AnesthesiaCaseStatus.inProgress,
+  };
 }
 
 class AnesthesiaCase {

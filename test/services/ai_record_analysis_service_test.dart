@@ -9,7 +9,9 @@ void main() {
   const service = AiRecordAnalysisService();
 
   test('marks incomplete records as pending', () async {
-    final analysis = await service.analyzeRecord(const AnesthesiaRecord.empty());
+    final analysis = await service.analyzeRecord(
+      const AnesthesiaRecord.empty(),
+    );
 
     expect(analysis.status, 'pendente');
     expect(analysis.isComplete, isFalse);
@@ -22,60 +24,65 @@ void main() {
     );
   });
 
-  test('flags inconsistencies and recommendations for a partially filled record', () async {
-    final record = AnesthesiaRecord.empty().copyWith(
-      patient: const Patient(
-        name: 'Joao',
-        age: 50,
-        weightKg: 80,
-        heightMeters: 1.75,
-        asa: 'II',
-        allergies: ['Latex'],
-        restrictions: [],
-        medications: ['Metformina'],
-      ),
-      airway: const Airway(
-        mallampati: 'II',
-        cormackLehane: 'I',
-        device: 'TOT',
-        tubeNumber: '',
-        technique: 'Laringoscopia direta',
-        observation: '',
-      ),
-      anesthesiaTechnique: 'Geral',
-      maintenanceAgents: 'Sevoflurano',
-      drugs: const ['Propofol'],
-      events: const ['Hipotensao'],
-      fluidBalance: const FluidBalance(
-        crystalloids: '3000',
-        colloids: '0',
-        blood: '0',
-        diuresis: '300',
-        bleeding: '200',
-        spongeCount: '',
-        otherLosses: '',
-      ),
-    );
+  test(
+    'flags inconsistencies and recommendations for a partially filled record',
+    () async {
+      final record = AnesthesiaRecord.empty().copyWith(
+        patient: const Patient(
+          name: 'Joao',
+          age: 50,
+          weightKg: 80,
+          heightMeters: 1.75,
+          asa: 'II',
+          allergies: ['Latex'],
+          restrictions: [],
+          medications: ['Metformina'],
+        ),
+        airway: const Airway(
+          mallampati: 'II',
+          cormackLehane: 'I',
+          device: 'TOT',
+          tubeNumber: '',
+          technique: 'Laringoscopia direta',
+          observation: '',
+        ),
+        anesthesiaTechnique: 'Geral',
+        maintenanceAgents: 'Sevoflurano',
+        drugs: const ['Propofol'],
+        events: const ['Hipotensao'],
+        fluidBalance: const FluidBalance(
+          crystalloids: '3000',
+          colloids: '0',
+          blood: '0',
+          diuresis: '300',
+          bleeding: '200',
+          spongeCount: '',
+          otherLosses: '',
+        ),
+      );
 
-    final analysis = await service.analyzeRecord(record);
+      final analysis = await service.analyzeRecord(record);
 
-    expect(analysis.status, 'pendente');
-    expect(analysis.missingFields, contains('Via aérea'));
-    expect(
-      analysis.findings,
-      contains('Tubo orotraqueal selecionado sem número definido.'),
-    );
-    expect(
-      analysis.findings,
-      contains('Balanço hídrico positivo elevado para revisão clínica.'),
-    );
-    expect(
-      analysis.recommendations,
-      contains('Confirmar alergias e restrições antes da finalização.'),
-    );
-    expect(
-      analysis.recommendations,
-      contains('Checar coerência entre técnica, manutenção e drogas administradas.'),
-    );
-  });
+      expect(analysis.status, 'pendente');
+      expect(analysis.missingFields, contains('Via aérea'));
+      expect(
+        analysis.findings,
+        contains('Tubo orotraqueal selecionado sem número definido.'),
+      );
+      expect(
+        analysis.findings,
+        contains('Balanço hídrico positivo elevado para revisão clínica.'),
+      );
+      expect(
+        analysis.recommendations,
+        contains('Confirmar alergias e restrições antes da finalização.'),
+      );
+      expect(
+        analysis.recommendations,
+        contains(
+          'Checar coerência entre técnica, manutenção e drogas administradas.',
+        ),
+      );
+    },
+  );
 }

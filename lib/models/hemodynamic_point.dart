@@ -10,11 +10,7 @@ class HemodynamicPoint {
   final double time;
 
   Map<String, dynamic> toJson() {
-    return {
-      'type': type,
-      'value': value,
-      'time': time,
-    };
+    return {'type': type, 'value': value, 'time': time};
   }
 
   factory HemodynamicPoint.fromJson(Map<dynamic, dynamic> json) {

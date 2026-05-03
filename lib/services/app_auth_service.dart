@@ -6,8 +6,6 @@ import 'supabase_service.dart';
 class AppAuthService {
   AppAuthService();
 
-  static const String adminEmail = 'sandrodainez@hotmail.com';
-
   SupabaseClient? get _client => SupabaseService.instance.client;
 
   bool get isConfigured => SupabaseService.instance.isConfigured;
@@ -52,11 +50,7 @@ class AppAuthService {
     if (user == null) {
       throw const AuthException('Não foi possível concluir o cadastro.');
     }
-    await _upsertProfile(
-      userId: user.id,
-      email: normalizedEmail,
-      fullName: fullName.trim(),
-    );
+    await _registerCurrentUserProfile(fullName: fullName.trim());
   }
 
   Future<void> signOut() async {
@@ -84,9 +78,7 @@ class AppAuthService {
     if (user == null) return null;
     final existing = await fetchCurrentUserProfile();
     if (existing != null) return existing;
-    await _upsertProfile(
-      userId: user.id,
-      email: user.email ?? '',
+    await _registerCurrentUserProfile(
       fullName: (user.userMetadata?['full_name'] as String? ?? '').trim(),
     );
     return fetchCurrentUserProfile();
@@ -138,28 +130,12 @@ class AppAuthService {
         .eq('id', userId);
   }
 
-  Future<void> _upsertProfile({
-    required String userId,
-    required String email,
-    required String fullName,
-  }) async {
+  Future<void> _registerCurrentUserProfile({required String fullName}) async {
     final client = _requireClient();
-    final normalizedEmail = email.trim().toLowerCase();
-    final now = DateTime.now().toIso8601String();
-    final isAdminUser = normalizedEmail == adminEmail;
-    await client.from('app_users').upsert({
-      'id': userId,
-      'email': normalizedEmail,
-      'full_name': fullName,
-      'role': isAdminUser ? AppUserRole.admin.code : AppUserRole.clinician.code,
-      'status': isAdminUser
-          ? AppUserStatus.active.code
-          : AppUserStatus.pending.code,
-      'created_at': now,
-      'updated_at': now,
-      'approved_at': isAdminUser ? now : null,
-      'blocked_at': null,
-    }, onConflict: 'id');
+    await client.rpc(
+      'register_current_user_profile',
+      params: {'full_name_input': fullName.trim()},
+    );
   }
 
   SupabaseClient _requireClient() {

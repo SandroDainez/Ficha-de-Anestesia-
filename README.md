@@ -114,184 +114,26 @@ git push -u origin main
 
 ## Estado atual
 
-O projeto esta funcional localmente e hoje usa analise "IA" simulada por heuristicas em codigo. Nao ha integracao real com backend, LLM ou servico clinico externo.
+O projeto esta funcional localmente, usa analise "IA" simulada por heuristicas em codigo e possui integracao opcional com Supabase para login, aprovacao de usuarios e banco compartilhado. Nao ha integracao real com LLM ou servico clinico externo.
 
-## Persistência online com Supabase e controle de acesso
+## Persistencia online com Supabase e controle de acesso
 
-1. Configure as variáveis de ambiente com:
+1. Configure as variaveis de ambiente para habilitar login e banco compartilhado:
 
-   ```
-   flutter run --dart-define=SUPABASE_URL=https://ekzwbjfimrojujookyhi.supabase.co \
-     --dart-define=SUPABASE_ANON_KEY=sb_publishable_m_6gsKJexTpua5tKSWUOxA_I2TuuccE
-   ```
-
-   Essas variáveis continuam sendo aceitas para sobrescrever a configuração padrão. No estado atual do projeto, o app já traz um fallback com essas mesmas chaves e passa a armazenar/listar casos diretamente no Supabase mesmo sem `--dart-define`.
-
-   No Vercel, ainda é recomendado definir `SUPABASE_URL` e `SUPABASE_ANON_KEY` em Settings → Environment Variables. Com essas chaves, o app habilita o modo compartilhado com login e mantém a configuração explícita no deploy.
-
-2. Crie a tabela de usuários do app, a tabela de casos e as políticas com esse SQL:
-
-   ```sql
-   create table public.app_users (
-     id uuid primary key references auth.users(id) on delete cascade,
-     email text not null unique,
-     full_name text not null default '',
-     role text not null default 'clinician' check (role in ('admin', 'clinician')),
-     status text not null default 'pending' check (status in ('pending', 'active', 'blocked')),
-     approved_at timestamptz,
-     blocked_at timestamptz,
-     created_at timestamptz not null default now(),
-     updated_at timestamptz not null default now()
-   );
-
-   create table public.anesthesia_cases (
-     id uuid primary key default gen_random_uuid(),
-     created_at timestamptz not null default now(),
-     updated_at timestamptz not null default now(),
-     pre_anesthetic_date text default '',
-     anesthesia_date text default '',
-     status text not null,
-     record jsonb not null
-   );
-
-   create or replace function public.is_admin_user()
-   returns boolean
-   language sql
-   stable
-   as $$
-     select exists (
-       select 1
-       from public.app_users
-       where id = auth.uid()
-         and role = 'admin'
-         and status = 'active'
-     );
-   $$;
-
-   create or replace function public.touch_updated_at()
-   returns trigger
-   language plpgsql
-   as $$
-   begin
-     new.updated_at = now();
-     return new;
-   end;
-   $$;
-
-   create trigger touch_app_users_updated_at
-   before update on public.app_users
-   for each row execute function public.touch_updated_at();
-
-   create trigger touch_anesthesia_cases_updated_at
-   before update on public.anesthesia_cases
-   for each row execute function public.touch_updated_at();
-
-   alter table public.app_users enable row level security;
-   alter table public.anesthesia_cases enable row level security;
-
-   create policy "users can read own profile"
-   on public.app_users
-   for select
-   to authenticated
-   using (id = auth.uid());
-
-   create policy "admins can read all profiles"
-   on public.app_users
-   for select
-   to authenticated
-   using (public.is_admin_user());
-
-   create policy "users can insert own profile"
-   on public.app_users
-   for insert
-   to authenticated
-   with check (id = auth.uid());
-
-   create policy "admins can update profiles"
-   on public.app_users
-   for update
-   to authenticated
-   using (public.is_admin_user())
-   with check (public.is_admin_user());
-
-   create policy "active users can read cases"
-   on public.anesthesia_cases
-   for select
-   to authenticated
-   using (
-     exists (
-       select 1
-       from public.app_users
-       where id = auth.uid()
-         and status = 'active'
-     )
-   );
-
-   create policy "active users can insert cases"
-   on public.anesthesia_cases
-   for insert
-   to authenticated
-   with check (
-     exists (
-       select 1
-       from public.app_users
-       where id = auth.uid()
-         and status = 'active'
-     )
-   );
-
-   create policy "active users can update cases"
-   on public.anesthesia_cases
-   for update
-   to authenticated
-   using (
-     exists (
-       select 1
-       from public.app_users
-       where id = auth.uid()
-         and status = 'active'
-     )
-   )
-   with check (
-     exists (
-       select 1
-       from public.app_users
-       where id = auth.uid()
-         and status = 'active'
-     )
-   );
-
-   create policy "active users can delete cases"
-   on public.anesthesia_cases
-   for delete
-   to authenticated
-   using (
-     exists (
-       select 1
-       from public.app_users
-       where id = auth.uid()
-         and status = 'active'
-     )
-   );
+   ```bash
+   flutter run --dart-define=SUPABASE_URL=https://seu-projeto.supabase.co \
+     --dart-define=SUPABASE_ANON_KEY=sua-chave-anon
    ```
 
-3. Crie o primeiro administrador no Supabase Auth com:
-   - email: `sandrodainez@hotmail.com`
-   - senha inicial: `123456` se quiser manter esse padrão inicial
+   No Vercel, defina `SUPABASE_URL` e `SUPABASE_ANON_KEY` em Settings -> Environment Variables. O app nao traz mais fallback com chaves hardcoded; sem essas variaveis, o modo local usa Hive em plataformas desktop/mobile.
 
-   Observação: a senha **não** fica gravada no código do app. Ela deve ser criada no Supabase Auth para esse email.
+2. Aplique as migrations em `supabase/migrations/`. Elas criam as tabelas, policies RLS e a funcao `register_current_user_profile`, que registra o perfil do usuario autenticado sem permitir que o Flutter escolha `role` ou `status` diretamente.
 
-4. Agora você terá:
-   - login e cadastro de usuários
-   - cadastro comum com status `pending`, aguardando aprovação do administrador
-   - administrador com acesso para listar usuários, aprovar, bloquear e reativar
-   - casos sincronizados no Supabase para todos os usuários ativos
-   - fallback para Hive local quando o Supabase não estiver acessível
-   - exportação de PDF e também JSON (botão novo no rodapé e na lista de casos) para baixar/enviar por email ou WhatsApp
+3. O primeiro administrador continua sendo o email `sandrodainez@hotmail.com`. Crie esse usuario no Supabase Auth e execute as migrations; a migration de seguranca promove esse perfil para `admin`/`active`.
 
-5. Redefinição de senha por administrador e convite por email/WhatsApp ficam para a próxima etapa. Para redefinir senha de forma segura será necessário usar backend próprio, Edge Function ou script administrativo com `service_role` fora do Flutter/web.
+4. Com Supabase ativo, o app oferece login/cadastro, cadastro comum como `pending`, aprovacao/bloqueio/reativacao por administrador, casos compartilhados entre usuarios ativos e exportacao de PDF/JSON.
 
-6. Se precisar de tarefas administrativas (migrations, webhooks etc.) use a `service_role` em scripts separados — jamais exponha essa chave no Flutter/web.
+5. Redefinicao de senha por administrador e convite por email/WhatsApp ficam para uma etapa com backend proprio, Edge Function ou script administrativo com `service_role`. Nunca exponha `service_role` no Flutter/web.
 
 ## Pendências conhecidas
 
@@ -302,5 +144,6 @@ O projeto esta funcional localmente e hoje usa analise "IA" simulada por heurist
 
 ## Observacoes
 
-- este app persiste um unico registro atual localmente
+- este app persiste multiplos casos localmente com Hive quando Supabase nao esta configurado e a plataforma permite armazenamento local
+- no web, use Supabase para persistencia confiavel entre sessoes e usuarios
 - o README anterior era o padrão do Flutter; este arquivo agora documenta o estado real do projeto

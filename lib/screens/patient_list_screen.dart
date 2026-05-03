@@ -477,7 +477,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
   }
 
   Widget _buildSearchPanel() {
-    final supabaseOnline = SupabaseService.instance.isConfigured;
+    final supabaseOnline = SupabaseService.instance.isReady;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -644,7 +644,7 @@ class _CaseTile extends StatelessWidget {
       AnesthesiaCaseStatus.finalized => const Color(0xFF168B79),
     };
     final populationLabel = patient.population.label;
-    final supabaseOnline = SupabaseService.instance.isConfigured;
+    final supabaseOnline = SupabaseService.instance.isReady;
     final summaryParts = <String>[
       if (patient.age > 0) '${patient.age} anos',
       if (patient.weightKg > 0) '${patient.weightKg.toStringAsFixed(0)} kg',
@@ -724,7 +724,7 @@ class _CaseTile extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 supabaseOnline
-                    ? 'Sincronizado no Supabase'
+                    ? 'Banco compartilhado ativo'
                     : 'Sem conexão Supabase',
                 style: TextStyle(
                   color: supabaseOnline

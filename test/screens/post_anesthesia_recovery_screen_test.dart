@@ -6,9 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   Widget buildTestableApp(AnesthesiaRecord record) {
-    return MaterialApp(
-      home: PostAnesthesiaRecoveryScreen(record: record),
-    );
+    return MaterialApp(home: PostAnesthesiaRecoveryScreen(record: record));
   }
 
   AnesthesiaRecord buildRecord() {
@@ -25,25 +23,27 @@ void main() {
       ),
       surgeryDescription: 'Colecistectomia',
       anesthesiaTechnique: 'Anestesia geral balanceada',
-      anesthesiaTechniqueDetails: 'Sem intercorrências maiores no intraoperatório.',
+      anesthesiaTechniqueDetails:
+          'Sem intercorrências maiores no intraoperatório.',
       operationalNotes: 'Transferência estável para recuperação.',
     );
   }
 
-  testWidgets('recovery page exposes admission monitoring scales complications interventions and discharge sections', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(buildTestableApp(buildRecord()));
+  testWidgets(
+    'recovery page exposes admission monitoring scales complications interventions and discharge sections',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(buildTestableApp(buildRecord()));
 
-    expect(find.text('ADMISSÃO NA RPA'), findsOneWidget);
-    expect(find.text('CRITÉRIOS DE ADMISSÃO'), findsOneWidget);
-    expect(find.text('MONITORIZAÇÃO NA RECUPERAÇÃO'), findsOneWidget);
-    expect(find.text('ESCALAS E AVALIAÇÕES'), findsOneWidget);
-    expect(find.text('COMPLICAÇÕES NA RECUPERAÇÃO'), findsOneWidget);
-    expect(find.text('INTERVENÇÕES NA RECUPERAÇÃO'), findsOneWidget);
-    expect(find.text('CRITÉRIOS DE ALTA'), findsOneWidget);
-    expect(find.text('ALTA DA RECUPERAÇÃO'), findsOneWidget);
-  });
+      expect(find.text('ADMISSÃO NA RPA'), findsOneWidget);
+      expect(find.text('CRITÉRIOS DE ADMISSÃO'), findsOneWidget);
+      expect(find.text('MONITORIZAÇÃO NA RECUPERAÇÃO'), findsOneWidget);
+      expect(find.text('ESCALAS E AVALIAÇÕES'), findsOneWidget);
+      expect(find.text('COMPLICAÇÕES NA RECUPERAÇÃO'), findsOneWidget);
+      expect(find.text('INTERVENÇÕES NA RECUPERAÇÃO'), findsOneWidget);
+      expect(find.text('CRITÉRIOS DE ALTA'), findsOneWidget);
+      expect(find.text('ALTA DA RECUPERAÇÃO'), findsOneWidget);
+    },
+  );
 
   testWidgets('recovery destination options do not include alta da RPA', (
     WidgetTester tester,

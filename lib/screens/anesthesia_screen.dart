@@ -2024,15 +2024,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return normalized.join(', ');
   }
 
-  String _displayLineEntries(
-    String value, {
-    String empty = 'Toque para preencher',
-  }) {
-    final items = _lineItems(value);
-    if (items.isEmpty) return empty;
-    return items.join(', ');
-  }
-
   String _displayStructuredLineEntries(
     String value, {
     String empty = 'Toque para preencher',

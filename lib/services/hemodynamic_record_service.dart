@@ -56,11 +56,7 @@ class HemodynamicRecordService {
       final pam = (pas.value + (2 * matchingPad.value)) / 3;
       final averagedTime = (pas.time + matchingPad.time) / 2;
       pamPoints.add(
-        HemodynamicPoint(
-          type: 'PAM',
-          value: pam,
-          time: averagedTime,
-        ),
+        HemodynamicPoint(type: 'PAM', value: pam, time: averagedTime),
       );
     }
 
@@ -118,7 +114,9 @@ class HemodynamicRecordService {
     if (label == 'Início da anestesia') {
       updatedMarkers.removeWhere((item) => item.label == label);
     } else {
-      final anesthesiaStart = updatedMarkers.cast<HemodynamicMarker?>().firstWhere(
+      final anesthesiaStart = updatedMarkers
+          .cast<HemodynamicMarker?>()
+          .firstWhere(
             (item) => item?.label == 'Início da anestesia',
             orElse: () => null,
           );
@@ -195,7 +193,8 @@ class HemodynamicRecordService {
   }
 
   AnesthesiaRecord migrateLegacyHemodynamics(AnesthesiaRecord record) {
-    if (record.hemodynamicPoints.isNotEmpty || record.hemodynamicEntries.isEmpty) {
+    if (record.hemodynamicPoints.isNotEmpty ||
+        record.hemodynamicEntries.isEmpty) {
       return record;
     }
 
@@ -219,7 +218,9 @@ class HemodynamicRecordService {
         points.add(HemodynamicPoint(type: 'PAD', value: pad, time: timeValue));
       }
       if (spo2 != null) {
-        points.add(HemodynamicPoint(type: 'SpO2', value: spo2, time: timeValue));
+        points.add(
+          HemodynamicPoint(type: 'SpO2', value: spo2, time: timeValue),
+        );
       }
     }
 

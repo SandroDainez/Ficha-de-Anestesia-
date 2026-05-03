@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 import 'card_widget.dart';
 
 class EventListWidget extends StatelessWidget {
-  const EventListWidget({
-    super.key,
-    required this.events,
-  });
+  const EventListWidget({super.key, required this.events});
 
   final List<String> events;
 
@@ -27,20 +24,16 @@ class EventListWidget extends StatelessWidget {
             : events[index].split(' ').skip(1).join(' ');
         final description = hasStructuredData
             ? (parts.length > 2 && parts[2].trim().isNotEmpty
-                ? parts[2]
-                : 'Sem detalhes adicionais.')
+                  ? parts[2]
+                  : 'Sem detalhes adicionais.')
             : (index == 0
-                ? 'Propofol 150 mg, Fentanil 100 mcg, Rocurônio 50 mg.'
-                : index == 1
-                    ? 'Tubo 7,0 cm com videolaringoscópio.'
-                    : index == 2
-                        ? 'PAM 58 mmHg. Tratado com efedrina 10 mg.'
-                        : 'Início do procedimento.');
-        return EventRow(
-          time: time,
-          title: title,
-          description: description,
-        );
+                  ? 'Propofol 150 mg, Fentanil 100 mcg, Rocurônio 50 mg.'
+                  : index == 1
+                  ? 'Tubo 7,0 cm com videolaringoscópio.'
+                  : index == 2
+                  ? 'PAM 58 mmHg. Tratado com efedrina 10 mg.'
+                  : 'Início do procedimento.');
+        return EventRow(time: time, title: title, description: description);
       },
     );
   }
@@ -92,13 +85,13 @@ class EventRow extends StatelessWidget {
                 color: isCritical
                     ? const Color(0xFFFFE9E9)
                     : isSuccess
-                        ? const Color(0xFFE4F7EA)
-                        : const Color(0xFFEAF2FF),
+                    ? const Color(0xFFE4F7EA)
+                    : const Color(0xFFEAF2FF),
                 textColor: isCritical
                     ? const Color(0xFFDD3B3B)
                     : isSuccess
-                        ? const Color(0xFF169653)
-                        : const Color(0xFF2B76D2),
+                    ? const Color(0xFF169653)
+                    : const Color(0xFF2B76D2),
               ),
               const SizedBox(height: 6),
               Text(
