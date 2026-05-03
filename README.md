@@ -99,7 +99,7 @@ No painel do projeto Vercel, confira **Settings → General → Build & Developm
 
 O arquivo `vercel.json` na raiz define `buildCommand`, `outputDirectory` e rewrites SPA. O primeiro build pode levar vários minutos (download do SDK). Se aparecer **404 NOT_FOUND**, em geral o deploy não gerou `build/web` (build falhou): abra o log do deployment no Vercel.
 
-O fluxo manual continua válido: `./scripts/deploy_vercel_prod.sh` (build local + `vercel deploy --cwd build/web`). O script copia para `build/web` um `vercel.json` só com rewrites e um `package.json` mínimo (o `npm install` / `npm run build` da Vercel não voltam a correr o Flutter dentro dessa pasta). No painel, se **Output Directory** estiver `build/web` e usares só este fluxo CLI, altera para **`.`** ou deixa em branco para o projeto ligado a esta pasta.
+O fluxo manual continua válido: `./scripts/deploy_vercel_prod.sh` (build local + `vercel deploy --cwd build/web`). Agora ele também puxa `SUPABASE_URL` e `SUPABASE_ANON_KEY` do ambiente de produção do Vercel quando essas variáveis não estiverem definidas localmente, e passa ambas ao `flutter build web` via `--dart-define`. O script copia para `build/web` um `vercel.json` só com rewrites e um `package.json` mínimo (o `npm install` / `npm run build` da Vercel não voltam a correr o Flutter dentro dessa pasta). No painel, se **Output Directory** estiver `build/web` e usares só este fluxo CLI, altera para **`.`** ou deixa em branco para o projeto ligado a esta pasta.
 
 ## Versionamento
 
@@ -125,7 +125,7 @@ O projeto esta funcional localmente, usa analise "IA" simulada por heuristicas e
      --dart-define=SUPABASE_ANON_KEY=sua-chave-anon
    ```
 
-   No Vercel, defina `SUPABASE_URL` e `SUPABASE_ANON_KEY` em Settings -> Environment Variables. O app nao traz mais fallback com chaves hardcoded; sem essas variaveis, o modo local usa Hive em plataformas desktop/mobile.
+   No Vercel, defina `SUPABASE_URL` e `SUPABASE_ANON_KEY` em Settings -> Environment Variables. O app nao traz mais fallback com chaves hardcoded; sem essas variaveis, o modo local usa Hive em plataformas desktop/mobile. Para web publicado, essas variaveis precisam entrar no `flutter build web`; o deploy manual e o build remoto agora fazem isso automaticamente quando o ambiente estiver configurado.
 
 2. Aplique as migrations em `supabase/migrations/`. Elas criam as tabelas, policies RLS e a funcao `register_current_user_profile`, que registra o perfil do usuario autenticado sem permitir que o Flutter escolha `role` ou `status` diretamente.
 
