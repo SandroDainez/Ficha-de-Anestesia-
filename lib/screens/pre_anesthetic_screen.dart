@@ -58,30 +58,59 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     'Enterocolite necrosante / cirurgia abdominal',
   ];
   static const List<String> _medicationOptions = [
-    'AAS / clopidogrel (antiagregantes)',
-    'Varfarina / rivaroxabana / apixabana (anticoagulantes)',
-    'Atenolol / metoprolol / propranolol (betabloqueadores)',
-    'Captopril / enalapril / losartana (IECA/ARB)',
-    'Furosemida / hidroclorotiazida (diuréticos)',
-    'Metformina / insulina / glibenclamida (antidiabéticos)',
-    'Prednisona / dexametasona (corticoides)',
-    'Salbutamol / formoterol / ipratrópio (broncodilatadores)',
+    'AAS (antiagregante)',
+    'Clopidogrel (antiagregante)',
+    'Varfarina (anticoagulante)',
+    'Rivaroxabana (anticoagulante)',
+    'Apixabana (anticoagulante)',
+    'Atenolol (betabloqueador)',
+    'Metoprolol (betabloqueador)',
+    'Propranolol (betabloqueador)',
+    'Captopril (IECA)',
+    'Enalapril (IECA)',
+    'Losartana (ARB)',
+    'Furosemida (diurético)',
+    'Hidroclorotiazida (diurético)',
+    'Metformina (antidiabético)',
+    'Insulina (antidiabético)',
+    'Glibenclamida (antidiabético)',
+    'Prednisona (corticoide)',
+    'Dexametasona (corticoide)',
+    'Salbutamol (broncodilatador)',
+    'Formoterol (broncodilatador)',
+    'Ipratrópio (broncodilatador)',
   ];
   static const List<String> _pediatricMedicationOptions = [
-    'Salbutamol / ipratrópio (broncodilatadores)',
-    'Budesonida / fluticasona (corticoides inalatórios)',
-    'Valproato / levetiracetam / fenobarbital (anticonvulsivantes)',
-    'Amoxicilina / cefalexina / azitromicina (antibióticos em uso)',
-    'Insulina regular / NPH',
-    'Tacrolimo / ciclosporina / metotrexato (imunossupressores)',
+    'Salbutamol (broncodilatador)',
+    'Ipratrópio (broncodilatador)',
+    'Budesonida (corticoide inalatório)',
+    'Fluticasona (corticoide inalatório)',
+    'Valproato (anticonvulsivante)',
+    'Levetiracetam (anticonvulsivante)',
+    'Fenobarbital (anticonvulsivante)',
+    'Amoxicilina (antibiótico em uso)',
+    'Cefalexina (antibiótico em uso)',
+    'Azitromicina (antibiótico em uso)',
+    'Insulina regular',
+    'Insulina NPH',
+    'Tacrolimo (imunossupressor)',
+    'Ciclosporina (imunossupressor)',
+    'Metotrexato (imunossupressor)',
   ];
   static const List<String> _neonatalMedicationOptions = [
     'Cafeína',
-    'Ampicilina / gentamicina / amicacina (antibióticos)',
+    'Ampicilina (antibiótico)',
+    'Gentamicina (antibiótico)',
+    'Amicacina (antibiótico)',
     'Furosemida (diurético)',
-    'Fenobarbital / levetiracetam / midazolam (anticonvulsivantes)',
-    'Dobutamina / dopamina / adrenalina (vasoativos)',
-    'Fentanil / midazolam (sedação/analgesia contínua)',
+    'Fenobarbital (anticonvulsivante)',
+    'Levetiracetam (anticonvulsivante)',
+    'Midazolam (anticonvulsivante)',
+    'Dobutamina (vasoativo)',
+    'Dopamina (vasoativo)',
+    'Adrenalina (vasoativo)',
+    'Fentanil (sedação/analgesia contínua)',
+    'Midazolam (sedação/analgesia contínua)',
   ];
   static const List<String> _adultAgePresetOptions = [
     '18',
@@ -434,6 +463,44 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     'Suporte ventilatório recente',
     'Distensão abdominal importante',
   ];
+  static const Set<String> _intubationPredictorSet = {
+    'Mallampati III/IV',
+    'Abertura oral reduzida',
+    'Mobilidade cervical limitada',
+    'Distância tireomentoniana reduzida',
+    'Micrognatia/retrognatia',
+    'Macroglossia',
+    'Pescoço curto',
+    'Obesidade',
+    'Limitação mandibular',
+    'Hipertrofia adenotonsilar',
+    'Síndrome craniofacial',
+    'Malformação craniofacial',
+    'Prematuridade',
+  };
+  static const Set<String> _ventilationPredictorSet = {
+    'Barba',
+    'Obesidade',
+    'Sem dentes',
+    'Apneia do sono',
+    'Ronco importante',
+    'Idade > 55 anos',
+    'Limitação mandibular',
+    'IVAS recente',
+    'Secreção abundante',
+    'Sibilância/broncoespasmo',
+    'Hipertrofia adenotonsilar',
+    'Apneia prévia',
+    'Suporte ventilatório recente',
+    'Distensão abdominal importante',
+    'Macroglossia',
+  };
+  static const Set<String> _structuredAirwayAssessmentFindings = {
+    'Mallampati III/IV',
+    'Abertura oral reduzida',
+    'Mobilidade cervical limitada',
+    'Sem dentes',
+  };
   static const List<String> _complementaryExamOptions = [
     'ECG',
     'Hemograma',
@@ -629,7 +696,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   late Set<String> _selectedPreAnestheticOrientationItems;
   late Set<String> _selectedAnesthesiaTeamRequestItems;
   late Set<String> _selectedRestrictions;
+  late Set<String> _selectedAirwayAssessmentFindings;
   late Set<String> _selectedDifficultAirwayPredictors;
+  late Set<String> _selectedDifficultIntubationPredictors;
   late Set<String> _selectedDifficultVentilationPredictors;
   String _smokingStatus = '';
   String _alcoholStatus = '';
@@ -1123,6 +1192,22 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       ..._difficultVentilationPredictorOptions,
       ..._pediatricDifficultVentilationPredictorOptions,
       ..._neonatalDifficultVentilationPredictorOptions,
+    }.toList();
+  }
+
+  List<String> get _profileAirwayAssessmentOptions {
+    return {
+          ..._profileDifficultAirwayPredictorOptions,
+          ..._profileDifficultVentilationPredictorOptions,
+        }
+        .where((item) => !_structuredAirwayAssessmentFindings.contains(item))
+        .toList();
+  }
+
+  List<String> get _allAirwayAssessmentOptions {
+    return {
+      ..._allDifficultAirwayPredictorOptions,
+      ..._allDifficultVentilationPredictorOptions,
     }.toList();
   }
 
@@ -1742,42 +1827,56 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     return parts.join('\n');
   }
 
-  void _syncMallampatiPredictor() {
-    const predictor = 'Mallampati III/IV';
-    if (_showMallampatiSection &&
-        (_selectedMallampati == 'III' || _selectedMallampati == 'IV')) {
-      _selectedDifficultAirwayPredictors.add(predictor);
-    } else {
-      _selectedDifficultAirwayPredictors.remove(predictor);
-    }
+  void _syncAirwayPredictors() {
+    _selectedDifficultIntubationPredictors =
+        _difficultIntubationPredictorsFromAssessment();
+    _selectedDifficultVentilationPredictors =
+        _difficultVentilationPredictorsFromAssessment();
+    _selectedDifficultAirwayPredictors = {
+      ..._selectedDifficultIntubationPredictors,
+      ..._selectedDifficultVentilationPredictors,
+    };
   }
 
-  void _syncMouthOpeningPredictor() {
-    const predictor = 'Abertura oral reduzida';
+  Set<String> _difficultIntubationPredictorsFromAssessment() {
+    final predictors = <String>{};
+    for (final finding in _selectedAirwayAssessmentFindings) {
+      if (_intubationPredictorSet.contains(finding)) {
+        predictors.add(finding);
+      }
+    }
+    if (_showMallampatiSection &&
+        (_selectedMallampati == 'III' || _selectedMallampati == 'IV')) {
+      predictors.add('Mallampati III/IV');
+    }
     if (_selectedMouthOpening == '2-3 dedos (3-5 cm)' ||
         _selectedMouthOpening == '< 2 dedos (< 3 cm)' ||
         _selectedMouthOpening == 'Reduzida' ||
         _selectedMouthOpening == 'Muito reduzida') {
-      _selectedDifficultAirwayPredictors.add(predictor);
-    } else {
-      _selectedDifficultAirwayPredictors.remove(predictor);
+      predictors.add('Abertura oral reduzida');
     }
-  }
-
-  void _syncNeckMobilityPredictor() {
-    const predictor = 'Mobilidade cervical limitada';
     if (_selectedNeckMobility == 'Limitada' ||
         _selectedNeckMobility == 'Muito limitada') {
-      _selectedDifficultAirwayPredictors.add(predictor);
-    } else {
-      _selectedDifficultAirwayPredictors.remove(predictor);
+      predictors.add('Mobilidade cervical limitada');
     }
+    return predictors;
   }
 
-  void _syncAirwayPredictors() {
-    _syncMallampatiPredictor();
-    _syncMouthOpeningPredictor();
-    _syncNeckMobilityPredictor();
+  Set<String> _difficultVentilationPredictorsFromAssessment() {
+    final predictors = <String>{};
+    for (final finding in _selectedAirwayAssessmentFindings) {
+      if (_ventilationPredictorSet.contains(finding)) {
+        predictors.add(finding);
+      }
+    }
+    if (_selectedMouthOpening == '< 2 dedos (< 3 cm)' ||
+        _selectedMouthOpening == 'Muito reduzida') {
+      predictors.add('Limitação mandibular');
+    }
+    if (_selectedDentition == 'Sem dentes') {
+      predictors.add('Sem dentes');
+    }
+    return predictors;
   }
 
   String get _antecedentGuidanceTitle {
@@ -1967,7 +2066,22 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     _selectedRestrictions = assessment.restrictionItems
         .where(_allRestrictionOptions.contains)
         .toSet();
+    _selectedAirwayAssessmentFindings =
+        {
+              ...assessment.difficultAirwayPredictors,
+              ...assessment.difficultIntubationPredictors,
+              ...assessment.difficultVentilationPredictors,
+            }
+            .where(_allAirwayAssessmentOptions.contains)
+            .where(
+              (item) => !_structuredAirwayAssessmentFindings.contains(item),
+            )
+            .toSet();
     _selectedDifficultAirwayPredictors = assessment.difficultAirwayPredictors
+        .where(_allAirwayAssessmentOptions.contains)
+        .toSet();
+    _selectedDifficultIntubationPredictors = assessment
+        .difficultIntubationPredictors
         .where(_allDifficultAirwayPredictorOptions.contains)
         .toSet();
     _selectedDifficultVentilationPredictors = assessment
@@ -2000,6 +2114,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     _selectedDentition = _allDentitionOptions.contains(assessment.dentition)
         ? assessment.dentition
         : '';
+    _syncAirwayPredictors();
     _selectedSolidFasting = _normalizeFastingValue(
       assessment.fastingSolids,
       _solidFastingOptions,
@@ -2135,6 +2250,42 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       isSelected: selectedValues.contains,
       onTap: onToggle,
       color: color,
+    );
+  }
+
+  Widget _buildAirwayClassificationPanel({
+    required String title,
+    required Set<String> predictors,
+    required Color color,
+  }) {
+    final value = predictors.isEmpty
+        ? 'Sem preditores classificados'
+        : predictors.join(' • ');
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(color: color, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Color(0xFF17324D),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -2408,6 +2559,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       otherDifficultAirwayPredictors: _otherDifficultAirwayPredictorsController
           .text
           .trim(),
+      difficultIntubationPredictors: _selectedDifficultIntubationPredictors
+          .toList(),
+      otherDifficultIntubationPredictors: '',
       difficultVentilationPredictors: _selectedDifficultVentilationPredictors
           .toList(),
       otherDifficultVentilationPredictors:
@@ -3654,13 +3808,16 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                     options: _profileDentitionOptions,
                     selectedValue: _selectedDentition,
                     onSelected: (value) {
-                      setState(() => _selectedDentition = value);
+                      setState(() {
+                        _selectedDentition = value;
+                        _syncAirwayPredictors();
+                      });
                     },
                     color: const Color(0xFFCC7A00),
                   ),
                 ],
                 const SizedBox(height: 14),
-                _sectionLabel('Preditores de via aérea difícil'),
+                _sectionLabel('Achados da avaliação de via aérea'),
                 const SizedBox(height: 8),
                 Container(
                   width: double.infinity,
@@ -3672,10 +3829,10 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   ),
                   child: Text(
                     _selectedPopulation == PatientPopulation.adult
-                        ? 'Referência rápida: distância tireomentoniana menor que 6 cm sugere maior risco de laringoscopia/intubação difícil.'
+                        ? 'Marque apenas os achados presentes. O sistema classifica automaticamente risco de via aérea, intubação e ventilação difícil.'
                         : _selectedPopulation == PatientPopulation.pediatric
-                        ? 'Referência rápida pediátrica: valorize síndromes craniofaciais, hipertrofia adenotonsilar, limitação de abertura oral e história de dificuldade prévia.'
-                        : 'Referência rápida neonatal: valorize micrognatia, macroglossia, malformações craniofaciais, secreção e suporte ventilatório recente.',
+                        ? 'Marque apenas os achados presentes na criança. Síndromes craniofaciais, IVAS, secreção e hipertrofia adenotonsilar são classificados conforme risco predominante.'
+                        : 'Marque apenas os achados presentes no neonato. Micrognatia, secreção, suporte ventilatório e distensão abdominal são classificados conforme risco predominante.',
                     style: const TextStyle(
                       color: Color(0xFF5D7288),
                       fontWeight: FontWeight.w600,
@@ -3684,57 +3841,37 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                 ),
                 const SizedBox(height: 10),
                 _buildMultiSelectButtons(
-                  options: _profileDifficultAirwayPredictorOptions,
-                  selectedValues: _selectedDifficultAirwayPredictors,
+                  options: _profileAirwayAssessmentOptions,
+                  selectedValues: _selectedAirwayAssessmentFindings,
                   color: const Color(0xFFEA5455),
                   onToggle: (value) {
                     setState(() {
-                      if (_selectedDifficultAirwayPredictors.contains(value)) {
-                        _selectedDifficultAirwayPredictors.remove(value);
+                      if (_selectedAirwayAssessmentFindings.contains(value)) {
+                        _selectedAirwayAssessmentFindings.remove(value);
                       } else {
-                        _selectedDifficultAirwayPredictors.add(value);
+                        _selectedAirwayAssessmentFindings.add(value);
                       }
+                      _syncAirwayPredictors();
                     });
                   },
                 ),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: _otherDifficultAirwayPredictorsController,
-                  minLines: 2,
-                  maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: 'Outros - via aérea difícil',
-                    hintText: 'Descreva outros preditores relevantes',
-                  ),
+                _buildAirwayClassificationPanel(
+                  title: 'Preditores de via aérea difícil',
+                  predictors: _selectedDifficultAirwayPredictors,
+                  color: const Color(0xFFEA5455),
                 ),
-                const SizedBox(height: 14),
-                _sectionLabel('Preditores de ventilação difícil'),
-                const SizedBox(height: 8),
-                _buildMultiSelectButtons(
-                  options: _profileDifficultVentilationPredictorOptions,
-                  selectedValues: _selectedDifficultVentilationPredictors,
+                const SizedBox(height: 10),
+                _buildAirwayClassificationPanel(
+                  title: 'Preditores de intubação difícil',
+                  predictors: _selectedDifficultIntubationPredictors,
+                  color: const Color(0xFF8A5DD3),
+                ),
+                const SizedBox(height: 10),
+                _buildAirwayClassificationPanel(
+                  title: 'Preditores de ventilação difícil',
+                  predictors: _selectedDifficultVentilationPredictors,
                   color: const Color(0xFFCC7A00),
-                  onToggle: (value) {
-                    setState(() {
-                      if (_selectedDifficultVentilationPredictors.contains(
-                        value,
-                      )) {
-                        _selectedDifficultVentilationPredictors.remove(value);
-                      } else {
-                        _selectedDifficultVentilationPredictors.add(value);
-                      }
-                    });
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _otherDifficultVentilationPredictorsController,
-                  minLines: 2,
-                  maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: 'Outros - ventilação difícil',
-                    hintText: 'Descreva outros preditores relevantes',
-                  ),
                 ),
                 const SizedBox(height: 14),
                 TextField(
@@ -4342,7 +4479,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       _selectedMouthOpening.isNotEmpty ||
       _selectedNeckMobility.isNotEmpty ||
       _selectedDentition.isNotEmpty ||
+      _selectedAirwayAssessmentFindings.isNotEmpty ||
       _selectedDifficultAirwayPredictors.isNotEmpty ||
+      _selectedDifficultIntubationPredictors.isNotEmpty ||
       _selectedDifficultVentilationPredictors.isNotEmpty ||
       _otherDifficultAirwayPredictorsController.text.trim().isNotEmpty ||
       _otherDifficultVentilationPredictorsController.text.trim().isNotEmpty ||
@@ -4360,7 +4499,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       _selectedDentition == 'Dentição frágil' ||
       _selectedDentition == 'Dente móvel' ||
       _selectedDentition == 'Aparelho ortodôntico' ||
+      _selectedAirwayAssessmentFindings.isNotEmpty ||
       _selectedDifficultAirwayPredictors.isNotEmpty ||
+      _selectedDifficultIntubationPredictors.isNotEmpty ||
       _selectedDifficultVentilationPredictors.isNotEmpty ||
       _otherDifficultAirwayPredictorsController.text.trim().isNotEmpty ||
       _otherDifficultVentilationPredictorsController.text.trim().isNotEmpty ||
@@ -4775,9 +4916,13 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         'Mobilidade cervical: $_selectedNeckMobility',
       if (_selectedDentition.isNotEmpty)
         '$_dentitionLabel: $_selectedDentition',
-      _joinSummaryParts(_selectedDifficultAirwayPredictors),
+      if (_selectedDifficultAirwayPredictors.isNotEmpty)
+        'Via aérea difícil: ${_joinSummaryParts(_selectedDifficultAirwayPredictors)}',
       _joinSummaryParts(_lines(_otherDifficultAirwayPredictorsController.text)),
-      _joinSummaryParts(_selectedDifficultVentilationPredictors),
+      if (_selectedDifficultIntubationPredictors.isNotEmpty)
+        'Intubação difícil: ${_joinSummaryParts(_selectedDifficultIntubationPredictors)}',
+      if (_selectedDifficultVentilationPredictors.isNotEmpty)
+        'Ventilação difícil: ${_joinSummaryParts(_selectedDifficultVentilationPredictors)}',
       _joinSummaryParts(
         _lines(_otherDifficultVentilationPredictorsController.text),
       ),

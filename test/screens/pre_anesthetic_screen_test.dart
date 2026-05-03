@@ -215,12 +215,14 @@ void main() {
 
       expect(find.text('Foco neonatal'), findsOneWidget);
       expect(find.text('Cafeína'), findsOneWidget);
-      expect(
-        find.text('Dobutamina / dopamina / adrenalina (vasoativos)'),
-        findsOneWidget,
-      );
+      expect(find.text('Dobutamina (vasoativo)'), findsOneWidget);
+      expect(find.text('Dopamina (vasoativo)'), findsOneWidget);
+      expect(find.text('Adrenalina (vasoativo)'), findsOneWidget);
       expect(find.text('AAS'), findsNothing);
       expect(find.text('Losartana'), findsNothing);
+
+      await tester.tap(find.text('Medicações em uso'));
+      await tester.pumpAndSettle();
 
       await tester.scrollUntilVisible(
         find.text('Exames complementares'),

@@ -18,6 +18,8 @@ class PreAnestheticAssessment {
     required this.dentition,
     required this.difficultAirwayPredictors,
     required this.otherDifficultAirwayPredictors,
+    this.difficultIntubationPredictors = const [],
+    this.otherDifficultIntubationPredictors = '',
     required this.difficultVentilationPredictors,
     required this.otherDifficultVentilationPredictors,
     required this.otherAirwayDetails,
@@ -65,6 +67,8 @@ class PreAnestheticAssessment {
       dentition = '',
       difficultAirwayPredictors = const [],
       otherDifficultAirwayPredictors = '',
+      difficultIntubationPredictors = const [],
+      otherDifficultIntubationPredictors = '',
       difficultVentilationPredictors = const [],
       otherDifficultVentilationPredictors = '',
       otherAirwayDetails = '',
@@ -110,6 +114,8 @@ class PreAnestheticAssessment {
   final String dentition;
   final List<String> difficultAirwayPredictors;
   final String otherDifficultAirwayPredictors;
+  final List<String> difficultIntubationPredictors;
+  final String otherDifficultIntubationPredictors;
   final List<String> difficultVentilationPredictors;
   final String otherDifficultVentilationPredictors;
   final String otherAirwayDetails;
@@ -156,6 +162,8 @@ class PreAnestheticAssessment {
     String? dentition,
     List<String>? difficultAirwayPredictors,
     String? otherDifficultAirwayPredictors,
+    List<String>? difficultIntubationPredictors,
+    String? otherDifficultIntubationPredictors,
     List<String>? difficultVentilationPredictors,
     String? otherDifficultVentilationPredictors,
     String? otherAirwayDetails,
@@ -204,6 +212,11 @@ class PreAnestheticAssessment {
           difficultAirwayPredictors ?? this.difficultAirwayPredictors,
       otherDifficultAirwayPredictors:
           otherDifficultAirwayPredictors ?? this.otherDifficultAirwayPredictors,
+      difficultIntubationPredictors:
+          difficultIntubationPredictors ?? this.difficultIntubationPredictors,
+      otherDifficultIntubationPredictors:
+          otherDifficultIntubationPredictors ??
+          this.otherDifficultIntubationPredictors,
       difficultVentilationPredictors:
           difficultVentilationPredictors ?? this.difficultVentilationPredictors,
       otherDifficultVentilationPredictors:
@@ -266,6 +279,8 @@ class PreAnestheticAssessment {
       'dentition': dentition,
       'difficultAirwayPredictors': difficultAirwayPredictors,
       'otherDifficultAirwayPredictors': otherDifficultAirwayPredictors,
+      'difficultIntubationPredictors': difficultIntubationPredictors,
+      'otherDifficultIntubationPredictors': otherDifficultIntubationPredictors,
       'difficultVentilationPredictors': difficultVentilationPredictors,
       'otherDifficultVentilationPredictors':
           otherDifficultVentilationPredictors,
@@ -327,6 +342,12 @@ class PreAnestheticAssessment {
               .toList(),
       otherDifficultAirwayPredictors:
           json['otherDifficultAirwayPredictors'] as String? ?? '',
+      difficultIntubationPredictors:
+          (json['difficultIntubationPredictors'] as List<dynamic>? ?? const [])
+              .map((item) => item.toString())
+              .toList(),
+      otherDifficultIntubationPredictors:
+          json['otherDifficultIntubationPredictors'] as String? ?? '',
       difficultVentilationPredictors:
           (json['difficultVentilationPredictors'] as List<dynamic>? ?? const [])
               .map((item) => item.toString())

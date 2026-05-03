@@ -327,6 +327,24 @@ class ReportExportService {
               _orDash(record.preAnestheticAssessment.physicalExam),
             ),
             _field(
+              'Preditores de via aérea difícil',
+              _joinList(
+                record.preAnestheticAssessment.difficultAirwayPredictors,
+              ),
+            ),
+            _field(
+              'Preditores de intubação difícil',
+              _joinList(
+                record.preAnestheticAssessment.difficultIntubationPredictors,
+              ),
+            ),
+            _field(
+              'Preditores de ventilação difícil',
+              _joinList(
+                record.preAnestheticAssessment.difficultVentilationPredictors,
+              ),
+            ),
+            _field(
               'Prioridade do caso',
               _orDash(record.preAnestheticAssessment.surgeryPriority),
             ),
@@ -573,6 +591,26 @@ class ReportExportService {
           record.preAnestheticAssessment.mets,
         ),
         'exame_fisico': _orDash(record.preAnestheticAssessment.physicalExam),
+        'preditores_de_via_aerea_dificil':
+            record.preAnestheticAssessment.difficultAirwayPredictors.isEmpty
+            ? 'Nenhum registrado'
+            : record.preAnestheticAssessment.difficultAirwayPredictors.join(
+                ', ',
+              ),
+        'preditores_de_intubacao_dificil':
+            record.preAnestheticAssessment.difficultIntubationPredictors.isEmpty
+            ? 'Nenhum registrado'
+            : record.preAnestheticAssessment.difficultIntubationPredictors.join(
+                ', ',
+              ),
+        'preditores_de_ventilacao_dificil':
+            record
+                .preAnestheticAssessment
+                .difficultVentilationPredictors
+                .isEmpty
+            ? 'Nenhum registrado'
+            : record.preAnestheticAssessment.difficultVentilationPredictors
+                  .join(', '),
         'prioridade_do_caso': _orDash(
           record.preAnestheticAssessment.surgeryPriority,
         ),
