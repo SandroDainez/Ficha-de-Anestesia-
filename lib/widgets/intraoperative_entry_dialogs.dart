@@ -246,9 +246,21 @@ class _MaintenanceEntryEditDialogState
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.title),
+      backgroundColor: const Color(0xFFF3F6FC),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+      title: Text(
+        widget.title,
+        style: const TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1F2630),
+        ),
+      ),
       content: SizedBox(
-        width: 460,
+        width: 1120,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -338,10 +350,26 @@ class _MaintenanceEntryEditDialogState
       ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(
             const MaintenanceEntryEditResult(
               category: '',
@@ -352,6 +380,18 @@ class _MaintenanceEntryEditDialogState
           child: const Text('Remover'),
         ),
         FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF3C6C9C),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
           onPressed: () => Navigator.of(context).pop(
             MaintenanceEntryEditResult(
               category: _categoryController.text.trim(),
@@ -442,9 +482,21 @@ class _MedicationEntryEditDialogState extends State<MedicationEntryEditDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.title),
+      backgroundColor: const Color(0xFFF3F6FC),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+      title: Text(
+        widget.title,
+        style: const TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1F2630),
+        ),
+      ),
       content: SizedBox(
-        width: 420,
+        width: 1120,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -517,16 +569,44 @@ class _MedicationEntryEditDialogState extends State<MedicationEntryEditDialog> {
       ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(
             const MedicationEntryEditResult(encodedEntry: '', remove: true),
           ),
           child: const Text('Remover'),
         ),
         FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF3C6C9C),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
           onPressed: () => Navigator.of(context).pop(
             MedicationEntryEditResult(encodedEntry: _encode(), remove: false),
           ),
@@ -816,9 +896,21 @@ class _DrugInfusionsDialogState extends State<DrugInfusionsDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Editar Indução (Drogas)'),
+      backgroundColor: const Color(0xFFF3F6FC),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+      title: const Text(
+        'Editar Indução (Drogas)',
+        style: TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1F2630),
+        ),
+      ),
       content: SizedBox(
-        width: 640,
+        width: 1120,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -867,10 +959,30 @@ class _DrugInfusionsDialogState extends State<DrugInfusionsDialog> {
       ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF3C6C9C),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
           key: const Key('drug-save-button'),
           onPressed: () => Navigator.of(context).pop(_buildResult()),
           child: const Text('Salvar'),
@@ -963,9 +1075,21 @@ class _EventsDialogState extends State<EventsDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Editar Eventos'),
+      backgroundColor: const Color(0xFFF3F6FC),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+      title: const Text(
+        'Editar Eventos',
+        style: TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1F2630),
+        ),
+      ),
       content: SizedBox(
-        width: 620,
+        width: 1120,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1058,10 +1182,30 @@ class _EventsDialogState extends State<EventsDialog> {
       ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF3C6C9C),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
           key: const Key('event-save-button'),
           onPressed: () {
             final pending = _buildDraftItem();
@@ -1225,9 +1369,21 @@ class _AdjunctsDialogState extends State<AdjunctsDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Editar Adjuvantes'),
+      backgroundColor: const Color(0xFFF3F6FC),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+      title: const Text(
+        'Editar Adjuvantes',
+        style: TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1F2630),
+        ),
+      ),
       content: SizedBox(
-        width: 620,
+        width: 1120,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1342,10 +1498,30 @@ class _AdjunctsDialogState extends State<AdjunctsDialog> {
       ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF3C6C9C),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
           onPressed: () => Navigator.of(context).pop(_buildResult()),
           child: const Text('Salvar'),
         ),
@@ -1528,9 +1704,21 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
         widget.title.toLowerCase().contains('sedacao');
 
     return AlertDialog(
-      title: Text(widget.title),
+      backgroundColor: const Color(0xFFF3F6FC),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+      title: Text(
+        widget.title,
+        style: const TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1F2630),
+        ),
+      ),
       content: SizedBox(
-        width: 640,
+        width: 1120,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1780,10 +1968,30 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
       ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF3C6C9C),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
           onPressed: () => Navigator.of(context).pop(_buildResult()),
           child: const Text('Salvar'),
         ),
@@ -1929,9 +2137,21 @@ class _VasoactiveDrugsDialogState extends State<VasoactiveDrugsDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Editar Drogas vasoativas'),
+      backgroundColor: const Color(0xFFF3F6FC),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+      title: const Text(
+        'Editar Drogas vasoativas',
+        style: TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1F2630),
+        ),
+      ),
       content: SizedBox(
-        width: 760,
+        width: 1120,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -2029,10 +2249,30 @@ class _VasoactiveDrugsDialogState extends State<VasoactiveDrugsDialog> {
       ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF3C6C9C),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
           onPressed: () => Navigator.of(context).pop(_buildResult()),
           child: const Text('Salvar'),
         ),

@@ -122,8 +122,11 @@ class RecordAnalysisDialog extends StatelessWidget {
         : const Color(0xFFCC3D3D);
 
     return AlertDialog(
-      backgroundColor: const Color(0xFFF9FBFE),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+      backgroundColor: const Color(0xFFF3F6FC),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
       title: Row(
         children: [
           Icon(
@@ -178,6 +181,18 @@ class RecordAnalysisDialog extends StatelessWidget {
       ),
       actions: [
         FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF3C6C9C),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Fechar'),
         ),
