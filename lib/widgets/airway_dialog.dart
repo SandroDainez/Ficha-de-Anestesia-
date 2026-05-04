@@ -183,11 +183,21 @@ class _AirwayDialogState extends State<AirwayDialog> {
     final showObservation = widget.section == AirwayEditSection.observation;
 
     return AlertDialog(
-      backgroundColor: const Color(0xFFF9FBFE),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-      title: Text(_titleForSection(widget.section)),
+      backgroundColor: const Color(0xFFF3F6FC),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+      title: Text(
+        _titleForSection(widget.section),
+        style: const TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1F2630),
+        ),
+      ),
       content: SizedBox(
-        width: 420,
+        width: 1120,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -355,10 +365,30 @@ class _AirwayDialogState extends State<AirwayDialog> {
       ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF3C6C9C),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
           key: const Key('airway-save-button'),
           onPressed: () => Navigator.of(context).pop(
             widget.initialAirway.copyWith(

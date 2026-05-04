@@ -9148,11 +9148,21 @@ class _VenousAccessDialogState extends State<VenousAccessDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: const Color(0xFFF9FBFE),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-      title: const Text('Editar Acesso venoso'),
+      backgroundColor: const Color(0xFFF3F6FC),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+      title: const Text(
+        'Editar Acesso venoso',
+        style: TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1F2630),
+        ),
+      ),
       content: SizedBox(
-        width: 480,
+        width: 1120,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -9364,10 +9374,30 @@ class _VenousAccessDialogState extends State<VenousAccessDialog> {
       ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF3C6C9C),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
           onPressed: () => Navigator.of(context).pop(_buildResult()),
           child: const Text('Salvar'),
         ),
@@ -9462,11 +9492,21 @@ class _ArterialAccessDialogState extends State<ArterialAccessDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: const Color(0xFFF9FBFE),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-      title: const Text('Editar Acesso arterial'),
+      backgroundColor: const Color(0xFFF3F6FC),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+      title: const Text(
+        'Editar Acesso arterial',
+        style: TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1F2630),
+        ),
+      ),
       content: SizedBox(
-        width: 460,
+        width: 1120,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -9640,10 +9680,30 @@ class _ArterialAccessDialogState extends State<ArterialAccessDialog> {
       ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF3C6C9C),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
           onPressed: () => Navigator.of(context).pop(_buildResult()),
           child: const Text('Salvar'),
         ),
@@ -9747,41 +9807,22 @@ class _NeuraxialNeedlesDialogState extends State<NeuraxialNeedlesDialog> {
     return _formatLossEntryLabel(entry, prefix: 'Consumo extra');
   }
 
-  Future<void> _editPresetNeedles({
-    required String title,
-    required List<String> options,
-  }) async {
-    final result = await showDialog<List<String>>(
-      context: context,
-      builder: (_) => ListFieldDialog(
-        title: title,
-        label: 'Outros itens',
-        initialItems: _selectedMainItems.where(options.contains).toList(),
-        suggestions: options,
-      ),
-    );
-
-    if (result == null) return;
-    setState(() {
-      _selectedMainItems.removeWhere(options.contains);
-      _selectedMainItems.addAll(result.where(options.contains));
-      _extraEntries.addAll(result.where((item) => !options.contains(item)));
-    });
-  }
-
-  String _presetSummary(List<String> options) {
-    final selected = _selectedMainItems.where(options.contains).toList();
-    if (selected.isEmpty) return 'Nenhum item selecionado';
-    if (selected.length <= 2) return selected.join(' • ');
-    return '${selected.take(2).join(' • ')} +${selected.length - 2}';
-  }
-
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: const Color(0xFFF3F6FC),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
-      title: const Text('Agulhas para raqui / peridural'),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+      title: const Text(
+        'Agulhas para raqui / peridural',
+        style: TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1F2630),
+        ),
+      ),
       content: SizedBox(
         width: 1120,
         child: SingleChildScrollView(
@@ -9797,23 +9838,19 @@ class _NeuraxialNeedlesDialogState extends State<NeuraxialNeedlesDialog> {
                 ),
               ),
               const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => _editPresetNeedles(
-                    title: 'Agulhas para raqui',
-                    options: _spinalNeedles,
-                  ),
-                  icon: const Icon(Icons.vaccines_outlined),
-                  label: Text(_presetSummary(_spinalNeedles)),
-                  style: OutlinedButton.styleFrom(
-                    alignment: Alignment.centerLeft,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                  ),
-                ),
+              SelectionGridSection(
+                options: _spinalNeedles,
+                searchEnabled: false,
+                isSelected: (item) => _selectedMainItems.contains(item),
+                onToggle: (item) {
+                  setState(() {
+                    if (_selectedMainItems.contains(item)) {
+                      _selectedMainItems.remove(item);
+                    } else {
+                      _selectedMainItems.add(item);
+                    }
+                  });
+                },
               ),
               const SizedBox(height: 16),
               const Text(
@@ -9824,23 +9861,19 @@ class _NeuraxialNeedlesDialogState extends State<NeuraxialNeedlesDialog> {
                 ),
               ),
               const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => _editPresetNeedles(
-                    title: 'Agulhas para peridural',
-                    options: _epiduralNeedles,
-                  ),
-                  icon: const Icon(Icons.medical_services_outlined),
-                  label: Text(_presetSummary(_epiduralNeedles)),
-                  style: OutlinedButton.styleFrom(
-                    alignment: Alignment.centerLeft,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                  ),
-                ),
+              SelectionGridSection(
+                options: _epiduralNeedles,
+                searchEnabled: false,
+                isSelected: (item) => _selectedMainItems.contains(item),
+                onToggle: (item) {
+                  setState(() {
+                    if (_selectedMainItems.contains(item)) {
+                      _selectedMainItems.remove(item);
+                    } else {
+                      _selectedMainItems.add(item);
+                    }
+                  });
+                },
               ),
               const SizedBox(height: 16),
               TextField(
@@ -9989,14 +10022,42 @@ class _NeuraxialNeedlesDialogState extends State<NeuraxialNeedlesDialog> {
       ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(const <String>[]),
           child: const Text('Limpar'),
         ),
         FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF3C6C9C),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
           onPressed: () => Navigator.of(context).pop([
             ..._selectedMainItems,
             ..._extraEntries,
