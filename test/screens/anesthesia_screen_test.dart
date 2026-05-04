@@ -581,12 +581,13 @@ void main() {
       await tester.tap(find.text('Editar técnica'));
       await tester.pumpAndSettle();
 
+      await tester.tap(find.text('Anestesia geral balanceada').last);
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Bloqueio periférico').last);
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('technique-save-button')));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('technique-card')), findsOneWidget);
       expect(find.byKey(const Key('drugs-card')), findsNothing);
       expect(find.byKey(const Key('maintenance-card')), findsNothing);
       expect(find.byKey(const Key('airway-card')), findsNothing);
@@ -1122,6 +1123,24 @@ void main() {
     expect(find.text('Extubado em sala'), findsWidgets);
     expect(find.textContaining('Aspiradas secreções'), findsOneWidget);
   });
+
+  testWidgets(
+    'emergence card uses recovery wording for isolated regional technique',
+    (WidgetTester tester) async {
+      final record = buildRecord().copyWith(
+        anesthesiaTechnique: 'Raquianestesia\nBloqueio periférico',
+      );
+
+      await pumpScreen(tester, record);
+
+      expect(find.text('RECUPERAÇÃO / ENCAMINHAMENTO'), findsOneWidget);
+      expect(find.text('DESPERTAR / EXTUBAÇÃO'), findsNothing);
+      expect(
+        find.textContaining('Recuperação pós-anestésica pendente'),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets(
     'maintenance card shows clickable groups and inhalational estimate in ml per hour',

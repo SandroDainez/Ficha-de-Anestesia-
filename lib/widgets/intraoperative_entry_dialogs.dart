@@ -693,6 +693,23 @@ class _DrugInfusionsDialogState extends State<DrugInfusionsDialog> {
     return [...selected, ...others];
   }
 
+  Widget _buildMedicationFormCard({
+    required Widget child,
+    EdgeInsetsGeometry margin = const EdgeInsets.only(bottom: 12),
+  }) {
+    return Container(
+      width: double.infinity,
+      margin: margin,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFE),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFDCE7F3)),
+      ),
+      child: child,
+    );
+  }
+
   Widget _buildDrugSection({
     required String title,
     required List<String> drugs,
@@ -712,8 +729,7 @@ class _DrugInfusionsDialogState extends State<DrugInfusionsDialog> {
         ),
         const SizedBox(height: 10),
         ...drugs.map(
-          (name) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+          (name) => _buildMedicationFormCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1186,6 +1202,23 @@ class _AdjunctsDialogState extends State<AdjunctsDialog> {
     return [...selected, ...others];
   }
 
+  Widget _buildMedicationFormCard({
+    required Widget child,
+    EdgeInsetsGeometry margin = const EdgeInsets.only(bottom: 12),
+  }) {
+    return Container(
+      width: double.infinity,
+      margin: margin,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFE),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFDCE7F3)),
+      ),
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -1215,8 +1248,7 @@ class _AdjunctsDialogState extends State<AdjunctsDialog> {
               ),
               const SizedBox(height: 14),
               ..._adjunctNames.map((name) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+                return _buildMedicationFormCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1468,6 +1500,23 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
     });
   }
 
+  Widget _buildMedicationFormCard({
+    required Widget child,
+    EdgeInsetsGeometry margin = const EdgeInsets.only(bottom: 12),
+  }) {
+    return Container(
+      width: double.infinity,
+      margin: margin,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFE),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFDCE7F3)),
+      ),
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isSedationDialog =
@@ -1624,8 +1673,7 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
                 final defaultDose = entry.value;
                 final recommendation =
                     widget.catalogRecommendations[name]?.trim() ?? '';
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+                return _buildMedicationFormCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1856,6 +1904,23 @@ class _VasoactiveDrugsDialogState extends State<VasoactiveDrugsDialog> {
     return [...selected, ...others];
   }
 
+  Widget _buildMedicationFormCard({
+    required Widget child,
+    EdgeInsetsGeometry margin = const EdgeInsets.only(bottom: 14),
+  }) {
+    return Container(
+      width: double.infinity,
+      margin: margin,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFE),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFDCE7F3)),
+      ),
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -1869,8 +1934,7 @@ class _VasoactiveDrugsDialogState extends State<VasoactiveDrugsDialog> {
               ...widget.catalogItems.entries.map((entry) {
                 final name = entry.key;
                 final defaultDose = entry.value;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
+                return _buildMedicationFormCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

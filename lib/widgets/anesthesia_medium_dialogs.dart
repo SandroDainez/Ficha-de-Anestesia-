@@ -294,18 +294,6 @@ class _TechniqueDialogState extends State<TechniqueDialog> {
         .where((item) => item.isNotEmpty),
   ];
 
-  bool _isGeneralTechnique(String technique) {
-    final normalized = technique.toLowerCase();
-    return normalized.contains('anestesia geral') ||
-        normalized.contains('tiva') ||
-        normalized.contains('intubação') ||
-        normalized.contains('intubacao') ||
-        normalized.contains('máscara laríngea') ||
-        normalized.contains('mascara laringea') ||
-        normalized.contains('ventilação controlada') ||
-        normalized.contains('ventilacao controlada');
-  }
-
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -327,9 +315,6 @@ class _TechniqueDialogState extends State<TechniqueDialog> {
                       if (_selectedTechniques.contains(item)) {
                         _selectedTechniques.remove(item);
                       } else {
-                        if (!_isGeneralTechnique(item)) {
-                          _selectedTechniques.removeWhere(_isGeneralTechnique);
-                        }
                         _selectedTechniques.add(item);
                       }
                     });

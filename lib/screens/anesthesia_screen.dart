@@ -2215,6 +2215,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   bool get _showsMechanicalVentilationCard =>
       _techniqueProfile.isEmpty || _techniqueProfile.hasGeneral;
 
+  bool get _isGeneralEmergenceFlow => _showsGeneralWorkflowCards;
+
   bool get _hasAdvancedAirwayDevice {
     final device = _record.airway.device.toLowerCase();
     return device.contains('tot') ||
@@ -4481,6 +4483,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         initialStatus: _record.emergenceStatus,
         initialNotes: _record.emergenceNotes,
         patientDestination: _displayPatientDestination,
+        isGeneralFlow: _isGeneralEmergenceFlow,
       ),
     );
     if (result == null) return;
@@ -7924,16 +7927,23 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   Widget _buildEmergenceCard() {
+    final title = _isGeneralEmergenceFlow
+        ? 'Despertar / extubação'
+        : 'Recuperação / encaminhamento';
     final status = _record.emergenceStatus.trim().isEmpty
-        ? 'Saída da anestesia pendente'
+        ? (_isGeneralEmergenceFlow
+              ? 'Saída da anestesia pendente'
+              : 'Recuperação pós-anestésica pendente')
         : _record.emergenceStatus.trim();
     final summary = _record.emergenceNotes.trim().isEmpty
-        ? 'Registrar reversão, aspiração, extubação ou encaminhamento ventilado conforme o desfecho.'
+        ? (_isGeneralEmergenceFlow
+              ? 'Registrar reversão, aspiração, extubação ou encaminhamento ventilado conforme o desfecho.'
+              : 'Registrar recuperação clínica, suporte respiratório quando necessário e encaminhamento pós-operatório.')
         : _record.emergenceNotes.trim();
     return _buildCompactOperationalCard(
       key: const Key('emergence-card'),
       tapKey: const Key('emergence-entry'),
-      title: 'Despertar / extubação',
+      title: title,
       titleColor: _emergencePhaseColor,
       icon: Icons.logout_outlined,
       minHeight: 92,
@@ -8060,24 +8070,32 @@ class _EmergenceDialog extends StatefulWidget {
     required this.initialStatus,
     required this.initialNotes,
     required this.patientDestination,
+    required this.isGeneralFlow,
   });
 
   final String initialStatus;
   final String initialNotes;
   final String patientDestination;
+  final bool isGeneralFlow;
 
   @override
   State<_EmergenceDialog> createState() => _EmergenceDialogState();
 }
 
 class _EmergenceDialogState extends State<_EmergenceDialog> {
-  static const List<String> _statusOptions = [
+  static const List<String> _generalStatusOptions = [
     'Extubado em sala',
     'Mantido intubado para UTI',
     'Mantido em dispositivo supraglótico / máscara',
     'Sem via aérea avançada',
   ];
-  static const List<String> _noteOptions = [
+  static const List<String> _regionalStatusOptions = [
+    'Sem via aérea avançada',
+    'Ventilação espontânea em ar ambiente',
+    'Ventilação espontânea com O₂ suplementar',
+    'Necessidade de suporte ventilatório',
+  ];
+  static const List<String> _generalNoteOptions = [
     'Desperto',
     'Ventilando espontaneamente',
     'Sem broncoespasmo',
@@ -8085,9 +8103,23 @@ class _EmergenceDialogState extends State<_EmergenceDialog> {
     'Hemodinamicamente estável',
     'TOF > 0,9',
   ];
+  static const List<String> _regionalNoteOptions = [
+    'Desperto',
+    'Ventilando espontaneamente',
+    'Bloqueio sensitivo/motor em regressão',
+    'Analgesia adequada',
+    'Sem náusea/vômito',
+    'Hemodinamicamente estável',
+  ];
 
   late String _selectedStatus;
   late final TextEditingController _notesController;
+
+  List<String> get _statusOptions =>
+      widget.isGeneralFlow ? _generalStatusOptions : _regionalStatusOptions;
+
+  List<String> get _noteOptions =>
+      widget.isGeneralFlow ? _generalNoteOptions : _regionalNoteOptions;
 
   @override
   void initState() {
@@ -8131,7 +8163,11 @@ class _EmergenceDialogState extends State<_EmergenceDialog> {
         .toSet();
 
     return AlertDialog(
-      title: const Text('Despertar / extubação'),
+      title: Text(
+        widget.isGeneralFlow
+            ? 'Despertar / extubação'
+            : 'Recuperação / encaminhamento',
+      ),
       content: SizedBox(
         width: 520,
         child: SingleChildScrollView(
@@ -8139,8 +8175,10 @@ class _EmergenceDialogState extends State<_EmergenceDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Desfecho imediato da via aérea / extubação',
+              Text(
+                widget.isGeneralFlow
+                    ? 'Desfecho imediato da via aérea / extubação'
+                    : 'Desfecho respiratório imediato e recuperação',
                 style: TextStyle(
                   color: Color(0xFF17324D),
                   fontWeight: FontWeight.w800,
@@ -8158,8 +8196,10 @@ class _EmergenceDialogState extends State<_EmergenceDialog> {
                 },
               ),
               const SizedBox(height: 14),
-              const Text(
-                'Achados pós-extubação',
+              Text(
+                widget.isGeneralFlow
+                    ? 'Achados pós-extubação'
+                    : 'Achados da recuperação imediata',
                 style: TextStyle(
                   color: Color(0xFF17324D),
                   fontWeight: FontWeight.w800,
