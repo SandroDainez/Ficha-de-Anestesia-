@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import '../models/patient.dart';
 import '../models/pre_anesthetic_assessment.dart';
@@ -745,6 +748,14 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   ];
   static const List<String> _preAnestheticOrientationOptions = [
     'Manter medicações de uso contínuo; suspender somente as que foram orientadas',
+    'Suspender iSGLT2 (dapagliflozina/empagliflozina/canagliflozina) 3 dias antes (ertugliflozina 4 dias)',
+    'Suspender varfarina 5 dias antes e confirmar INR conforme protocolo local',
+    'Suspender clopidogrel 5 dias antes',
+    'Suspender ticagrelor 3 dias antes',
+    'Suspender prasugrel 7 dias antes',
+    'Suspender DOAC 24-72h conforme função renal, fármaco e risco de sangramento',
+    'Suspender metformina no dia da cirurgia (ou antes se disfunção renal/contraste)',
+    'Suspender IECA/ARA-II na manhã da cirurgia para cirurgia não cardíaca',
     'Suspender clopidogrel 5-7 dias se liberado pela equipe assistente',
     'Manter AAS quando alto risco trombótico ou prevenção secundária',
     'Suspender varfarina 5 dias e checar INR conforme protocolo',
@@ -764,7 +775,16 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     ),
     _OrientationOptionGroup(
       title: 'Suspender',
-      options: [],
+      options: [
+        'Suspender iSGLT2 (dapagliflozina/empagliflozina/canagliflozina) 3 dias antes (ertugliflozina 4 dias)',
+        'Suspender varfarina 5 dias antes e confirmar INR conforme protocolo local',
+        'Suspender clopidogrel 5 dias antes',
+        'Suspender ticagrelor 3 dias antes',
+        'Suspender prasugrel 7 dias antes',
+        'Suspender DOAC 24-72h conforme função renal, fármaco e risco de sangramento',
+        'Suspender metformina no dia da cirurgia (ou antes se disfunção renal/contraste)',
+        'Suspender IECA/ARA-II na manhã da cirurgia para cirurgia não cardíaca',
+      ],
       freeTextField: _OrientationFreeTextField(
         label: 'Medicações a suspender',
         hintText: 'Digite uma medicação por linha',
@@ -920,9 +940,25 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   static const List<String> _anesthesiaTeamRequestOptions = [
     'Avaliação cardiológica',
     'Avaliação pneumológica',
+    'Avaliação endocrinológica',
+    'Avaliação hematológica',
     'Outras avaliações',
     'Solicitação de exames',
   ];
+  static const Map<String, String> _requestReasonTemplates = {
+    'Avaliação cardiológica':
+        'Solicitada para estratificação de risco cardiovascular perioperatório e otimização clínica antes do procedimento.',
+    'Avaliação pneumológica':
+        'Solicitada para avaliação de risco respiratório perioperatório e ajuste terapêutico pré-operatório.',
+    'Avaliação endocrinológica':
+        'Solicitada para otimização metabólica/hormonal e alinhamento de condutas antes do ato cirúrgico.',
+    'Avaliação hematológica':
+        'Solicitada para avaliação do risco trombótico/hemorrágico e definição de estratégia perioperatória.',
+    'Outras avaliações':
+        'Solicitada avaliação especializada adicional conforme achados da consulta pré-anestésica.',
+    'Solicitação de exames':
+        'Solicitados exames complementares para esclarecimento diagnóstico e segurança perioperatória.',
+  };
   static const List<String> _surgeryClearanceOptions = [
     'Cirurgia liberada',
     'Cirurgia suspensa',
@@ -3523,197 +3559,6 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
             },
           ),
           const SizedBox(height: 12),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final sideBySide = constraints.maxWidth >= 900;
-
-              final requestsCard = _SectionCard(
-                title: _anesthesiaTeamRequestSectionTitle,
-                isCompleted:
-                    _selectedAnesthesiaTeamRequestItems.isNotEmpty ||
-                    _anesthesiaTeamRequestNotesController.text
-                        .trim()
-                        .isNotEmpty,
-                summary: _requestsSummary(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSummaryBanner(_requestsSummary()),
-                    const SizedBox(height: 14),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFE),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE5ECF6)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: _anesthesiaTeamRequestGuidanceLines
-                            .map(
-                              (line) => Padding(
-                                padding: const EdgeInsets.only(bottom: 2),
-                                child: Text(
-                                  line,
-                                  style: const TextStyle(
-                                    color: Color(0xFF5D7288),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    _buildMultiSelectButtons(
-                      options: _anesthesiaTeamRequestOptions,
-                      selectedValues: _selectedAnesthesiaTeamRequestItems,
-                      color: const Color(0xFF2B76D2),
-                      onToggle: (value) {
-                        setState(() {
-                          if (_selectedAnesthesiaTeamRequestItems.contains(
-                            value,
-                          )) {
-                            _selectedAnesthesiaTeamRequestItems.remove(value);
-                          } else {
-                            _selectedAnesthesiaTeamRequestItems.add(value);
-                          }
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 14),
-                    TextField(
-                      controller: _anesthesiaTeamRequestNotesController,
-                      minLines: 3,
-                      maxLines: 5,
-                      decoration: const InputDecoration(
-                        labelText: 'Outras solicitações',
-                        hintText:
-                            'Ex: avaliação cardiológica, pneumológica, exames, recomendações ou pendências adicionais',
-                      ),
-                    ),
-                  ],
-                ),
-              );
-
-              final clearanceCard = _SectionCard(
-                title: _surgeryClearanceSectionTitle,
-                isCompleted:
-                    _selectedSurgeryClearanceStatus.isNotEmpty ||
-                    _surgeryClearanceNotesController.text.trim().isNotEmpty,
-                tone: _hasSurgeryClearanceAlert
-                    ? _SectionCardTone.alert
-                    : _selectedSurgeryClearanceStatus == 'Cirurgia liberada'
-                    ? _SectionCardTone.completed
-                    : _SectionCardTone.neutral,
-                summary: _clearanceSummary(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSummaryBanner(
-                      _clearanceSummary(),
-                      tone: _hasSurgeryClearanceAlert
-                          ? _SectionCardTone.alert
-                          : _selectedSurgeryClearanceStatus ==
-                                'Cirurgia liberada'
-                          ? _SectionCardTone.completed
-                          : _SectionCardTone.neutral,
-                    ),
-                    const SizedBox(height: 14),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFE),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE5ECF6)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: _surgeryClearanceGuidanceLines
-                            .map(
-                              (line) => Padding(
-                                padding: const EdgeInsets.only(bottom: 2),
-                                child: Text(
-                                  line,
-                                  style: const TextStyle(
-                                    color: Color(0xFF5D7288),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    _buildSingleSelectButtons(
-                      options: _surgeryClearanceOptions,
-                      selectedValue: _selectedSurgeryClearanceStatus,
-                      color: const Color(0xFF169653),
-                      onSelected: (value) {
-                        setState(() => _selectedSurgeryClearanceStatus = value);
-                      },
-                    ),
-                    const SizedBox(height: 14),
-                    const Text(
-                      'Motivos rápidos',
-                      style: TextStyle(
-                        color: Color(0xFF17324D),
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    SelectionGridSection(
-                      options: _profileSurgeryClearanceNoteOptions,
-                      searchEnabled: false,
-                      isSelected: (option) => _surgeryClearanceNotesController
-                          .text
-                          .split('\n')
-                          .map((line) => line.trim())
-                          .where((line) => line.isNotEmpty)
-                          .contains(option),
-                      onToggle: _toggleSurgeryClearanceNoteOption,
-                    ),
-                    const SizedBox(height: 14),
-                    TextField(
-                      controller: _surgeryClearanceNotesController,
-                      minLines: 3,
-                      maxLines: 5,
-                      decoration: const InputDecoration(
-                        labelText: 'Motivos / pendências / retorno',
-                        hintText:
-                            'Ex: suspensa por HAS descompensada, pendência cardiológica, retorno após exame',
-                      ),
-                    ),
-                  ],
-                ),
-              );
-
-              if (sideBySide) {
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: requestsCard),
-                    const SizedBox(width: 12),
-                    Expanded(child: clearanceCard),
-                  ],
-                );
-              }
-
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  requestsCard,
-                  const SizedBox(height: 12),
-                  clearanceCard,
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 12),
           _SectionCard(
             title: 'Antecedentes',
             isCompleted:
@@ -4867,6 +4712,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 12),
+          _buildRequestsAndClearanceSection(),
           const SizedBox(height: 20),
           FilledButton.icon(
             onPressed: _saveAndReturn,
@@ -5062,6 +4909,328 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   bool get _hasSurgeryClearanceAlert =>
       _selectedSurgeryClearanceStatus.isNotEmpty &&
       _selectedSurgeryClearanceStatus != 'Cirurgia liberada';
+
+  Widget _buildRequestsAndClearanceSection() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final sideBySide = constraints.maxWidth >= 900;
+
+        final requestsCard = _SectionCard(
+          title: _anesthesiaTeamRequestSectionTitle,
+          isCompleted:
+              _selectedAnesthesiaTeamRequestItems.isNotEmpty ||
+              _anesthesiaTeamRequestNotesController.text.trim().isNotEmpty,
+          summary: _requestsSummary(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSummaryBanner(_requestsSummary()),
+              const SizedBox(height: 14),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFE),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE5ECF6)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: _anesthesiaTeamRequestGuidanceLines
+                      .map(
+                        (line) => Padding(
+                          padding: const EdgeInsets.only(bottom: 2),
+                          child: Text(
+                            line,
+                            style: const TextStyle(
+                              color: Color(0xFF5D7288),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+              const SizedBox(height: 14),
+              _buildMultiSelectButtons(
+                options: _anesthesiaTeamRequestOptions,
+                selectedValues: _selectedAnesthesiaTeamRequestItems,
+                color: const Color(0xFF2B76D2),
+                onToggle: (value) {
+                  setState(() {
+                    if (_selectedAnesthesiaTeamRequestItems.contains(value)) {
+                      _selectedAnesthesiaTeamRequestItems.remove(value);
+                    } else {
+                      _selectedAnesthesiaTeamRequestItems.add(value);
+                    }
+                  });
+                },
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: _anesthesiaTeamRequestNotesController,
+                minLines: 3,
+                maxLines: 5,
+                decoration: const InputDecoration(
+                  labelText: 'Outras solicitações',
+                  hintText:
+                      'Ex: avaliação cardiológica, pneumológica, exames, recomendações ou pendências adicionais',
+                ),
+              ),
+              const SizedBox(height: 14),
+              Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton.icon(
+                  onPressed: _printRequestReport,
+                  icon: const Icon(Icons.print_outlined),
+                  label: const Text('Imprimir solicitação'),
+                ),
+              ),
+            ],
+          ),
+        );
+
+        final clearanceCard = _SectionCard(
+          title: _surgeryClearanceSectionTitle,
+          isCompleted:
+              _selectedSurgeryClearanceStatus.isNotEmpty ||
+              _surgeryClearanceNotesController.text.trim().isNotEmpty,
+          tone: _hasSurgeryClearanceAlert
+              ? _SectionCardTone.alert
+              : _selectedSurgeryClearanceStatus == 'Cirurgia liberada'
+              ? _SectionCardTone.completed
+              : _SectionCardTone.neutral,
+          summary: _clearanceSummary(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSummaryBanner(
+                _clearanceSummary(),
+                tone: _hasSurgeryClearanceAlert
+                    ? _SectionCardTone.alert
+                    : _selectedSurgeryClearanceStatus == 'Cirurgia liberada'
+                    ? _SectionCardTone.completed
+                    : _SectionCardTone.neutral,
+              ),
+              const SizedBox(height: 14),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFE),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE5ECF6)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: _surgeryClearanceGuidanceLines
+                      .map(
+                        (line) => Padding(
+                          padding: const EdgeInsets.only(bottom: 2),
+                          child: Text(
+                            line,
+                            style: const TextStyle(
+                              color: Color(0xFF5D7288),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+              const SizedBox(height: 14),
+              _buildSingleSelectButtons(
+                options: _surgeryClearanceOptions,
+                selectedValue: _selectedSurgeryClearanceStatus,
+                color: const Color(0xFF169653),
+                onSelected: (value) {
+                  setState(() => _selectedSurgeryClearanceStatus = value);
+                },
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Motivos rápidos',
+                style: TextStyle(
+                  color: Color(0xFF17324D),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SelectionGridSection(
+                options: _profileSurgeryClearanceNoteOptions,
+                searchEnabled: false,
+                isSelected: (option) => _surgeryClearanceNotesController.text
+                    .split('\n')
+                    .map((line) => line.trim())
+                    .where((line) => line.isNotEmpty)
+                    .contains(option),
+                onToggle: _toggleSurgeryClearanceNoteOption,
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: _surgeryClearanceNotesController,
+                minLines: 3,
+                maxLines: 5,
+                decoration: const InputDecoration(
+                  labelText: 'Motivos / pendências / retorno',
+                  hintText:
+                      'Ex: suspensa por HAS descompensada, pendência cardiológica, retorno após exame',
+                ),
+              ),
+              const SizedBox(height: 14),
+              Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton.icon(
+                  onPressed: _printPatientRecommendations,
+                  icon: const Icon(Icons.print_outlined),
+                  label: const Text('Imprimir orientações'),
+                ),
+              ),
+            ],
+          ),
+        );
+
+        if (sideBySide) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: requestsCard),
+              const SizedBox(width: 12),
+              Expanded(child: clearanceCard),
+            ],
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [requestsCard, const SizedBox(height: 12), clearanceCard],
+        );
+      },
+    );
+  }
+
+  Future<void> _printRequestReport() async {
+    final lines = <String>[
+      ..._selectedAnesthesiaTeamRequestItems,
+      ..._lines(_anesthesiaTeamRequestNotesController.text),
+    ];
+    if (lines.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Preencha solicitações antes de imprimir'),
+        ),
+      );
+      return;
+    }
+
+    final doc = pw.Document();
+    final now = DateTime.now();
+    doc.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(28),
+        build: (_) => [
+          pw.Text(
+            'Solicitação pré-anestésica',
+            style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 8),
+          pw.Text('Paciente: ${_nameController.text.trim()}'),
+          pw.Text('Data: ${now.day}/${now.month}/${now.year}'),
+          pw.Text('Situação da cirurgia: ${_clearanceSummary()}'),
+          pw.SizedBox(height: 14),
+          pw.Text(
+            'Solicitações e motivos',
+            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 8),
+          ...lines.map((item) {
+            final reason = _requestReasonTemplates[item];
+            final text = reason == null ? item : '$item: $reason';
+            return pw.Padding(
+              padding: const pw.EdgeInsets.only(bottom: 6),
+              child: pw.Bullet(text: text),
+            );
+          }),
+          if (_surgeryClearanceNotesController.text.trim().isNotEmpty) ...[
+            pw.SizedBox(height: 12),
+            pw.Text(
+              'Pendências/observações',
+              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.SizedBox(height: 6),
+            pw.Text(_surgeryClearanceNotesController.text.trim()),
+          ],
+        ],
+      ),
+    );
+
+    await Printing.layoutPdf(onLayout: (_) async => doc.save());
+  }
+
+  Future<void> _printPatientRecommendations() async {
+    final orientationLines = <String>[
+      ..._selectedPreAnestheticOrientationItems,
+      ..._orientationFreeTextItems,
+      ..._lines(_preAnestheticOrientationNotesController.text),
+    ];
+    if (orientationLines.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Preencha orientações antes de imprimir')),
+      );
+      return;
+    }
+
+    final doc = pw.Document();
+    final now = DateTime.now();
+    doc.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(28),
+        build: (_) => [
+          pw.Text(
+            'Recomendações ao paciente',
+            style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 8),
+          pw.Text('Paciente: ${_nameController.text.trim()}'),
+          pw.Text('Data: ${now.day}/${now.month}/${now.year}'),
+          pw.SizedBox(height: 12),
+          pw.Text(
+            'Jejum',
+            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.Bullet(text: _fastingSummary()),
+          pw.SizedBox(height: 10),
+          pw.Text(
+            'Orientações',
+            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+          ),
+          ...orientationLines.map(
+            (line) => pw.Padding(
+              padding: const pw.EdgeInsets.only(bottom: 6),
+              child: pw.Bullet(text: line),
+            ),
+          ),
+          if (_surgeryClearanceNotesController.text.trim().isNotEmpty) ...[
+            pw.SizedBox(height: 12),
+            pw.Text(
+              'Pendências e retorno',
+              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.SizedBox(height: 6),
+            pw.Text(_surgeryClearanceNotesController.text.trim()),
+          ],
+        ],
+      ),
+    );
+
+    await Printing.layoutPdf(onLayout: (_) async => doc.save());
+  }
 
   Widget _buildAdaptiveInputField({
     required TextEditingController controller,

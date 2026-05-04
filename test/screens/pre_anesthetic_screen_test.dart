@@ -822,6 +822,12 @@ void main() {
         ),
       ),
     );
+    await tester.scrollUntilVisible(
+      find.text('Situação da cirurgia'),
+      500,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
 
     expect(
       find.text('Pendente para liberação • Pendente de exame'),
@@ -898,6 +904,12 @@ void main() {
           ),
         ),
       );
+      await tester.scrollUntilVisible(
+        find.text('Situação da cirurgia'),
+        500,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
 
       expect(find.text('Cirurgia liberada'), findsOneWidget);
 
