@@ -263,6 +263,17 @@ void main() {
       find.text('Suspender IECA/ARB no dia da cirurgia se indicado'),
       findsNothing,
     );
+    expect(
+      find.text('Suspender varfarina 5 dias antes e confirmar INR conforme protocolo local'),
+      findsNothing,
+    );
+    expect(find.text('Suspender clopidogrel 5 dias antes'), findsNothing);
+    expect(
+      find.text(
+        'Suspender DOAC 24-72h conforme função renal, fármaco e risco de sangramento',
+      ),
+      findsNothing,
+    );
 
     await tester.enterText(
       find.widgetWithText(TextField, 'Medicações a suspender'),

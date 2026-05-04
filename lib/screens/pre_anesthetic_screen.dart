@@ -777,11 +777,6 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       title: 'Suspender',
       options: [
         'Suspender iSGLT2 (dapagliflozina/empagliflozina/canagliflozina) 3 dias antes (ertugliflozina 4 dias)',
-        'Suspender varfarina 5 dias antes e confirmar INR conforme protocolo local',
-        'Suspender clopidogrel 5 dias antes',
-        'Suspender ticagrelor 3 dias antes',
-        'Suspender prasugrel 7 dias antes',
-        'Suspender DOAC 24-72h conforme função renal, fármaco e risco de sangramento',
         'Suspender metformina no dia da cirurgia (ou antes se disfunção renal/contraste)',
         'Suspender IECA/ARA-II na manhã da cirurgia para cirurgia não cardíaca',
       ],
