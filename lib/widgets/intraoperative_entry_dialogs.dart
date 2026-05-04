@@ -1652,7 +1652,7 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
                                 _timeControllers[name]!,
                               ),
                               decoration: const InputDecoration(
-                                labelText: 'Horário da 1ª dose',
+                                labelText: 'Horário (opcional)',
                                 hintText: 'Ex: 08:30',
                                 suffixIcon: Icon(Icons.schedule_outlined),
                               ),

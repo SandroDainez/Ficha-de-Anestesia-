@@ -573,6 +573,57 @@ void main() {
   );
 
   testWidgets(
+    'hides general anesthesia cards when selecting isolated regional technique',
+    (WidgetTester tester) async {
+      await pumpScreen(tester, buildRecord());
+
+      await tester.ensureVisible(find.text('Editar técnica'));
+      await tester.tap(find.text('Editar técnica'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Bloqueio periférico').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('technique-save-button')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('technique-card')), findsOneWidget);
+      expect(find.byKey(const Key('drugs-card')), findsNothing);
+      expect(find.byKey(const Key('maintenance-card')), findsNothing);
+      expect(find.byKey(const Key('airway-card')), findsNothing);
+      expect(find.byKey(const Key('ventilation-card')), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'shows general anesthesia cards for combined general and regional technique',
+    (WidgetTester tester) async {
+      final record = buildRecord().copyWith(
+        anesthesiaTechnique: 'Bloqueio periférico',
+        drugs: const [],
+        maintenanceAgents: '',
+        airway: const Airway.empty(),
+      );
+
+      await pumpScreen(tester, record);
+
+      await tester.ensureVisible(find.text('Editar técnica'));
+      await tester.tap(find.text('Editar técnica'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Anestesia geral balanceada').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('technique-save-button')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('technique-card')), findsNothing);
+      expect(find.byKey(const Key('drugs-card')), findsOneWidget);
+      expect(find.byKey(const Key('maintenance-card')), findsOneWidget);
+      expect(find.byKey(const Key('airway-card')), findsOneWidget);
+      expect(find.byKey(const Key('ventilation-card')), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'shows induction suggestions by weight and confirms a selected drug',
     (WidgetTester tester) async {
       final record = buildRecord().copyWith(
@@ -612,7 +663,7 @@ void main() {
   );
 
   testWidgets(
-    'technique section uses tecnica anestesica and brief editable description',
+    'technique section uses tecnica anestesica without description field',
     (WidgetTester tester) async {
       await pumpScreen(tester, buildRecord());
 
@@ -623,6 +674,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Editar Técnica anestésica'), findsOneWidget);
+      expect(find.byKey(const Key('technique-details-field')), findsNothing);
+      expect(find.text('Outros / outras'), findsOneWidget);
     },
   );
 
@@ -1146,31 +1199,6 @@ void main() {
     expect(find.text('Raquianestesia'), findsNothing);
   });
 
-  testWidgets(
-    'technique dialog suggests a specific description for combined techniques',
-    (WidgetTester tester) async {
-      await pumpScreen(tester, buildRecord());
-
-      await tester.ensureVisible(find.text('Editar técnica'));
-      await tester.tap(find.text('Editar técnica'));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('TIVA').last);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Bloqueio periférico').last);
-      await tester.pumpAndSettle();
-
-      final detailsField = tester.widget<TextField>(
-        find.byKey(const Key('technique-details-field')),
-      );
-      final detailsText = detailsField.controller?.text ?? '';
-
-      expect(detailsText, contains('técnica combinada'));
-      expect(detailsText, contains('anestesia geral'));
-      expect(detailsText, contains('bloqueio'));
-    },
-  );
-
   testWidgets('shows pediatric fasting guidance in the fasting card summary', (
     WidgetTester tester,
   ) async {
@@ -1370,6 +1398,25 @@ void main() {
     expect(find.text('1 acesso(s) válido(s) • 0 perda(s)'), findsOneWidget);
   });
 
+  testWidgets('saves pending venous access without tapping add', (
+    WidgetTester tester,
+  ) async {
+    await pumpScreen(tester, buildRecord().copyWith(venousAccesses: const []));
+
+    await tester.ensureVisible(find.byKey(const Key('venous-access-entry')));
+    await tester.tap(find.byKey(const Key('venous-access-entry')));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, 'MSE');
+    await tester.tap(find.text('18').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Salvar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('AVP MSE - 18G'), findsOneWidget);
+    expect(find.text('1 acesso(s) válido(s) • 0 perda(s)'), findsOneWidget);
+  });
+
   testWidgets('saves arterial access through the dialog', (
     WidgetTester tester,
   ) async {
@@ -1387,6 +1434,26 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('PAI - radial esquerda 20G'), findsWidgets);
+    expect(find.text('1 acesso(s) válido(s) • 0 perda(s)'), findsOneWidget);
+  });
+
+  testWidgets('saves pending arterial access without tapping add', (
+    WidgetTester tester,
+  ) async {
+    await pumpScreen(
+      tester,
+      buildRecord().copyWith(arterialAccesses: const []),
+    );
+
+    await tester.ensureVisible(find.byKey(const Key('arterial-access-entry')));
+    await tester.tap(find.byKey(const Key('arterial-access-entry')));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, 'radial direita 20G');
+    await tester.tap(find.widgetWithText(FilledButton, 'Salvar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('PAI - radial direita 20G'), findsWidgets);
     expect(find.text('1 acesso(s) válido(s) • 0 perda(s)'), findsOneWidget);
   });
 
@@ -1498,6 +1565,7 @@ void main() {
     (WidgetTester tester) async {
       final record = buildRecord().copyWith(
         drugs: const ['Propofol|150 mg|||2 ampolas'],
+        prophylacticAntibiotics: const ['Cefazolina|2 g||||'],
         venousAccesses: const ['AVP MSE - 18G'],
         arterialAccesses: const ['PAI - radial esquerda 20G'],
         anesthesiaMaterials: const ['TOT 7,5 1 un'],
@@ -1513,6 +1581,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Indução: Propofol • 2 ampolas'), findsOneWidget);
+      expect(
+        find.text('Antibiótico profilaxia: Cefazolina • 2 g'),
+        findsOneWidget,
+      );
       expect(find.text('Via aérea: TOT 7.5 • 1 un'), findsOneWidget);
       expect(find.text('Acesso venoso: AVP MSE - 18G • 1 un'), findsOneWidget);
       expect(

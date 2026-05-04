@@ -192,10 +192,6 @@ class ReportExportService {
           ]),
           _section('Técnica e medicações', [
             _field('Técnica anestésica', _orDash(record.anesthesiaTechnique)),
-            _field(
-              'Descrição da técnica',
-              _orDash(record.anesthesiaTechniqueDetails),
-            ),
             _field('Indução / drogas', _joinList(record.drugs)),
             _field('Adjuvantes', _joinList(record.adjuncts)),
             _field('Sedação associada', _joinList(record.sedationMedications)),
@@ -474,9 +470,6 @@ class ReportExportService {
         ),
         'porte_cirurgico': _orDash(record.surgicalSize),
         'tecnica_anestesica': _orDash(record.anesthesiaTechnique),
-        'descricao_da_tecnica_anestesica': _orDash(
-          record.anesthesiaTechniqueDetails,
-        ),
         'saida_da_anestesia': {
           'status': _orDash(record.emergenceStatus),
           'observacoes': _orDash(record.emergenceNotes),

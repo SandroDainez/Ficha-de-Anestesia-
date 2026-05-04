@@ -54,6 +54,9 @@ class _OrientationFreeTextField {
 }
 
 class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
+  static const Color _completedSelectionColor = Color(0xFF169653);
+  static const Color _suspendedSelectionColor = Color(0xFFD2473F);
+
   static const List<String> _comorbiditiesOptions = [
     'HAS',
     'DM',
@@ -2619,12 +2622,14 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     required Set<String> selectedValues,
     required ValueChanged<String> onToggle,
     Color color = const Color(0xFF2B76D2),
+    Color Function(String option)? selectedColorBuilder,
   }) {
     return _buildOptionCardGrid(
       options: options,
       isSelected: selectedValues.contains,
       onTap: onToggle,
       color: color,
+      selectedColorBuilder: selectedColorBuilder,
     );
   }
 
@@ -2665,7 +2670,11 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
               options: group.options,
               freeTextField: group.freeTextField,
               selectedValues: _selectedPreAnestheticOrientationItems,
-              color: const Color(0xFF2B76D2),
+              color: _completedSelectionColor,
+              selectedColorBuilder: (option) =>
+                  _isSuspendedOrientationOption(option)
+                  ? _suspendedSelectionColor
+                  : _completedSelectionColor,
               onToggle: (value) {
                 setState(() {
                   if (_selectedPreAnestheticOrientationItems.contains(value)) {
@@ -2688,6 +2697,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     required Set<String> selectedValues,
     required ValueChanged<String> onToggle,
     required Color color,
+    Color Function(String option)? selectedColorBuilder,
   }) {
     final selectedOptionCount = options
         .where((option) => selectedValues.contains(option))
@@ -2698,6 +2708,16 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
             _orientationFreeTextControllers[freeTextField.prefix]?.text ?? '',
           ).length;
     final selectedCount = selectedOptionCount + freeTextCount;
+    final hasSuspendedSelection =
+        options.any(
+          (option) =>
+              selectedValues.contains(option) &&
+              _isSuspendedOrientationOption(option),
+        ) ||
+        (freeTextCount > 0 && _isSuspendedOrientationFreeText(freeTextField));
+    final statusColor = hasSuspendedSelection
+        ? _suspendedSelectionColor
+        : color;
     final subtitle = selectedCount == 0
         ? 'Toque para escolher opções'
         : '$selectedCount opção(ões) selecionada(s)';
@@ -2708,7 +2728,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         border: Border.all(
           color: selectedCount == 0
               ? const Color(0xFFD5E4F7)
-              : color.withValues(alpha: 0.65),
+              : statusColor.withValues(alpha: 0.65),
           width: selectedCount == 0 ? 1 : 1.3,
         ),
       ),
@@ -2727,7 +2747,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
           subtitle: Text(
             subtitle,
             style: TextStyle(
-              color: selectedCount == 0 ? const Color(0xFF5D7288) : color,
+              color: selectedCount == 0 ? const Color(0xFF5D7288) : statusColor,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -2738,6 +2758,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                 selectedValues: selectedValues,
                 onToggle: onToggle,
                 color: color,
+                selectedColorBuilder: selectedColorBuilder,
               ),
             if (freeTextField != null) ...[
               if (options.isNotEmpty) const SizedBox(height: 14),
@@ -2747,6 +2768,18 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         ),
       ),
     );
+  }
+
+  bool _isSuspendedOrientationOption(String option) {
+    final normalized = option.trim().toLowerCase();
+    return normalized.startsWith('suspender ') ||
+        normalized.startsWith('suspender/ajustar ') ||
+        normalized.contains(' suspender ');
+  }
+
+  bool _isSuspendedOrientationFreeText(_OrientationFreeTextField? field) {
+    if (field == null) return false;
+    return field.prefix.trim().toLowerCase().startsWith('suspender');
   }
 
   Widget _buildOrientationFreeTextField(_OrientationFreeTextField field) {
@@ -2819,6 +2852,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     required bool Function(String option) isSelected,
     required ValueChanged<String> onTap,
     required Color color,
+    Color Function(String option)? selectedColorBuilder,
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -2828,6 +2862,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         for (var i = 0; i < options.length; i++) {
           final option = options[i];
           final selected = isSelected(option);
+          final effectiveColor = selected
+              ? selectedColorBuilder?.call(option) ?? color
+              : color;
           columnChildren[i % columns].add(
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
@@ -2835,7 +2872,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                 label: option,
                 selected: selected,
                 onTap: () => onTap(option),
-                color: color,
+                color: effectiveColor,
               ),
             ),
           );
@@ -2861,7 +2898,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     required Color color,
   }) {
     final borderColor = selected ? color : const Color(0xFFD5E4F7);
-    final backgroundColor = selected ? color.withAlpha(12) : Colors.white;
+    final backgroundColor = selected
+        ? color.withValues(alpha: 0.10)
+        : Colors.white;
 
     return Material(
       color: Colors.transparent,
@@ -2875,7 +2914,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
           decoration: BoxDecoration(
             color: backgroundColor,
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: borderColor, width: selected ? 1.4 : 1),
+            border: Border.all(color: borderColor, width: selected ? 1.6 : 1),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x0A17324D),
@@ -2890,13 +2929,23 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(
-                    color: Color(0xFF26384A),
+                  style: TextStyle(
+                    color: selected ? color : const Color(0xFF26384A),
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
                   ),
                 ),
               ),
+              if (selected) ...[
+                const SizedBox(width: 10),
+                Icon(
+                  color == _suspendedSelectionColor
+                      ? Icons.block_outlined
+                      : Icons.check_circle_outline,
+                  color: color,
+                  size: 22,
+                ),
+              ],
             ],
           ),
         ),
@@ -4357,7 +4406,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                 _buildMultiSelectButtons(
                   options: _profileAirwayAssessmentOptions,
                   selectedValues: _selectedAirwayAssessmentFindings,
-                  color: const Color(0xFFEA5455),
+                  color: const Color(0xFF2B76D2),
                   onToggle: (value) {
                     setState(() {
                       if (_selectedAirwayAssessmentFindings.contains(value)) {
@@ -5408,7 +5457,21 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   }
 
   String _airwaySummary() {
-    final parts = [
+    final riskParts = [
+      if (_selectedDifficultIntubationPredictors.isNotEmpty)
+        'Intubação difícil: ${_joinSummaryParts(_selectedDifficultIntubationPredictors)}',
+      if (_selectedDifficultVentilationPredictors.isNotEmpty)
+        'Ventilação difícil: ${_joinSummaryParts(_selectedDifficultVentilationPredictors)}',
+      if (_otherDifficultAirwayPredictorsController.text.trim().isNotEmpty)
+        'Preditores adicionais: ${_joinSummaryParts(_lines(_otherDifficultAirwayPredictorsController.text))}',
+      if (_otherDifficultVentilationPredictorsController.text.trim().isNotEmpty)
+        'Ventilação difícil adicional: ${_joinSummaryParts(_lines(_otherDifficultVentilationPredictorsController.text))}',
+    ];
+    if (riskParts.isNotEmpty) {
+      return _joinSummaryParts(riskParts);
+    }
+
+    final assessmentParts = [
       if (_selectedMallampati.isNotEmpty) 'Mallampati $_selectedMallampati',
       if (_selectedMouthOpening.isNotEmpty)
         '$_mouthOpeningLabel: $_selectedMouthOpening',
@@ -5416,19 +5479,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         'Mobilidade cervical: $_selectedNeckMobility',
       if (_selectedDentition.isNotEmpty)
         '$_dentitionLabel: $_selectedDentition',
-      if (_selectedDifficultAirwayPredictors.isNotEmpty)
-        'Via aérea difícil: ${_joinSummaryParts(_selectedDifficultAirwayPredictors)}',
-      _joinSummaryParts(_lines(_otherDifficultAirwayPredictorsController.text)),
-      if (_selectedDifficultIntubationPredictors.isNotEmpty)
-        'Intubação difícil: ${_joinSummaryParts(_selectedDifficultIntubationPredictors)}',
-      if (_selectedDifficultVentilationPredictors.isNotEmpty)
-        'Ventilação difícil: ${_joinSummaryParts(_selectedDifficultVentilationPredictors)}',
-      _joinSummaryParts(
-        _lines(_otherDifficultVentilationPredictorsController.text),
-      ),
       _joinSummaryParts(_lines(_otherAirwayController.text)),
     ];
-    final summary = _joinSummaryParts(parts);
+    final summary = _joinSummaryParts(assessmentParts);
     return summary.isEmpty ? 'Selecione os achados da via aérea' : summary;
   }
 

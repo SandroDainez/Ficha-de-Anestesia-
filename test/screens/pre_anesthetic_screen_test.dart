@@ -1006,4 +1006,55 @@ void main() {
       expect(find.textContaining('Mobilidade cervical limitada'), findsWidgets);
     },
   );
+
+  testWidgets('airway alert summary shows only risk predictors', (
+    WidgetTester tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PreAnestheticScreen(
+          patient: const Patient(
+            name: 'Adulto',
+            age: 40,
+            weightKg: 70,
+            heightMeters: 1.7,
+            asa: 'II',
+            allergies: [],
+            restrictions: [],
+            medications: [],
+          ),
+          initialAssessment: const PreAnestheticAssessment.empty(),
+          initialConsultationDate: '',
+        ),
+      ),
+    );
+
+    await tester.scrollUntilVisible(
+      find.text('Avaliação de via aérea'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Avaliação de via aérea'));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('> 3 dedos (> 5 cm)'),
+      150,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('> 3 dedos (> 5 cm)'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Limitada'),
+      150,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Limitada'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Intubação difícil'), findsWidgets);
+    expect(find.textContaining('Abertura oral: > 3 dedos'), findsNothing);
+  });
 }

@@ -3410,8 +3410,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   bool get _hasPendingAirway => _missingRequiredFields.contains('Via aérea');
   bool get _hasPendingTechnique =>
       _missingRequiredFields.contains('Técnica anestésica');
-  bool get _hasPendingTechniqueDetails =>
-      _missingRequiredFields.contains('Descrição da técnica anestésica');
   bool get _hasPendingDrugs =>
       _missingRequiredFields.contains('Drogas e infusões');
   bool get _hasPendingFluidBalance =>
@@ -4383,7 +4381,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       context: context,
       builder: (_) => TechniqueDialog(
         initialTechnique: _record.anesthesiaTechnique,
-        initialDetails: _record.anesthesiaTechniqueDetails,
         patient: _record.patient,
       ),
     );
@@ -6776,21 +6773,14 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         .where((item) => item.trim().isNotEmpty)
         .toList();
     final hasTechniques = selectedTechniques.isNotEmpty;
-    final hasDetails = _record.anesthesiaTechniqueDetails.trim().isNotEmpty;
     final collapsedStatus = hasTechniques
         ? selectedTechniques.length == 1
               ? selectedTechniques.first
               : '${selectedTechniques.first} +${selectedTechniques.length - 1}'
         : 'Nenhuma técnica selecionada';
-    final detailsPreview = _record.anesthesiaTechniqueDetails.trim().replaceAll(
-      '\n',
-      ' ',
-    );
-    final collapsedSummary = hasDetails
-        ? detailsPreview.length > 88
-              ? '${detailsPreview.substring(0, 88).trimRight()}...'
-              : detailsPreview
-        : 'Use o botão "Editar técnica" para definir a técnica principal e a descrição breve.';
+    final collapsedSummary = hasTechniques
+        ? _techniqueWorkflowSummary
+        : 'Use o botão "Editar técnica" para definir a técnica anestésica.';
     return KeyedSubtree(
       key: _eventsSectionKey,
       child: PanelCard(
@@ -6799,10 +6789,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         titleColor: _techniqueRowColor,
         icon: Icons.description_outlined,
         fillChild: true,
-        isAttention: _hasPendingTechnique || _hasPendingTechniqueDetails,
-        isCompleted:
-            _record.anesthesiaTechnique.trim().isNotEmpty &&
-            _record.anesthesiaTechniqueDetails.trim().isNotEmpty,
+        isAttention: _hasPendingTechnique,
+        isCompleted: _record.anesthesiaTechnique.trim().isNotEmpty,
         collapsedChild: _buildCollapsedPanelSummary(
           status: collapsedStatus,
           summary: collapsedSummary,
@@ -6837,7 +6825,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
               else
                 const StatusHint(
                   text:
-                      'Nenhuma técnica definida. Use "Editar técnica" para configurar o plano anestésico.',
+                      'Nenhuma técnica selecionada. Use "Editar técnica" para escolher a técnica anestésica.',
                 ),
               const SizedBox(height: 12),
               Container(
@@ -6852,24 +6840,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      hasDetails
-                          ? _record.anesthesiaTechniqueDetails.trim()
-                          : 'Resumo ainda não preenchido.',
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: hasDetails
-                            ? const Color(0xFF17324D)
-                            : const Color(0xFF7A8EA5),
-                        fontWeight: FontWeight.w600,
-                        height: 1.45,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
                       key: const Key('technique-workflow-summary'),
                       _techniqueWorkflowSummary,
-                      maxLines: 2,
+                      maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Color(0xFF5D7288),
@@ -7193,11 +7166,18 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     String group,
     List<String> entries, {
     int priority = 10,
+    bool useFirstDoseWhenTotalMissing = false,
   }) {
     return entries.where((entry) => entry.trim().isNotEmpty).map((entry) {
       final parts = entry.split('|');
       final name = parts.isNotEmpty ? parts.first.trim() : entry.trim();
-      final quantity = parts.length > 4 ? parts[4].trim() : '';
+      final totalQuantity = parts.length > 4 ? parts[4].trim() : '';
+      final firstDose = parts.length > 1 ? parts[1].trim() : '';
+      final quantity = totalQuantity.isNotEmpty
+          ? totalQuantity
+          : useFirstDoseWhenTotalMissing
+          ? firstDose
+          : '';
       final note = quantity.isEmpty ? 'quantidade não informada' : '';
       return _UsageSummaryItem(
         group: group,
@@ -7465,6 +7445,11 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       ..._usageItemsFromMedicationEntries(
         'Vasoativas',
         _record.vasoactiveDrugs,
+      ),
+      ..._usageItemsFromMedicationEntries(
+        'Antibiótico profilaxia',
+        _record.prophylacticAntibiotics,
+        useFirstDoseWhenTotalMissing: true,
       ),
       ..._usageItemsFromAirway(),
       ..._usageItemsFromPlainEntries('Acesso venoso', _record.venousAccesses),
@@ -8902,21 +8887,46 @@ class _VenousAccessDialogState extends State<VenousAccessDialog> {
   }
 
   void _addAvp() {
-    final site = _avpSiteController.text.trim();
-    if (site.isEmpty || _selectedAvpSize.isEmpty) return;
+    final entry = _pendingAvpEntry();
+    if (entry == null) return;
     setState(() {
-      _items.add('AVP $site - ${_selectedAvpSize}G');
+      _items.add(entry);
       _avpSiteController.clear();
       _selectedAvpSize = '';
     });
   }
 
   void _addCentral() {
-    if (_selectedCentral.isEmpty) return;
+    final entry = _pendingCentralEntry();
+    if (entry == null) return;
     setState(() {
-      _items.add(_selectedCentral);
+      _items.add(entry);
       _selectedCentral = '';
     });
+  }
+
+  String? _pendingAvpEntry() {
+    final site = _avpSiteController.text.trim();
+    if (site.isEmpty || _selectedAvpSize.isEmpty) return null;
+    return 'AVP $site - ${_selectedAvpSize}G';
+  }
+
+  String? _pendingCentralEntry() {
+    final central = _selectedCentral.trim();
+    return central.isEmpty ? null : central;
+  }
+
+  List<String> _buildResult() {
+    final result = [..._items];
+    final pendingAvp = _pendingAvpEntry();
+    if (pendingAvp != null && !result.contains(pendingAvp)) {
+      result.add(pendingAvp);
+    }
+    final pendingCentral = _pendingCentralEntry();
+    if (pendingCentral != null && !result.contains(pendingCentral)) {
+      result.add(pendingCentral);
+    }
+    return [...result, ..._lossEntries];
   }
 
   void _addLossEntry() {
@@ -9161,8 +9171,7 @@ class _VenousAccessDialogState extends State<VenousAccessDialog> {
           child: const Text('Cancelar'),
         ),
         FilledButton(
-          onPressed: () =>
-              Navigator.of(context).pop([..._items, ..._lossEntries]),
+          onPressed: () => Navigator.of(context).pop(_buildResult()),
           child: const Text('Salvar'),
         ),
       ],
@@ -9211,12 +9220,27 @@ class _ArterialAccessDialogState extends State<ArterialAccessDialog> {
   }
 
   void _addArterialAccess() {
-    final description = _descriptionController.text.trim();
-    if (!_paiSelected || description.isEmpty) return;
+    final entry = _pendingArterialAccessEntry();
+    if (entry == null) return;
     setState(() {
-      _items.add('PAI - $description');
+      _items.add(entry);
       _descriptionController.clear();
     });
+  }
+
+  String? _pendingArterialAccessEntry() {
+    final description = _descriptionController.text.trim();
+    if (!_paiSelected || description.isEmpty) return null;
+    return 'PAI - $description';
+  }
+
+  List<String> _buildResult() {
+    final result = [..._items];
+    final pendingAccess = _pendingArterialAccessEntry();
+    if (pendingAccess != null && !result.contains(pendingAccess)) {
+      result.add(pendingAccess);
+    }
+    return [...result, ..._lossEntries];
   }
 
   void _addLossEntry() {
@@ -9423,8 +9447,7 @@ class _ArterialAccessDialogState extends State<ArterialAccessDialog> {
           child: const Text('Cancelar'),
         ),
         FilledButton(
-          onPressed: () =>
-              Navigator.of(context).pop([..._items, ..._lossEntries]),
+          onPressed: () => Navigator.of(context).pop(_buildResult()),
           child: const Text('Salvar'),
         ),
       ],

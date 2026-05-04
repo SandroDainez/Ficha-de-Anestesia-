@@ -49,20 +49,6 @@ class AiRecordAnalysisService {
       );
     }
 
-    if (record.drugs.isNotEmpty &&
-        record.anesthesiaTechniqueDetails.trim().isEmpty) {
-      findings.add(
-        'Há medicações registradas sem descrição da técnica anestésica.',
-      );
-    }
-
-    if (record.anesthesiaTechniqueDetails.trim().isNotEmpty &&
-        record.drugs.isEmpty) {
-      findings.add(
-        'Há técnica anestésica descrita sem drogas/infusões registradas.',
-      );
-    }
-
     if (!hasPreAnestheticData) {
       recommendations.add(
         'Consulta pré-anestésica não registrada. Isso deve aparecer como orientação e não como bloqueio, sobretudo em urgência/emergência; documente a justificativa quando aplicável.',

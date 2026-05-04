@@ -213,12 +213,10 @@ class TechniqueDialog extends StatefulWidget {
   const TechniqueDialog({
     super.key,
     required this.initialTechnique,
-    required this.initialDetails,
     required this.patient,
   });
 
   final String initialTechnique;
-  final String initialDetails;
   final Patient patient;
 
   @override
@@ -252,9 +250,6 @@ class _TechniqueDialogState extends State<TechniqueDialog> {
   ];
   late Set<String> _selectedTechniques;
   late final TextEditingController _otherTechniqueController;
-  late final TextEditingController _detailsController;
-  bool _detailsEditedManually = false;
-  bool _updatingSuggestedDetails = false;
 
   List<String> get _techniqueOptions {
     switch (widget.patient.population) {
@@ -283,21 +278,11 @@ class _TechniqueDialogState extends State<TechniqueDialog> {
           .where((item) => !_techniqueOptions.contains(item))
           .join('\n'),
     );
-    _detailsController = TextEditingController(
-      text: widget.initialDetails.trim().isEmpty
-          ? _buildSuggestedDetails()
-          : widget.initialDetails,
-    );
-    _detailsController.addListener(() {
-      if (_updatingSuggestedDetails) return;
-      _detailsEditedManually = true;
-    });
   }
 
   @override
   void dispose() {
     _otherTechniqueController.dispose();
-    _detailsController.dispose();
     super.dispose();
   }
 
@@ -309,117 +294,16 @@ class _TechniqueDialogState extends State<TechniqueDialog> {
         .where((item) => item.isNotEmpty),
   ];
 
-  bool _containsAny(Iterable<String> values, List<String> needles) {
-    return values.any((item) => needles.any((needle) => item.contains(needle)));
-  }
-
-  String _joinSelectedTechniques(List<String> techniques) {
-    if (techniques.isEmpty) return '';
-    if (techniques.length == 1) return techniques.first;
-    if (techniques.length == 2) {
-      return '${techniques.first} associada a ${techniques.last}';
-    }
-    final head = techniques.take(techniques.length - 1).join(', ');
-    return '$head e ${techniques.last}';
-  }
-
-  String _buildSuggestedDetails() {
-    final selectedOriginal = _allSelectedTechniques;
-    final selected = selectedOriginal
-        .map((item) => item.toLowerCase())
-        .toList();
-
-    if (selected.isEmpty) {
-      return switch (widget.patient.population) {
-        PatientPopulation.adult =>
-          'Descrever de forma breve a técnica anestésica escolhida, as etapas principais, o tipo de monitorização e como será feita a condução intraoperatória.',
-        PatientPopulation.pediatric =>
-          'Descrever a técnica anestésica em linguagem objetiva, incluindo condução da sedação/anestesia, monitorização e cuidados específicos do paciente pediátrico.',
-        PatientPopulation.neonatal =>
-          'Descrever a técnica anestésica, a estratégia ventilatória, a monitorização e os cuidados específicos para o neonato durante o procedimento.',
-      };
-    }
-
-    final hasTiva = _containsAny(selected, ['tiva', 'venosa total']);
-    final hasBalancedGeneral = _containsAny(selected, [
-      'anestesia geral balanceada',
-    ]);
-    final hasGeneral =
-        hasTiva ||
-        hasBalancedGeneral ||
-        _containsAny(selected, [
-          'anestesia geral',
-          'máscara laríngea',
-          'mascara laringea',
-        ]);
-    final hasSpinal = _containsAny(selected, ['raqui']);
-    final hasEpidural = _containsAny(selected, ['peridural', 'epidural']);
-    final hasRegional = _containsAny(selected, [
-      'bloqueio',
-      'regional',
-      'caudal',
-    ]);
-    final hasSedation = _containsAny(selected, ['sedação', 'sedacao']);
-
-    final combinedLabel = _joinSelectedTechniques(selectedOriginal);
-
-    if ((hasSpinal || hasEpidural || hasRegional) && hasGeneral) {
-      return '$combinedLabel planejada como técnica combinada, com componente regional realizado antes da incisão para analgesia e redução do consumo de anestésicos, seguido de anestesia geral com monitorização contínua, controle de via aérea, indução conforme o contexto e manutenção titulada até o despertar. O bloqueio deve ser conferido clinicamente, com vigilância hemodinâmica, respiratória e estratégia de resgate caso a cobertura regional seja incompleta.';
-    }
-
-    if (hasSpinal && hasSedation) {
-      return 'Raquianestesia associada à sedação, com punção subaracnoidea, confirmação do bloqueio sensitivo-motor e início do procedimento após instalação adequada. A sedação deve ser titulada para conforto e imobilidade, preservando ventilação espontânea sempre que possível, com monitorização contínua da hemodinâmica, oxigenação, nível de consciência e regressão do bloqueio ao final.';
-    }
-
-    if (hasEpidural && hasSedation) {
-      return 'Peridural associada à sedação, com identificação do espaço peridural, dose teste quando indicada, administração fracionada do anestésico local e avaliação seriada do nível de bloqueio. A sedação deve ser ajustada ao estímulo cirúrgico, mantendo conforto, vigilância respiratória e estabilidade hemodinâmica durante todo o procedimento.';
-    }
-
-    if (hasRegional && hasSedation) {
-      return 'Bloqueio periférico/regional associado à sedação, com confirmação do território anestesiado, tempo de latência adequado e início cirúrgico apenas após analgesia satisfatória. A sedação deve ser titulada progressivamente para conforto e cooperação, com monitorização contínua da ventilação, oxigenação e resposta hemodinâmica.';
-    }
-
-    if (hasTiva) {
-      return 'Anestesia venosa total (TIVA), com indução intravenosa, controle de via aérea conforme a necessidade e manutenção em infusão contínua titulada ao plano anestésico e ao estímulo cirúrgico. A condução deve integrar hipnose, analgesia, relaxamento quando indicado e monitorização contínua da hemodinâmica, ventilação, oxigenação e recuperação ao término do procedimento.';
-    }
-
-    if (hasBalancedGeneral) {
-      return 'Anestesia geral balanceada, com indução venosa, controle de via aérea conforme o caso e manutenção combinando agente hipnótico/inalatório, analgésicos e adjuvantes de forma titulada. A condução deve incluir monitorização contínua, ventilação ajustada ao procedimento, controle hemodinâmico e planejamento de despertar, analgesia e extubação ao final.';
-    }
-
-    if (hasSpinal && hasEpidural) {
-      return 'Técnica combinada raquiperidural, com punção para componente subaracnoideo seguida de acesso peridural para complementação e titulação do bloqueio conforme a duração e a necessidade analgésica do procedimento. Exige avaliação seriada do nível sensitivo-motor, vigilância hemodinâmica e planejamento de analgesia pós-operatória pelo cateter quando indicado.';
-    }
-
-    if (hasSpinal) {
-      return 'Raquianestesia com punção subaracnoidea, confirmação da técnica, instalação do bloqueio sensitivo-motor e início cirúrgico após nível adequado. Requer monitorização contínua, vigilância de hipotensão/bradicardia, avaliação seriada da extensão do bloqueio e acompanhamento da recuperação motora e sensitiva ao final.';
-    }
-
-    if (hasEpidural) {
-      return 'Peridural com identificação do espaço, dose teste quando indicada e administração fracionada do anestésico local para titulação progressiva do bloqueio. A condução deve incluir avaliação seriada do nível analgésico/anestésico, monitorização contínua e possibilidade de complementação intraoperatória e analgesia pós-operatória.';
-    }
-
-    if (hasRegional) {
-      return 'Bloqueio periférico/regional com localização do alvo, realização do bloqueio, tempo de latência adequado e confirmação clínica de cobertura do território operatório antes do início da cirurgia. A condução inclui monitorização contínua, avaliação da eficácia analgésica e plano complementar caso o bloqueio seja parcial ou insuficiente.';
-    }
-
-    if (hasSedation) {
-      return 'Sedação monitorizada com titulação progressiva conforme o estímulo cirúrgico e a resposta clínica, priorizando conforto, cooperação e segurança respiratória. A condução deve manter vigilância contínua do nível de consciência, ventilação, oxigenação e estabilidade hemodinâmica, com prontidão para suporte de via aérea se necessário.';
-    }
-
-    return 'Técnica anestésica planejada conforme seleção atual, com monitorização contínua, execução em etapas e titulação da condução intraoperatória de acordo com a resposta clínica e as necessidades do procedimento.';
-  }
-
-  void _refreshSuggestedDetails() {
-    if (_detailsEditedManually || widget.initialDetails.trim().isNotEmpty) {
-      return;
-    }
-    _updatingSuggestedDetails = true;
-    _detailsController.text = _buildSuggestedDetails();
-    _detailsController.selection = TextSelection.collapsed(
-      offset: _detailsController.text.length,
-    );
-    _updatingSuggestedDetails = false;
+  bool _isGeneralTechnique(String technique) {
+    final normalized = technique.toLowerCase();
+    return normalized.contains('anestesia geral') ||
+        normalized.contains('tiva') ||
+        normalized.contains('intubação') ||
+        normalized.contains('intubacao') ||
+        normalized.contains('máscara laríngea') ||
+        normalized.contains('mascara laringea') ||
+        normalized.contains('ventilação controlada') ||
+        normalized.contains('ventilacao controlada');
   }
 
   @override
@@ -443,9 +327,11 @@ class _TechniqueDialogState extends State<TechniqueDialog> {
                       if (_selectedTechniques.contains(item)) {
                         _selectedTechniques.remove(item);
                       } else {
+                        if (!_isGeneralTechnique(item)) {
+                          _selectedTechniques.removeWhere(_isGeneralTechnique);
+                        }
                         _selectedTechniques.add(item);
                       }
-                      _refreshSuggestedDetails();
                     });
                   },
                 ),
@@ -455,26 +341,10 @@ class _TechniqueDialogState extends State<TechniqueDialog> {
                 key: const Key('technique-other-technique-field'),
                 controller: _otherTechniqueController,
                 maxLines: 2,
-                onChanged: (_) {
-                  setState(() {
-                    _refreshSuggestedDetails();
-                  });
-                },
+                onChanged: (_) => setState(() {}),
                 decoration: const InputDecoration(
-                  labelText: 'Outras técnicas',
+                  labelText: 'Outros / outras',
                   hintText: 'Uma técnica por linha',
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                key: const Key('technique-details-field'),
-                controller: _detailsController,
-                minLines: 5,
-                maxLines: 9,
-                decoration: const InputDecoration(
-                  labelText: 'Descrição breve da técnica',
-                  hintText:
-                      'Ex: fases da raqui, estratégia da peridural, bloqueios, sedação associada e condução da anestesia geral conforme o contexto.',
                 ),
               ),
             ],
@@ -491,7 +361,7 @@ class _TechniqueDialogState extends State<TechniqueDialog> {
           onPressed: () => Navigator.of(context).pop(
             TechniqueDialogResult(
               technique: _allSelectedTechniques.join('\n'),
-              details: _detailsController.text.trim(),
+              details: '',
             ),
           ),
           child: const Text('Salvar'),

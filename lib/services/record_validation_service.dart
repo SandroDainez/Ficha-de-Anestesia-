@@ -18,10 +18,6 @@ class RecordValidationService {
       missing.add('Técnica anestésica');
     }
 
-    if (record.anesthesiaTechniqueDetails.trim().isEmpty) {
-      missing.add('Descrição da técnica anestésica');
-    }
-
     final technique = record.anesthesiaTechnique.toLowerCase();
     if ((technique.contains('raqui') || technique.contains('peridural')) &&
         record.neuraxialNeedles.isEmpty) {

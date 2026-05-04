@@ -16,7 +16,6 @@ void main() {
     expect(missing, contains('Identificação do paciente'));
     expect(missing, contains('Via aérea'));
     expect(missing, contains('Técnica anestésica'));
-    expect(missing, contains('Descrição da técnica anestésica'));
     expect(missing, contains('Drogas e infusões'));
     expect(missing, contains('Balanço hídrico'));
   });
@@ -42,8 +41,6 @@ void main() {
         observation: '',
       ),
       anesthesiaTechnique: 'Raqui',
-      anesthesiaTechniqueDetails:
-          'Raquianestesia com instalação do bloqueio e monitorização seriada.',
       neuraxialNeedles: const ['Quincke 25G'],
       drugs: const ['Midazolam'],
       fluidBalance: const FluidBalance(
