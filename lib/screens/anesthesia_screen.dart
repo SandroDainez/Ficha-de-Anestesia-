@@ -6514,15 +6514,29 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     String confirmLabel = 'Confirmar',
     String selectedLabel = 'Confirmado',
   }) {
+    const standardAccent = Color(0xFF3C6C9C);
+    const selectedBackground = Color(0xFFF2F7FF);
+    const unselectedBackground = Colors.white;
+    const standardBorder = Color(0xFFD5E4F7);
+    final effectiveAccent = standardAccent;
+
     final content = Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: selected ? accentColor.withAlpha(16) : const Color(0xFFF8FAFE),
-        borderRadius: BorderRadius.circular(18),
+        color: selected ? selectedBackground : unselectedBackground,
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: selected ? accentColor : const Color(0xFFDCE7F3),
+          color: selected ? effectiveAccent : standardBorder,
+          width: selected ? 1.4 : 1,
         ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A17324D),
+            blurRadius: 14,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -6538,14 +6552,16 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: selected
-                          ? accentColor.withAlpha(24)
+                          ? effectiveAccent.withAlpha(24)
                           : const Color(0xFFEAF2FF),
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
                       badge,
                       style: TextStyle(
-                        color: selected ? accentColor : const Color(0xFF2B76D2),
+                        color: selected
+                            ? effectiveAccent
+                            : const Color(0xFF2B76D2),
                         fontWeight: FontWeight.w800,
                         fontSize: 12,
                       ),
@@ -6597,7 +6613,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                 ),
                 label: Text(selected ? selectedLabel : confirmLabel),
                 style: FilledButton.styleFrom(
-                  backgroundColor: accentColor,
+                  backgroundColor: effectiveAccent,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
@@ -6612,8 +6628,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                   icon: const Icon(Icons.edit_outlined),
                   label: const Text('Editar'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: accentColor,
-                    side: BorderSide(color: accentColor.withAlpha(140)),
+                    foregroundColor: effectiveAccent,
+                    side: BorderSide(color: effectiveAccent.withAlpha(140)),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 18,
                       vertical: 14,
@@ -6632,7 +6648,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
 
     return InkWell(
       key: key,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(22),
       onTap: onTap,
       child: content,
     );
