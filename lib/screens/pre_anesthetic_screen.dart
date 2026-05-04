@@ -4909,6 +4909,14 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final sideBySide = constraints.maxWidth >= 900;
+        final printRecommendationsButton = Align(
+          alignment: Alignment.centerRight,
+          child: OutlinedButton.icon(
+            onPressed: _printPatientRecommendations,
+            icon: const Icon(Icons.print_outlined),
+            label: const Text('Imprimir orientações'),
+          ),
+        );
 
         final requestsCard = _SectionCard(
           title: _anesthesiaTeamRequestSectionTitle,
@@ -5074,33 +5082,37 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                       'Ex: suspensa por HAS descompensada, pendência cardiológica, retorno após exame',
                 ),
               ),
-              const SizedBox(height: 14),
-              Align(
-                alignment: Alignment.centerRight,
-                child: OutlinedButton.icon(
-                  onPressed: _printPatientRecommendations,
-                  icon: const Icon(Icons.print_outlined),
-                  label: const Text('Imprimir orientações'),
-                ),
-              ),
             ],
           ),
         );
 
         if (sideBySide) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(child: requestsCard),
-              const SizedBox(width: 12),
-              Expanded(child: clearanceCard),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: requestsCard),
+                  const SizedBox(width: 12),
+                  Expanded(child: clearanceCard),
+                ],
+              ),
+              const SizedBox(height: 12),
+              printRecommendationsButton,
             ],
           );
         }
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [requestsCard, const SizedBox(height: 12), clearanceCard],
+          children: [
+            requestsCard,
+            const SizedBox(height: 12),
+            clearanceCard,
+            const SizedBox(height: 12),
+            printRecommendationsButton,
+          ],
         );
       },
     );
