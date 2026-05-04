@@ -7,6 +7,22 @@ import 'anesthesia_basic_dialogs.dart';
 
 enum AirwayEditSection { cormack, device, technique, observation }
 
+bool _isAirwayLossEntry(String entry) => entry.startsWith('__LOSS__|');
+
+String _encodeAirwayLossEntry({
+  required String material,
+  required String quantity,
+  required String reason,
+}) {
+  return '__LOSS__|${material.trim()}|${quantity.trim()}|${reason.trim()}';
+}
+
+String _formatAirwayLossEntry(String entry) {
+  final parts = entry.split('|');
+  if (parts.length < 4) return entry;
+  return 'Perda: ${parts[1]} • ${parts[2]} • ${parts[3]}';
+}
+
 class AirwayDialog extends StatefulWidget {
   const AirwayDialog({
     super.key,
@@ -66,6 +82,10 @@ class _AirwayDialogState extends State<AirwayDialog> {
   late final TextEditingController _otherDeviceController;
   late final TextEditingController _techniqueController;
   late final TextEditingController _observationController;
+  late final TextEditingController _lossMaterialController;
+  late final TextEditingController _lossQuantityController;
+  late final TextEditingController _lossReasonController;
+  late List<String> _lossEntries;
   late Set<String> _selectedObservationOptions;
 
   @override
@@ -91,14 +111,20 @@ class _AirwayDialogState extends State<AirwayDialog> {
         .map((item) => item.trim())
         .where((item) => item.isNotEmpty)
         .toList();
+    _lossEntries = observationParts.where(_isAirwayLossEntry).toList();
     _selectedObservationOptions = observationParts
+        .where((item) => !_isAirwayLossEntry(item))
         .where(_observationOptions.contains)
         .toSet();
     _observationController = TextEditingController(
       text: observationParts
+          .where((item) => !_isAirwayLossEntry(item))
           .where((item) => !_observationOptions.contains(item))
           .join('\n'),
     );
+    _lossMaterialController = TextEditingController();
+    _lossQuantityController = TextEditingController(text: '1 un');
+    _lossReasonController = TextEditingController();
   }
 
   @override
@@ -107,7 +133,46 @@ class _AirwayDialogState extends State<AirwayDialog> {
     _otherDeviceController.dispose();
     _techniqueController.dispose();
     _observationController.dispose();
+    _lossMaterialController.dispose();
+    _lossQuantityController.dispose();
+    _lossReasonController.dispose();
     super.dispose();
+  }
+
+  List<String> _observationLines({required bool includeEditedObservation}) {
+    final baseLines = includeEditedObservation
+        ? [
+            ..._selectedObservationOptions,
+            ..._observationController.text
+                .split('\n')
+                .map((item) => item.trim())
+                .where((item) => item.isNotEmpty),
+          ]
+        : widget.initialAirway.observation
+              .split('\n')
+              .map((item) => item.trim())
+              .where((item) => item.isNotEmpty && !_isAirwayLossEntry(item))
+              .toList();
+    return [...baseLines, ..._lossEntries];
+  }
+
+  void _addLossEntry() {
+    final material = _lossMaterialController.text.trim();
+    final quantity = _lossQuantityController.text.trim();
+    final reason = _lossReasonController.text.trim();
+    if (material.isEmpty || quantity.isEmpty || reason.isEmpty) return;
+    setState(() {
+      _lossEntries.add(
+        _encodeAirwayLossEntry(
+          material: material,
+          quantity: quantity,
+          reason: reason,
+        ),
+      );
+      _lossMaterialController.clear();
+      _lossQuantityController.text = '1 un';
+      _lossReasonController.clear();
+    });
   }
 
   @override
@@ -198,6 +263,18 @@ class _AirwayDialogState extends State<AirwayDialog> {
                     ),
                   ),
                 ],
+                const SizedBox(height: 16),
+                _LossMaterialEditor(
+                  title: 'Perda de material do dispositivo',
+                  materialController: _lossMaterialController,
+                  quantityController: _lossQuantityController,
+                  reasonController: _lossReasonController,
+                  entries: _lossEntries,
+                  onAdd: _addLossEntry,
+                  onRemove: (index) {
+                    setState(() => _lossEntries.removeAt(index));
+                  },
+                ),
               ],
               if (showTechnique) ...[
                 TextField(
@@ -258,6 +335,18 @@ class _AirwayDialogState extends State<AirwayDialog> {
                       maxLines: 4,
                       decoration: const InputDecoration(labelText: 'Outros'),
                     ),
+                    const SizedBox(height: 16),
+                    _LossMaterialEditor(
+                      title: 'Perda de material de apoio',
+                      materialController: _lossMaterialController,
+                      quantityController: _lossQuantityController,
+                      reasonController: _lossReasonController,
+                      entries: _lossEntries,
+                      onAdd: _addLossEntry,
+                      onRemove: (index) {
+                        setState(() => _lossEntries.removeAt(index));
+                      },
+                    ),
                   ],
                 ),
             ],
@@ -287,14 +376,10 @@ class _AirwayDialogState extends State<AirwayDialog> {
               technique: showTechnique
                   ? _techniqueController.text.trim()
                   : widget.initialAirway.technique,
-              observation: showObservation
-                  ? [
-                      ..._selectedObservationOptions,
-                      ..._observationController.text
-                          .split('\n')
-                          .map((item) => item.trim())
-                          .where((item) => item.isNotEmpty),
-                    ].join('\n')
+              observation: (showDevice || showObservation)
+                  ? _observationLines(
+                      includeEditedObservation: showObservation,
+                    ).join('\n')
                   : widget.initialAirway.observation,
             ),
           ),
@@ -417,6 +502,101 @@ class _InlineAirwayHintCard extends StatelessWidget {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LossMaterialEditor extends StatelessWidget {
+  const _LossMaterialEditor({
+    required this.title,
+    required this.materialController,
+    required this.quantityController,
+    required this.reasonController,
+    required this.entries,
+    required this.onAdd,
+    required this.onRemove,
+  });
+
+  final String title;
+  final TextEditingController materialController;
+  final TextEditingController quantityController;
+  final TextEditingController reasonController;
+  final List<String> entries;
+  final VoidCallback onAdd;
+  final ValueChanged<int> onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFDDE7F3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: Color(0xFF17324D),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            key: const Key('airway-loss-material-field'),
+            controller: materialController,
+            decoration: const InputDecoration(
+              labelText: 'Material',
+              hintText: 'Ex: TOT 7,5; bougie; fio-guia; máscara laríngea',
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            key: const Key('airway-loss-quantity-field'),
+            controller: quantityController,
+            decoration: const InputDecoration(
+              labelText: 'Quantidade',
+              hintText: 'Ex: 1 un',
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            key: const Key('airway-loss-reason-field'),
+            controller: reasonController,
+            decoration: const InputDecoration(
+              labelText: 'Justificativa',
+              hintText: 'Ex: múltiplas tentativas; cuff roto; troca por escape',
+            ),
+          ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton.icon(
+              key: const Key('airway-add-loss-button'),
+              onPressed: onAdd,
+              icon: const Icon(Icons.add),
+              label: const Text('Adicionar perda/consumo'),
+            ),
+          ),
+          if (entries.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            ...entries.asMap().entries.map(
+              (entry) => ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(_formatAirwayLossEntry(entry.value)),
+                trailing: IconButton(
+                  onPressed: () => onRemove(entry.key),
+                  icon: const Icon(Icons.close, size: 18),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

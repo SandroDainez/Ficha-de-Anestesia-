@@ -94,6 +94,8 @@ class _InductionPreset {
     required this.unit,
     required this.concentrationPerMl,
     required this.concentrationLabel,
+    this.obeseWeightBasis = _InductionWeightBasis.actual,
+    this.referenceNote = '',
   });
 
   final String name;
@@ -102,6 +104,15 @@ class _InductionPreset {
   final String unit;
   final double concentrationPerMl;
   final String concentrationLabel;
+  final _InductionWeightBasis obeseWeightBasis;
+  final String referenceNote;
+}
+
+enum _InductionWeightBasis {
+  actual,
+  predictedForObesity,
+  adjustedForObesity,
+  actualForObesity,
 }
 
 class _AdjunctPreset {
@@ -111,6 +122,8 @@ class _AdjunctPreset {
     required this.unit,
     required this.concentrationPerMl,
     required this.concentrationLabel,
+    this.obeseWeightBasis = _InductionWeightBasis.actual,
+    this.referenceNote = '',
   });
 
   final String name;
@@ -118,6 +131,8 @@ class _AdjunctPreset {
   final String unit;
   final double concentrationPerMl;
   final String concentrationLabel;
+  final _InductionWeightBasis obeseWeightBasis;
+  final String referenceNote;
 }
 
 class _UsageSummaryItem {
@@ -1094,6 +1109,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   static const Color _inductionPhaseColor = Color(0xFF8A5DD3);
   static const Color _maintenancePhaseColor = Color(0xFF168B79);
   static const Color _emergencePhaseColor = Color(0xFFD27A1F);
+  static const Color _intraoperativePhaseColor = Color(0xFF4A5568);
   static const Color _timeoutRowColor = _preInductionPhaseColor;
   static const Color _accessRowColor = _preInductionPhaseColor;
   static const Color _techniqueRowColor = _inductionPhaseColor;
@@ -1396,6 +1412,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       unit: 'mg',
       concentrationPerMl: 10,
       concentrationLabel: '10 mg/mL',
+      obeseWeightBasis: _InductionWeightBasis.predictedForObesity,
+      referenceNote: 'Bula: 2-2,5 mg/kg em adultos <65 anos ASA I-II.',
     ),
     _InductionPreset(
       name: 'Etomidato',
@@ -1404,6 +1422,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       unit: 'mg',
       concentrationPerMl: 2,
       concentrationLabel: '2 mg/mL',
+      referenceNote: 'Bula: 0,2-0,6 mg/kg; usual 0,3 mg/kg.',
     ),
     _InductionPreset(
       name: 'Cetamina',
@@ -1412,6 +1431,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       unit: 'mg',
       concentrationPerMl: 50,
       concentrationLabel: '50 mg/mL',
+      referenceNote: 'Bula: IV 1-4,5 mg/kg; média 2 mg/kg.',
     ),
     _InductionPreset(
       name: 'Fentanil',
@@ -1420,6 +1440,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       unit: 'mcg',
       concentrationPerMl: 50,
       concentrationLabel: '50 mcg/mL',
+      obeseWeightBasis: _InductionWeightBasis.predictedForObesity,
+      referenceNote: 'Bula: adjuvante 2-20 mcg/kg; titular ao efeito.',
     ),
     _InductionPreset(
       name: 'Alfentanil',
@@ -1428,6 +1450,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       unit: 'mcg',
       concentrationPerMl: 500,
       concentrationLabel: '500 mcg/mL',
+      obeseWeightBasis: _InductionWeightBasis.adjustedForObesity,
+      referenceNote:
+          'Bula: analgesia de indução 8-50 mcg/kg conforme ventilação.',
     ),
     _InductionPreset(
       name: 'Sufentanil',
@@ -1436,6 +1461,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       unit: 'mcg',
       concentrationPerMl: 50,
       concentrationLabel: '50 mcg/mL',
+      referenceNote: 'Bula: analgesia inicial 1-2 mcg/kg; individualizar.',
     ),
     _InductionPreset(
       name: 'Remifentanil',
@@ -1444,6 +1470,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       unit: 'mcg',
       concentrationPerMl: 50,
       concentrationLabel: '50 mcg/mL (diluição usual)',
+      obeseWeightBasis: _InductionWeightBasis.predictedForObesity,
+      referenceNote: 'Bula: em obesidade, iniciar por peso ideal/predito.',
     ),
     _InductionPreset(
       name: 'Rocurônio',
@@ -1452,6 +1480,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       unit: 'mg',
       concentrationPerMl: 10,
       concentrationLabel: '10 mg/mL',
+      obeseWeightBasis: _InductionWeightBasis.predictedForObesity,
+      referenceNote: 'Bula: intubação 0,6 mg/kg; RSI 0,6-1,2 mg/kg.',
     ),
     _InductionPreset(
       name: 'Cisatracúrio',
@@ -1460,6 +1490,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       unit: 'mg',
       concentrationPerMl: 2,
       concentrationLabel: '2 mg/mL',
+      obeseWeightBasis: _InductionWeightBasis.predictedForObesity,
+      referenceNote: 'Bula: 0,15-0,2 mg/kg avaliados para intubação.',
     ),
     _InductionPreset(
       name: 'Atracúrio',
@@ -1468,6 +1500,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       unit: 'mg',
       concentrationPerMl: 10,
       concentrationLabel: '10 mg/mL',
+      obeseWeightBasis: _InductionWeightBasis.predictedForObesity,
+      referenceNote: 'Bula: dose inicial 0,4-0,5 mg/kg.',
     ),
     _InductionPreset(
       name: 'Succinilcolina',
@@ -1476,6 +1510,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       unit: 'mg',
       concentrationPerMl: 20,
       concentrationLabel: '20 mg/mL',
+      obeseWeightBasis: _InductionWeightBasis.actualForObesity,
+      referenceNote: 'Literatura/diretriz em obesidade: usar peso real.',
     ),
   ];
   static const List<_AdjunctPreset> _adjunctPresets = [
@@ -1485,6 +1521,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       unit: 'mg',
       concentrationPerMl: 100,
       concentrationLabel: '100 mg/mL',
+      referenceNote:
+          'Literatura perioperatória: bolus usual 30-50 mg/kg; muitos estudos usam peso real.',
     ),
     _AdjunctPreset(
       name: 'Cetamina',
@@ -1492,6 +1530,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       unit: 'mg',
       concentrationPerMl: 50,
       concentrationLabel: '50 mg/mL',
+      obeseWeightBasis: _InductionWeightBasis.predictedForObesity,
+      referenceNote:
+          'Diretriz ASRA/AAPM/ASA: bolus analgésico geralmente <0,5 mg/kg; não exceder 0,35 mg/kg sem monitorização intensiva.',
     ),
     _AdjunctPreset(
       name: 'Clonidina',
@@ -1499,6 +1540,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       unit: 'mcg',
       concentrationPerMl: 150,
       concentrationLabel: '150 mcg/mL',
+      referenceNote:
+          'Revisões/estudos perioperatórios: clonidina 1-5 mcg/kg; monitorar hipotensão/bradicardia.',
     ),
     _AdjunctPreset(
       name: 'Metadona',
@@ -1506,6 +1549,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       unit: 'mg',
       concentrationPerMl: 10,
       concentrationLabel: '10 mg/mL',
+      obeseWeightBasis: _InductionWeightBasis.predictedForObesity,
+      referenceNote:
+          'Estudos intraoperatórios: 0,1-0,3 mg/kg em peso ideal; titular ao contexto e risco respiratório.',
     ),
     _AdjunctPreset(
       name: 'Dexmedetomidina (Precedex)',
@@ -1513,6 +1559,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       unit: 'mcg',
       concentrationPerMl: 4,
       concentrationLabel: '4 mcg/mL',
+      referenceNote:
+          'Bula: adulto 1 mcg/kg em 10 min; reduzir/individualizar em idosos, hepatopatas ou instabilidade.',
     ),
     _AdjunctPreset(
       name: 'Lidocaína',
@@ -1520,6 +1568,9 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
       unit: 'mg',
       concentrationPerMl: 20,
       concentrationLabel: '20 mg/mL (2%)',
+      obeseWeightBasis: _InductionWeightBasis.predictedForObesity,
+      referenceNote:
+          'Consenso internacional: dose inicial max. 1,5 mg/kg em peso ideal, com monitorização.',
     ),
   ];
   static const List<_MaintenancePreset> _maintenancePresets = [
@@ -1737,6 +1788,28 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     'Cetamina': '0,25-0,5 mg/kg',
     'Midazolam': 'individualizar conforme contexto',
   };
+  static const Map<String, String> _adultSedationRecommendations = {
+    'Midazolam': 'Repiques: 0,5-1 mg, titulando sedação e ventilação.',
+    'Fentanil': 'Repiques: 25 mcg, titular analgesia e depressão respiratória.',
+    'Propofol': 'Repiques: 10-20 mg; considerar infusão se sedação contínua.',
+    'Dexmedetomidina':
+        'Preferir infusão titulada; evitar bolus em instabilidade hemodinâmica.',
+    'Cetamina': 'Repiques: 5-10 mg, conforme analgesia, sedação e resposta.',
+    'Remifentanil': 'Uso em bomba; titular e ajustar conforme resposta.',
+  };
+  static const Map<String, String> _pediatricSedationRecommendations = {
+    'Midazolam': 'Repiques pequenos e titulados; monitorar via aérea.',
+    'Fentanil': 'Repiques: 0,25-0,5 mcg/kg conforme resposta.',
+    'Propofol': 'Repiques: 0,25-0,5 mg/kg; titular lentamente.',
+    'Dexmedetomidina': 'Preferir infusão titulada; individualizar bolus.',
+    'Cetamina': 'Repiques: 0,1-0,25 mg/kg conforme resposta.',
+  };
+  static const Map<String, String> _neonatalSedationRecommendations = {
+    'Fentanil': 'Repiques titulados e individualizados; monitorar ventilação.',
+    'Dexmedetomidina': 'Infusão titulada com vigilância hemodinâmica.',
+    'Cetamina': 'Uso individualizado conforme contexto e estabilidade.',
+    'Midazolam': 'Evitar rotina; individualizar por idade, peso e contexto.',
+  };
   static const Map<String, String> _adultVasoactiveDrugOptions = {
     'Etilefrina': 'Bolus 1-2 mg IV; repetir conforme resposta',
     'Metaraminol': 'Bolus 0,5-2 mg IV; considerar diluição',
@@ -1852,6 +1925,17 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         return _pediatricSedationMedicationOptions;
       case PatientPopulation.neonatal:
         return _neonatalSedationMedicationOptions;
+    }
+  }
+
+  Map<String, String> get _profileSedationRecommendations {
+    switch (_record.patient.population) {
+      case PatientPopulation.adult:
+        return _adultSedationRecommendations;
+      case PatientPopulation.pediatric:
+        return _pediatricSedationRecommendations;
+      case PatientPopulation.neonatal:
+        return _neonatalSedationRecommendations;
     }
   }
 
@@ -2248,13 +2332,11 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             (hasLaparoscopy ? 2 : 0) +
             (hasSevereObesity ? 2 : 0);
         final peep = hasSevereObesity
-            ? '8'
+            ? '6-8'
             : hasLaparoscopy || hasObesity
             ? '6'
             : '5';
-        final fio2 = hasSevereObesity
-            ? '60'
-            : hasLaparoscopy || hasDifficultVentilationRisk
+        final fio2 = hasLaparoscopy || hasDifficultVentilationRisk || hasObesity
             ? '50'
             : '40';
         final basis = <String>[
@@ -2273,7 +2355,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
               'Plano ventilatório inicial ajustado ao biotipo e ao contexto do caso.',
             if (basis.isNotEmpty) 'Base: ${basis.join(' • ')}.',
             if (hasLaparoscopy)
-              'Laparoscopia pede PEEP e FR um pouco mais altas para manter recrutamento e ETCO₂.',
+              'Laparoscopia costuma exigir FR/PEEP um pouco maiores para CO₂ e atelectasia.',
+            'Referências: IMPROVE favorece VT baixo com PEEP; PROVHILO/PROBESE não sustentam PEEP 12 + recrutamento de rotina.',
           ].join(' '),
           settings: MechanicalVentilationSettings(
             mode: mode,
@@ -2285,8 +2368,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             ieRatio: '1:2',
             targetEtco2: '35-40',
             notes: mode == 'PCV-VG'
-                ? 'Ajustar pressão/volume para manter VT protetor, driving pressure baixa e ETCO₂ na meta.'
-                : 'Estratégia protetora intraoperatória com VT baixo, PEEP titulada e revisão seriada da complacência.',
+                ? 'Estratégia protetora: VT 6-8 mL/kg de peso predito/referência, PEEP moderada, menor FiO₂ para SpO₂ adequada, pressão de platô preferencialmente <30 cmH₂O e driving pressure tão baixa quanto possível. Recrutamento apenas se dessaturação/atelectasia e com atenção hemodinâmica.'
+                : 'Estratégia protetora: VT 6-8 mL/kg de peso predito/referência, PEEP moderada, menor FiO₂ para SpO₂ adequada, pressão de platô preferencialmente <30 cmH₂O e driving pressure tão baixa quanto possível. Não usar PEEP alta/recrutamento de rotina.',
           ),
         );
       case PatientPopulation.pediatric:
@@ -2297,11 +2380,12 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         final fio2 = hasLaparoscopy ? '50' : '40';
         return _VentilationSuggestion(
           reason: [
-            'Em pediatria, o plano inicial deve acompanhar peso, complacência, escape e ETCO₂.',
+            'Em pediatria, usar estratégia poupadora pulmonar com VT 6-8 mL/kg e ajuste por peso, complacência, escape e ETCO₂.',
             if (weightKg > 0)
               'Base: peso ${_formatVentilationNumber(weightKg)} kg.',
             if (hasLaparoscopy)
               'Laparoscopia pede um pouco mais de PEEP e vigilância maior do CO₂.',
+            'Referência pediátrica: recomendações recentes aceitam VT 6-8 mL/kg de peso ideal e evitar hipo/hiperóxia e hipo/hipercapnia.',
           ].join(' '),
           settings: MechanicalVentilationSettings(
             mode: mode,
@@ -2314,7 +2398,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             ieRatio: '1:2',
             targetEtco2: '35-40',
             notes:
-                'Titular pressão e FR para manter VT protetor, menor escape possível e ETCO₂ adequado à idade.',
+                'Titular pressão/FR para VT 6-8 mL/kg, PEEP ao menos 5 cmH₂O quando tolerado, menor FiO₂ para saturação adequada, pressão de pico/platô baixa e ETCO₂ adequado à idade. Preferir PCV/PCV-VG quando houver escape ou volumes pequenos.',
           ),
         );
       case PatientPopulation.neonatal:
@@ -2322,9 +2406,10 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         final vtMl = weightKg > 0 ? _roundedPositiveInt(weightKg * vtPerKg) : 0;
         return _VentilationSuggestion(
           reason: [
-            'No neonato, priorizar pressões e volumes baixos, com atenção a escape, complacência e ETCO₂.',
+            'No neonato, priorizar PCV com pressões/volumes baixos e ajuste por complacência, escape, oxigenação e ETCO₂.',
             if (weightKg > 0)
               'Base: peso ${_formatVentilationNumber(weightKg)} kg.',
+            'A evidência intraoperatória neonatal é limitada; usar princípios protetores e titulação clínica.',
           ].join(' '),
           settings: MechanicalVentilationSettings(
             mode: 'PCV',
@@ -2337,7 +2422,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             ieRatio: '1:2',
             targetEtco2: '35-45',
             notes:
-                'Objetivar VT ~4-6 mL/kg com menor FiO₂ necessária e vigilância térmica/respiratória.',
+                'Objetivar VT ~4-6 mL/kg, PEEP 4-5 cmH₂O conforme tolerância, menor FiO₂ necessária para saturação-alvo, pressão inspiratória baixa e monitorização próxima de escape, temperatura e perfusão.',
           ),
         );
     }
@@ -2366,32 +2451,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     if (hours <= 0) return '--';
     if (hours < 1) return '${(hours * 60).round()} min';
     return '${hours.toStringAsFixed(1).replaceAll('.', ',')} h';
-  }
-
-  String get _techniqueWorkflowSummary {
-    final profile = _techniqueProfile;
-    if (profile.isEmpty) {
-      return 'Escolha primeiro a técnica principal para priorizar os cards abaixo e reduzir campos desnecessários.';
-    }
-    if (profile.hasTiva) {
-      return 'Fluxo de anestesia geral TIVA ativo: via aérea, indução e manutenção em bomba ficam priorizadas, com presets EV contínua/TIVA.';
-    }
-    if (profile.hasInhalationalGeneral) {
-      return 'Fluxo de anestesia geral balanceada/inalatória ativo: via aérea, indução e manutenção destacam agentes inalatórios e consumo automático por FGF.';
-    }
-    if (profile.hasGeneralIntravenous) {
-      return 'Fluxo de anestesia geral venosa ativo: via aérea, indução e manutenção EV contínua ficam em destaque.';
-    }
-    if (profile.hasPureRegionalOrNeuraxialFlow && profile.hasSedation) {
-      return 'Fluxo regional/neuraxial com sedação ativo: sedação associada e materiais específicos seguem visíveis; anestesia geral aparece apenas se houver associação ou conversão.';
-    }
-    if (profile.hasPureRegionalOrNeuraxialFlow) {
-      return 'Fluxo regional/neuraxial ativo: priorize bloqueios, agulhas e materiais; campos de anestesia geral ficam recolhidos até uma combinação ou conversão.';
-    }
-    if (profile.hasSedation) {
-      return 'Fluxo de sedação ativo: mantenha sedação e adjuvantes em foco; via aérea e manutenção geral só entram se a técnica evoluir para anestesia geral.';
-    }
-    return 'Fluxo técnico configurado conforme a seleção atual.';
   }
 
   String _maintenanceCategoryForPreset(_MaintenancePreset preset) {
@@ -2713,11 +2772,69 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         .toList();
   }
 
-  double _inductionReferenceWeightKg() {
+  bool get _isAdultWithObesityForDose {
+    final patient = _record.patient;
+    if (patient.population != PatientPopulation.adult) return false;
+    if (patient.weightKg <= 0 || patient.heightMeters <= 0) return false;
+    return _bodyMassIndex(
+          weightKg: patient.weightKg,
+          heightMeters: patient.heightMeters,
+        ) >=
+        30;
+  }
+
+  double _predictedDoseWeightKg() {
+    final patient = _record.patient;
+    if (patient.heightMeters <= 0) return patient.weightKg;
+    final predicted = 25 * patient.heightMeters * patient.heightMeters;
+    if (patient.weightKg <= 0) return predicted;
+    return predicted < patient.weightKg ? predicted : patient.weightKg;
+  }
+
+  double _adjustedDoseWeightKg() {
+    final patient = _record.patient;
+    final predicted = _predictedDoseWeightKg();
+    if (patient.weightKg <= 0 || predicted <= 0) return predicted;
+    return predicted + (0.4 * (patient.weightKg - predicted));
+  }
+
+  double _inductionReferenceWeightKg(_InductionPreset preset) {
+    final patient = _record.patient;
+    if (patient.population == PatientPopulation.neonatal) {
+      if (patient.weightKg > 0) return patient.weightKg;
+      if (patient.birthWeightKg > 0) return patient.birthWeightKg;
+      return 0;
+    }
+    if (!_isAdultWithObesityForDose) {
+      if (patient.weightKg > 0) return patient.weightKg;
+      if (patient.birthWeightKg > 0) return patient.birthWeightKg;
+      return 0;
+    }
+    return switch (preset.obeseWeightBasis) {
+      _InductionWeightBasis.predictedForObesity => _predictedDoseWeightKg(),
+      _InductionWeightBasis.adjustedForObesity => _adjustedDoseWeightKg(),
+      _InductionWeightBasis.actual ||
+      _InductionWeightBasis.actualForObesity => patient.weightKg,
+    };
+  }
+
+  double _actualMedicationReferenceWeightKg() {
     final patient = _record.patient;
     if (patient.weightKg > 0) return patient.weightKg;
     if (patient.birthWeightKg > 0) return patient.birthWeightKg;
     return 0;
+  }
+
+  String _inductionWeightBasisLabel(_InductionPreset preset) {
+    if (!_isAdultWithObesityForDose) return 'peso real';
+    return switch (preset.obeseWeightBasis) {
+      _InductionWeightBasis.predictedForObesity =>
+        'peso predito (IMC 25; proxy de peso magro/ideal)',
+      _InductionWeightBasis.adjustedForObesity =>
+        'peso ajustado = predito + 40% do excesso',
+      _InductionWeightBasis.actualForObesity => 'peso real',
+      _InductionWeightBasis.actual => 'peso real',
+    };
   }
 
   String _formatMedicationAmount(double value) {
@@ -2728,12 +2845,27 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return value.toStringAsFixed(2);
   }
 
+  String _formatDosePerKgAmount(double value) {
+    if (value == value.roundToDouble()) return value.toStringAsFixed(0);
+    return value
+        .toStringAsFixed(3)
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceFirst(RegExp(r'\.$'), '');
+  }
+
   String _inductionPresetDose(_InductionPreset preset) {
-    final weightKg = _inductionReferenceWeightKg();
+    final weightKg = _inductionReferenceWeightKg(preset);
     if (weightKg <= 0) return 'Informe o peso para calcular';
     final totalDose = preset.dosePerKg * weightKg;
     final totalMl = totalDose / preset.concentrationPerMl;
-    return '${_formatMedicationAmount(totalDose)} ${preset.unit} • ~${_formatMedicationAmount(totalMl)} mL (${preset.concentrationLabel})';
+    final perKgLabel =
+        '${_formatDosePerKgAmount(preset.dosePerKg)} ${preset.unit}/kg';
+    return '$perKgLabel em ${_inductionWeightBasisLabel(preset)} (${_formatMedicationAmount(weightKg)} kg) • ${_formatMedicationAmount(totalDose)} ${preset.unit} • ~${_formatMedicationAmount(totalMl)} mL (${preset.concentrationLabel})';
+  }
+
+  String _inductionPresetReferenceDetail(_InductionPreset preset) {
+    if (preset.referenceNote.isEmpty) return '';
+    return preset.referenceNote;
   }
 
   Future<void> _toggleInductionPreset(_InductionPreset preset) async {
@@ -2811,11 +2943,47 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
   }
 
   String _adjunctPresetDose(_AdjunctPreset preset) {
-    final weightKg = _inductionReferenceWeightKg();
+    final weightKg = _adjunctReferenceWeightKg(preset);
     if (weightKg <= 0) return 'Informe o peso para calcular';
     final totalDose = preset.dosePerKg * weightKg;
     final totalMl = totalDose / preset.concentrationPerMl;
-    return '${_formatMedicationAmount(totalDose)} ${preset.unit} • ~${_formatMedicationAmount(totalMl)} mL (${preset.concentrationLabel})';
+    final perKgLabel =
+        '${_formatDosePerKgAmount(preset.dosePerKg)} ${preset.unit}/kg';
+    return '$perKgLabel em ${_adjunctWeightBasisLabel(preset)} (${_formatMedicationAmount(weightKg)} kg) • ${_formatMedicationAmount(totalDose)} ${preset.unit} • ~${_formatMedicationAmount(totalMl)} mL (${preset.concentrationLabel})';
+  }
+
+  double _adjunctReferenceWeightKg(_AdjunctPreset preset) {
+    final patient = _record.patient;
+    if (patient.population == PatientPopulation.neonatal) {
+      if (patient.weightKg > 0) return patient.weightKg;
+      if (patient.birthWeightKg > 0) return patient.birthWeightKg;
+      return 0;
+    }
+    if (!_isAdultWithObesityForDose) {
+      return _actualMedicationReferenceWeightKg();
+    }
+    return switch (preset.obeseWeightBasis) {
+      _InductionWeightBasis.predictedForObesity => _predictedDoseWeightKg(),
+      _InductionWeightBasis.adjustedForObesity => _adjustedDoseWeightKg(),
+      _InductionWeightBasis.actual ||
+      _InductionWeightBasis.actualForObesity => patient.weightKg,
+    };
+  }
+
+  String _adjunctWeightBasisLabel(_AdjunctPreset preset) {
+    if (!_isAdultWithObesityForDose) return 'peso real';
+    return switch (preset.obeseWeightBasis) {
+      _InductionWeightBasis.predictedForObesity =>
+        'peso predito (IMC 25; proxy de peso ideal)',
+      _InductionWeightBasis.adjustedForObesity =>
+        'peso ajustado = predito + 40% do excesso',
+      _InductionWeightBasis.actualForObesity => 'peso real',
+      _InductionWeightBasis.actual => 'peso real',
+    };
+  }
+
+  String _adjunctPresetReferenceDetail(_AdjunctPreset preset) {
+    return preset.referenceNote;
   }
 
   Future<void> _toggleAdjunctPreset(_AdjunctPreset preset) async {
@@ -4507,9 +4675,13 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     final result = await showDialog<List<String>>(
       context: context,
       builder: (_) => CatalogMedicationDialog(
-        title: 'Editar Sedação associada',
+        title: 'Sedação',
         catalogItems: _profileSedationMedicationOptions,
+        catalogRecommendations: _profileSedationRecommendations,
         initialItems: _record.sedationMedications,
+        freeChoiceLabel: 'Livre escolha',
+        freeChoiceHint:
+            'Medicação, dose, horário, redose, infusão ou observação definida pelo usuário',
       ),
     );
     if (result == null) return;
@@ -5111,7 +5283,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         _buildSectionHeader(
           title: 'Registro Intraoperatório',
           subtitle: 'Área principal fixa para condução hemodinâmica e eventos',
-          accent: _maintenancePhaseColor,
+          accent: _intraoperativePhaseColor,
         ),
         const SizedBox(height: 10),
         _buildChartSection(dominant: true),
@@ -5426,10 +5598,15 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     required String subtitle,
     required Color accent,
   }) {
-    const headerAccent = Color(0xFF7D93AA);
-    const backgroundColor = Color(0xFFF5F7FC);
-    const borderColor = Color(0xFFBCD0E4);
     const subtitleColor = Color(0xFF6F8498);
+    final backgroundColor = Color.alphaBlend(
+      accent.withAlpha(14),
+      const Color(0xFFF8FAFE),
+    );
+    final borderColor = Color.alphaBlend(
+      accent.withAlpha(82),
+      const Color(0xFFE4ECF6),
+    );
 
     return Container(
       width: double.infinity,
@@ -5452,7 +5629,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             width: 8,
             height: 44,
             decoration: BoxDecoration(
-              color: headerAccent,
+              color: accent,
               borderRadius: BorderRadius.circular(999),
             ),
           ),
@@ -5488,14 +5665,14 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
 
   Widget _buildAirwayCard() {
     final airwaySupport = _buildAirwaySupportRecommendation(_record.patient);
+    final airwayObservation = _displayAirwayObservation;
     final airwayHighlights = <String>[
       if (_record.airway.cormackLehane.trim().isNotEmpty)
         'Cormack ${_record.airway.cormackLehane}',
       if (_record.airway.device.trim().isNotEmpty)
         '${_record.airway.device} ${_record.airway.tubeNumber}'.trim(),
       if (_record.airway.technique.trim().isNotEmpty) _record.airway.technique,
-      if (_record.airway.observation.trim().isNotEmpty)
-        _record.airway.observation,
+      if (airwayObservation.trim().isNotEmpty) airwayObservation,
     ];
     final airwayStatus = airwayHighlights.isEmpty
         ? 'Via aérea pendente'
@@ -5596,7 +5773,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                   _buildAirwayInfoCard(
                     key: const Key('airway-observation-entry'),
                     label: 'Materiais de apoio',
-                    value: _valueOrPlaceholder(_record.airway.observation),
+                    value: _valueOrPlaceholder(airwayObservation),
                     onTap: () =>
                         _editViaAereaSection(AirwayEditSection.observation),
                   ),
@@ -5607,6 +5784,14 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         ],
       ),
     );
+  }
+
+  String get _displayAirwayObservation {
+    return _record.airway.observation
+        .split('\n')
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty && !_isLossEntry(item))
+        .join('\n');
   }
 
   List<String> _mechanicalVentilationSummarySegments(
@@ -5986,7 +6171,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         _buildSectionHeader(
           title: 'Registro Intraoperatório',
           subtitle: 'Condução hemodinâmica e documentação contínua do caso',
-          accent: const Color(0xFF4A5568),
+          accent: _intraoperativePhaseColor,
         ),
         const SizedBox(height: 10),
         _buildChartSection(dominant: true),
@@ -6779,7 +6964,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
               : '${selectedTechniques.first} +${selectedTechniques.length - 1}'
         : 'Nenhuma técnica selecionada';
     final collapsedSummary = hasTechniques
-        ? _techniqueWorkflowSummary
+        ? '${selectedTechniques.length} técnica(s) selecionada(s)'
         : 'Use o botão "Editar técnica" para definir a técnica anestésica.';
     return KeyedSubtree(
       key: _eventsSectionKey,
@@ -6827,32 +7012,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
                   text:
                       'Nenhuma técnica selecionada. Use "Editar técnica" para escolher a técnica anestésica.',
                 ),
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FBFF),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFDDE7F3)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      key: const Key('technique-workflow-summary'),
-                      _techniqueWorkflowSummary,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFF5D7288),
-                        fontWeight: FontWeight.w600,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
         ),
@@ -6865,14 +7024,14 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         ? 'Nenhuma sedação registrada'
         : _record.sedationMedications.first.split('|').first;
     final summary = _record.sedationMedications.isEmpty
-        ? 'Registrar medicações de sedação para anestesia local, bloqueios, raqui e técnicas associadas.'
+        ? 'Medicações, doses de referência, repiques e livre escolha.'
         : '${_record.sedationMedications.length} medicação(ões) registradas';
     return KeyedSubtree(
       key: _techniqueSectionKey,
       child: _buildCompactOperationalCard(
         key: const Key('technique-card'),
         tapKey: const Key('technique-entry'),
-        title: '12) Sedação complementar',
+        title: 'Sedação',
         titleColor: _techniqueRowColor,
         icon: Icons.air_outlined,
         minHeight: 92,
@@ -6928,9 +7087,13 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
               final encodedEntry = _findDrugEntry(preset.name);
               final selected = encodedEntry != null;
               final parts = encodedEntry?.split('|') ?? const <String>[];
-              final detail = parts.length > 1 && parts[1].trim().isNotEmpty
+              final doseDetail = parts.length > 1 && parts[1].trim().isNotEmpty
                   ? parts[1].trim()
                   : _inductionPresetDose(preset);
+              final referenceDetail = _inductionPresetReferenceDetail(preset);
+              final detail = referenceDetail.isEmpty
+                  ? doseDetail
+                  : '$doseDetail\n$referenceDetail';
               return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: _buildPresetActionCard(
@@ -6991,9 +7154,13 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             final encodedEntry = _findAdjunctEntry(preset.name);
             final selected = encodedEntry != null;
             final parts = encodedEntry?.split('|') ?? const <String>[];
-            final detail = parts.length > 1 && parts[1].trim().isNotEmpty
+            final doseDetail = parts.length > 1 && parts[1].trim().isNotEmpty
                 ? parts[1].trim()
                 : _adjunctPresetDose(preset);
+            final referenceDetail = _adjunctPresetReferenceDetail(preset);
+            final detail = referenceDetail.isEmpty
+                ? doseDetail
+                : '$doseDetail\n$referenceDetail';
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: _buildPresetActionCard(
@@ -7110,6 +7277,70 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return '$normalizedGroup|$normalizedName';
   }
 
+  ({double value, String unit})? _parseUsageQuantity(String quantity) {
+    final match = RegExp(
+      r'^\s*([0-9]+(?:[,.][0-9]+)?)\s*([a-zA-Zµáàâãéèêíïóôõöúç]+)\s*$',
+      caseSensitive: false,
+    ).firstMatch(quantity);
+    if (match == null) return null;
+    final value = double.tryParse(match.group(1)!.replaceAll(',', '.'));
+    if (value == null) return null;
+    final rawUnit = match.group(2)!.toLowerCase().replaceAll('µ', 'mc');
+    final unit = switch (rawUnit) {
+      'un' || 'unid' || 'unidade' || 'unidades' => 'un',
+      'amp' || 'ampola' || 'ampolas' => 'ampola',
+      'frasco' || 'frascos' => 'frasco',
+      'ml' => 'mL',
+      'l' => 'L',
+      'mg' => 'mg',
+      'g' => 'g',
+      'mcg' => 'mcg',
+      'ui' => 'UI',
+      _ => '',
+    };
+    if (unit.isEmpty) return null;
+    return (value: value, unit: unit);
+  }
+
+  String _formatUsageQuantity(double value, String unit) {
+    final valueLabel = value == value.roundToDouble()
+        ? value.toStringAsFixed(0)
+        : value.toStringAsFixed(1).replaceAll('.', ',');
+    final unitLabel = switch (unit) {
+      'ampola' => value == 1 ? 'ampola' : 'ampolas',
+      'frasco' => value == 1 ? 'frasco' : 'frascos',
+      _ => unit,
+    };
+    return '$valueLabel $unitLabel';
+  }
+
+  String _mergeUsageNotes(String current, String next) {
+    final notes = <String>[];
+    for (final note in [...current.split(' • '), ...next.split(' • ')]) {
+      final normalized = note.trim();
+      if (normalized.isNotEmpty && !notes.contains(normalized)) {
+        notes.add(normalized);
+      }
+    }
+    return notes.join(' • ');
+  }
+
+  ({String name, String quantity}) _splitManualUsageItem(String entry) {
+    final match = RegExp(
+      r'\s+([0-9]+(?:[,.][0-9]+)?)\s*(un|unid|unidade|unidades|amp|ampola|ampolas|frasco|frascos|ml|l|mg|g|mcg|ui)\s*$',
+      caseSensitive: false,
+    ).firstMatch(entry);
+    if (match == null) return (name: entry.trim(), quantity: '');
+    final quantity = '${match.group(1)!} ${match.group(2)!}';
+    if (_parseUsageQuantity(quantity) == null) {
+      return (name: entry.trim(), quantity: '');
+    }
+    return (
+      name: entry.substring(0, match.start).trim(),
+      quantity: quantity.trim(),
+    );
+  }
+
   bool _isLossEntry(String entry) => _isEncodedLossEntry(entry);
 
   _LossEntry? _decodeLossEntry(String entry) => _decodeEncodedLossEntry(entry);
@@ -7134,6 +7365,8 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     Map<String, _UsageSummaryItem> items,
     _UsageSummaryItem item,
   ) {
+    final key = _usageItemKey(item.group, item.name);
+    final current = items[key];
     if (item.group == 'Ajuste manual') {
       final normalizedName = _usageNormalizedName(item.name);
       final alreadyTracked = items.values.any((current) {
@@ -7142,23 +7375,63 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             currentName.startsWith(normalizedName) ||
             normalizedName.startsWith(currentName);
       });
-      if (alreadyTracked) return;
+      if (alreadyTracked && current == null) return;
     }
-    final key = _usageItemKey(item.group, item.name);
-    final current = items[key];
     if (current == null) {
       items[key] = item;
+      return;
+    }
+    final currentQuantity = _parseUsageQuantity(current.quantity);
+    final nextQuantity = _parseUsageQuantity(item.quantity);
+    final mergedNote = _mergeUsageNotes(current.note, item.note);
+    if (currentQuantity != null &&
+        nextQuantity != null &&
+        currentQuantity.unit == nextQuantity.unit) {
+      items[key] = _UsageSummaryItem(
+        group: current.group,
+        name: current.name,
+        quantity: _formatUsageQuantity(
+          currentQuantity.value + nextQuantity.value,
+          currentQuantity.unit,
+        ),
+        note: mergedNote,
+        priority: current.priority < item.priority
+            ? current.priority
+            : item.priority,
+      );
       return;
     }
     final currentHasQuantity = current.quantity.trim().isNotEmpty;
     final nextHasQuantity = item.quantity.trim().isNotEmpty;
     if (!currentHasQuantity && nextHasQuantity) {
-      items[key] = item;
+      items[key] = _UsageSummaryItem(
+        group: item.group,
+        name: item.name,
+        quantity: item.quantity,
+        note: mergedNote,
+        priority: item.priority,
+      );
       return;
     }
     if (currentHasQuantity == nextHasQuantity &&
         item.priority > current.priority) {
-      items[key] = item;
+      items[key] = _UsageSummaryItem(
+        group: item.group,
+        name: item.name,
+        quantity: item.quantity,
+        note: mergedNote,
+        priority: item.priority,
+      );
+      return;
+    }
+    if (mergedNote != current.note) {
+      items[key] = _UsageSummaryItem(
+        group: current.group,
+        name: current.name,
+        quantity: current.quantity,
+        note: mergedNote,
+        priority: current.priority,
+      );
     }
   }
 
@@ -7171,19 +7444,32 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     return entries.where((entry) => entry.trim().isNotEmpty).map((entry) {
       final parts = entry.split('|');
       final name = parts.isNotEmpty ? parts.first.trim() : entry.trim();
-      final totalQuantity = parts.length > 4 ? parts[4].trim() : '';
+      final legacyTotalQuantity = parts.length == 5 && parts[3].trim().isEmpty
+          ? parts[4].trim()
+          : '';
+      final totalQuantity = parts.length > 5
+          ? parts[5].trim()
+          : legacyTotalQuantity;
       final firstDose = parts.length > 1 ? parts[1].trim() : '';
+      final repeatDose = parts.length > 3 ? parts[3].trim() : '';
+      final infusion = parts.length > 5 ? parts[4].trim() : '';
       final quantity = totalQuantity.isNotEmpty
           ? totalQuantity
           : useFirstDoseWhenTotalMissing
           ? firstDose
           : '';
+      final notes = <String>[
+        if (firstDose.isNotEmpty) '1ª dose: $firstDose',
+        if (repeatDose.isNotEmpty) 'redoses/bolus: $repeatDose',
+        if (infusion.isNotEmpty) 'infusão: $infusion',
+        if (quantity.isEmpty) 'quantidade total não informada',
+      ];
       final note = quantity.isEmpty ? 'quantidade não informada' : '';
       return _UsageSummaryItem(
         group: group,
         name: name,
         quantity: quantity,
-        note: note,
+        note: notes.isEmpty ? note : notes.join(' • '),
         priority: priority,
       );
     }).toList();
@@ -7249,29 +7535,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         .toList();
   }
 
-  List<_UsageSummaryItem> _usageItemsFromFluidEntries(
-    String group,
-    List<String> entries, {
-    int priority = 15,
-  }) {
-    return entries.where((entry) => entry.trim().isNotEmpty).map((entry) {
-      final parts = entry.split('|').map((item) => item.trim()).toList();
-      final name = parts.isNotEmpty ? parts[0] : entry.trim();
-      final quantity = parts.length > 2
-          ? '${parts[1]} • ${parts[2]} mL'
-          : parts.length > 1
-          ? '${parts[1]} mL'
-          : '';
-      return _UsageSummaryItem(
-        group: group,
-        name: name,
-        quantity: quantity,
-        note: quantity.isEmpty ? 'quantidade não informada' : '',
-        priority: priority,
-      );
-    }).toList();
-  }
-
   List<_UsageSummaryItem> _usageItemsFromAirway() {
     final items = <_UsageSummaryItem>[];
     final device = _record.airway.device.trim();
@@ -7299,13 +7562,15 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
               !_isLossEntry(entry) &&
               !_isOxygenTherapyEntry(entry),
         )
-        .map(
-          (entry) => _UsageSummaryItem(
+        .map((entry) {
+          final manualItem = _splitManualUsageItem(entry);
+          return _UsageSummaryItem(
             group: 'Ajuste manual',
-            name: entry,
+            name: manualItem.name,
+            quantity: manualItem.quantity,
             priority: 100,
-          ),
-        )
+          );
+        })
         .toList();
   }
 
@@ -7324,105 +7589,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           ),
         )
         .toList();
-  }
-
-  List<_UsageSummaryItem> _usageItemsFromMaintenanceGasFlows() {
-    final elapsedHours = _anesthesiaElapsedHours;
-    final elapsedMinutes = elapsedHours * 60;
-    final oxygenNotes = <String>[];
-    final compressedAirNotes = <String>[];
-    final nitrousOxideNotes = <String>[];
-    double oxygenTotalLiters = 0;
-    double compressedAirTotalLiters = 0;
-    double nitrousOxideTotalLiters = 0;
-
-    for (final preset in _maintenancePresets.where(
-      (item) => item.isInhalational,
-    )) {
-      final encodedEntry = _findMaintenanceEntry(preset.name);
-      if (encodedEntry == null) continue;
-
-      final oxygenFlow = _maintenanceOxygenFlowFromEntry(preset, encodedEntry);
-      final compressedAirFlow = _maintenanceCompressedAirFlowFromEntry(
-        preset,
-        encodedEntry,
-      );
-      final nitrousOxideFlow = _maintenanceNitrousOxideFlowFromEntry(
-        preset,
-        encodedEntry,
-      );
-
-      void addGasUsage({
-        required double flowLPerMin,
-        required List<String> notes,
-        required void Function(double liters) addToTotal,
-        required String source,
-      }) {
-        if (flowLPerMin <= 0) return;
-        final flowLabel = _formatFlowLabel(flowLPerMin);
-        if (elapsedMinutes > 0) {
-          final liters = flowLPerMin * elapsedMinutes;
-          addToTotal(liters);
-          notes.add(
-            '$source $flowLabel L/min • ${_formatElapsedHoursLabel(elapsedHours)}',
-          );
-          return;
-        }
-        notes.add('$source $flowLabel L/min • tempo anestésico não informado');
-      }
-
-      addGasUsage(
-        flowLPerMin: oxygenFlow,
-        notes: oxygenNotes,
-        addToTotal: (liters) => oxygenTotalLiters += liters,
-        source: '${preset.name} (O₂)',
-      );
-      addGasUsage(
-        flowLPerMin: compressedAirFlow,
-        notes: compressedAirNotes,
-        addToTotal: (liters) => compressedAirTotalLiters += liters,
-        source: '${preset.name} (ar)',
-      );
-      addGasUsage(
-        flowLPerMin: nitrousOxideFlow,
-        notes: nitrousOxideNotes,
-        addToTotal: (liters) => nitrousOxideTotalLiters += liters,
-        source: '${preset.name} (N₂O)',
-      );
-    }
-
-    _UsageSummaryItem? buildGasItem({
-      required String name,
-      required double liters,
-      required List<String> notes,
-    }) {
-      if (liters <= 0 && notes.isEmpty) return null;
-      return _UsageSummaryItem(
-        group: 'Gases medicinais',
-        name: name,
-        quantity: liters > 0 ? '${_formatLitersLabel(liters)} L' : '',
-        note: notes.join(' • '),
-        priority: 17,
-      );
-    }
-
-    return [
-      buildGasItem(
-        name: 'Oxigênio (O₂)',
-        liters: oxygenTotalLiters,
-        notes: oxygenNotes,
-      ),
-      buildGasItem(
-        name: 'Ar comprimido',
-        liters: compressedAirTotalLiters,
-        notes: compressedAirNotes,
-      ),
-      buildGasItem(
-        name: 'Óxido nitroso (N₂O)',
-        liters: nitrousOxideTotalLiters,
-        notes: nitrousOxideNotes,
-      ),
-    ].whereType<_UsageSummaryItem>().toList();
   }
 
   List<_UsageSummaryItem> _buildUsageSummaryItems() {
@@ -7452,6 +7618,10 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         useFirstDoseWhenTotalMissing: true,
       ),
       ..._usageItemsFromAirway(),
+      ..._usageItemsFromLossEntries(
+        'Perda de material',
+        _lineItems(_record.airway.observation),
+      ),
       ..._usageItemsFromPlainEntries('Acesso venoso', _record.venousAccesses),
       ..._usageItemsFromLossEntries(
         'Perda de material',
@@ -7470,19 +7640,6 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
         'Consumo extra neuraxial',
         _record.neuraxialNeedles,
       ),
-      ..._usageItemsFromFluidEntries(
-        'Cristaloides',
-        _record.fluidBalance.crystalloidEntries,
-      ),
-      ..._usageItemsFromFluidEntries(
-        'Coloides',
-        _record.fluidBalance.colloidEntries,
-      ),
-      ..._usageItemsFromFluidEntries(
-        'Sangue e derivados',
-        _record.fluidBalance.bloodEntries,
-      ),
-      ..._usageItemsFromMaintenanceGasFlows(),
       ..._usageItemsFromManualOxygenTherapy(),
       ..._usageItemsFromManualMaterials(),
     ];
@@ -7504,7 +7661,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     final summary = _buildUsageSummaryItems();
 
     return PanelCard(
-      title: 'Consolidado de uso',
+      title: 'Consolidado de medicamentos e materiais',
       titleColor: _emergencePhaseColor,
       icon: Icons.summarize_outlined,
       minHeight: 168,
@@ -7515,7 +7672,7 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
             ? const [
                 StatusHint(
                   text:
-                      'O consolidado é montado automaticamente com drogas, manutenção, via aérea, acessos, agulhas, fluidos e itens adicionais.',
+                      'O consolidado é montado automaticamente com medicações, via aérea, acessos, agulhas e itens adicionais.',
                 ),
               ]
             : summary

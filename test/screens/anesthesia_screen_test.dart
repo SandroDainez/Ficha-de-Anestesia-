@@ -638,12 +638,59 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Propofol'), findsOneWidget);
-      expect(find.text('136 mg • ~13.6 mL (10 mg/mL)'), findsOneWidget);
+      expect(
+        find.textContaining('2 mg/kg em peso real (68 kg) • 136 mg • ~13.6 mL'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('Bula: 2-2,5 mg/kg em adultos'),
+        findsOneWidget,
+      );
 
       await tester.tap(find.widgetWithText(FilledButton, 'Confirmar').first);
       await tester.pumpAndSettle();
 
       expect(find.text('1 item(ns) registrados'), findsWidgets);
+    },
+  );
+
+  testWidgets(
+    'induction recommendations show per kg dose and obesity weight basis',
+    (WidgetTester tester) async {
+      final record = buildRecord().copyWith(
+        drugs: const [],
+        patient: buildRecord().patient.copyWith(
+          weightKg: 120,
+          heightMeters: 1.6,
+        ),
+      );
+
+      await pumpScreen(tester, record);
+      await tester.ensureVisible(find.byKey(const Key('drugs-card')));
+
+      await tester.tap(find.text('13) INDUÇÃO'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.textContaining(
+          '2 mg/kg em peso predito (IMC 25; proxy de peso magro/ideal) (64 kg)',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(
+          '0.6 mg/kg em peso predito (IMC 25; proxy de peso magro/ideal) (64 kg)',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('1 mg/kg em peso real (120 kg) • 120 mg'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('20 mcg/kg em peso ajustado = predito + 40%'),
+        findsOneWidget,
+      );
     },
   );
 
@@ -658,7 +705,24 @@ void main() {
       await pumpScreen(tester, record);
       await tester.ensureVisible(find.byKey(const Key('technique-card')));
 
-      expect(find.text('12) SEDAÇÃO COMPLEMENTAR'), findsOneWidget);
+      expect(find.text('SEDAÇÃO'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('technique-entry')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sedação'), findsOneWidget);
+      expect(
+        find.textContaining(
+          'As doses e repiques abaixo são referências usuais',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Midazolam • dose de referência usual: 1-2 mg'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Repiques: 0,5-1 mg'), findsOneWidget);
+      expect(find.widgetWithText(TextField, 'Livre escolha'), findsOneWidget);
     },
   );
 
@@ -723,12 +787,64 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Sulfato de Mg'), findsOneWidget);
-      expect(find.text('2720 mg • ~27.2 mL (100 mg/mL)'), findsOneWidget);
+      expect(
+        find.textContaining(
+          '40 mg/kg em peso real (68 kg) • 2720 mg • ~27.2 mL',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('bolus usual 30-50 mg/kg'), findsOneWidget);
 
       await tester.tap(find.widgetWithText(FilledButton, 'Confirmar').first);
       await tester.pumpAndSettle();
 
       expect(find.text('1 item(ns) registrados'), findsWidgets);
+    },
+  );
+
+  testWidgets(
+    'adjunct recommendations show per kg dose and obesity weight basis',
+    (WidgetTester tester) async {
+      final record = buildRecord().copyWith(
+        adjuncts: const [],
+        patient: buildRecord().patient.copyWith(
+          weightKg: 120,
+          heightMeters: 1.6,
+        ),
+      );
+
+      await pumpScreen(tester, record);
+      await tester.ensureVisible(find.text('14) ADJUVANTES ANESTÉSICOS'));
+
+      await tester.tap(find.text('14) ADJUVANTES ANESTÉSICOS'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.textContaining('40 mg/kg em peso real (120 kg) • 4800 mg'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(
+          '0.25 mg/kg em peso predito (IMC 25; proxy de peso ideal) (64 kg)',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(
+          '0.15 mg/kg em peso predito (IMC 25; proxy de peso ideal) (64 kg)',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(
+          '1 mg/kg em peso predito (IMC 25; proxy de peso ideal) (64 kg)',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('Consenso internacional: dose inicial max.'),
+        findsOneWidget,
+      );
     },
   );
 
@@ -834,6 +950,76 @@ void main() {
     expect(find.text('Observações'), findsNothing);
   });
 
+  testWidgets('airway device and support materials record loss with reason', (
+    WidgetTester tester,
+  ) async {
+    final record = buildRecord().copyWith(
+      airway: const Airway.empty(),
+      drugs: const [],
+      adjuncts: const [],
+    );
+
+    await pumpScreen(tester, record);
+    await tester.tap(find.text('15) VIA AÉREA'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('airway-device-field')));
+    await tester.pumpAndSettle();
+    expect(find.text('Perda de material do dispositivo'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('airway-loss-material-field')),
+      'TOT 7,5',
+    );
+    await tester.enterText(
+      find.byKey(const Key('airway-loss-quantity-field')),
+      '1 un',
+    );
+    await tester.enterText(
+      find.byKey(const Key('airway-loss-reason-field')),
+      'cuff roto',
+    );
+    await tester.tap(find.byKey(const Key('airway-add-loss-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('Perda: TOT 7,5 • 1 un • cuff roto'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('airway-save-button')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('airway-observation-entry')));
+    await tester.pumpAndSettle();
+    expect(find.text('Perda de material de apoio'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('airway-loss-material-field')),
+      'Bougie',
+    );
+    await tester.enterText(
+      find.byKey(const Key('airway-loss-quantity-field')),
+      '1 un',
+    );
+    await tester.enterText(
+      find.byKey(const Key('airway-loss-reason-field')),
+      'múltiplas tentativas',
+    );
+    await tester.tap(find.byKey(const Key('airway-add-loss-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('airway-save-button')));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(
+      find.text('CONSOLIDADO DE MEDICAMENTOS E MATERIAIS'),
+    );
+    await tester.tap(find.text('CONSOLIDADO DE MEDICAMENTOS E MATERIAIS'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Perda de material: TOT 7,5 • 1 un • cuff roto'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Perda de material: Bougie • 1 un • múltiplas tentativas'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets(
     'shows contextual mechanical ventilation card for general anesthesia and allows editing',
     (WidgetTester tester) async {
@@ -846,11 +1032,14 @@ void main() {
 
       expect(find.text('Sugestão contextual'), findsOneWidget);
       expect(find.textContaining('VT'), findsWidgets);
+      expect(find.textContaining('PROVHILO/PROBESE'), findsOneWidget);
+      expect(find.textContaining('pressão de platô'), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('ventilation-entry')));
       await tester.pumpAndSettle();
 
       expect(find.text('Ventilação mecânica'), findsOneWidget);
+      expect(find.textContaining('VT 6-8 mL/kg'), findsWidgets);
       await tester.enterText(
         find.byKey(const Key('ventilation-mode-field')),
         'PCV-VG',
@@ -905,10 +1094,7 @@ void main() {
 
       expect(find.textContaining('altura 160 cm'), findsOneWidget);
       expect(find.textContaining('peso de referência 64'), findsOneWidget);
-      expect(
-        find.textContaining('PEEP e FR um pouco mais altas'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('FR/PEEP um pouco maiores'), findsOneWidget);
     },
   );
 
@@ -1561,28 +1747,38 @@ void main() {
   );
 
   testWidgets(
-    'usage summary card consolidates medications materials fluids and blood products used',
+    'usage summary card consolidates medications and materials used',
     (WidgetTester tester) async {
       final record = buildRecord().copyWith(
-        drugs: const ['Propofol|150 mg|||2 ampolas'],
+        drugs: const [
+          'Propofol|150 mg|||2 ampolas',
+          'Propofol|50 mg|||1 ampola',
+        ],
         prophylacticAntibiotics: const ['Cefazolina|2 g||||'],
         venousAccesses: const ['AVP MSE - 18G'],
         arterialAccesses: const ['PAI - radial esquerda 20G'],
-        anesthesiaMaterials: const ['TOT 7,5 1 un'],
-        fluidBalance: buildRecord().fluidBalance.copyWith(
-          crystalloidEntries: const ['RL|500'],
-          bloodEntries: const ['Concentrado de hemácias|1 UI|280'],
-        ),
+        anesthesiaMaterials: const [
+          'TOT 7,5 1 un',
+          'Seringa 20 mL 2 un',
+          'Seringa 20 mL 1 un',
+        ],
       );
 
       await pumpScreen(tester, record);
-      await tester.ensureVisible(find.text('CONSOLIDADO DE USO'));
-      await tester.tap(find.text('CONSOLIDADO DE USO'));
+      await tester.ensureVisible(
+        find.text('CONSOLIDADO DE MEDICAMENTOS E MATERIAIS'),
+      );
+      await tester.tap(find.text('CONSOLIDADO DE MEDICAMENTOS E MATERIAIS'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Indução: Propofol • 2 ampolas'), findsOneWidget);
       expect(
-        find.text('Antibiótico profilaxia: Cefazolina • 2 g'),
+        find.text(
+          'Indução: Propofol • 3 ampolas • 1ª dose: 150 mg • 1ª dose: 50 mg',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Antibiótico profilaxia: Cefazolina • 2 g • 1ª dose: 2 g'),
         findsOneWidget,
       );
       expect(find.text('Via aérea: TOT 7.5 • 1 un'), findsOneWidget);
@@ -1591,13 +1787,7 @@ void main() {
         find.text('Acesso arterial: PAI - radial esquerda 20G • 1 un'),
         findsOneWidget,
       );
-      expect(find.text('Cristaloides: RL • 500 mL'), findsOneWidget);
-      expect(
-        find.text(
-          'Sangue e derivados: Concentrado de hemácias • 1 UI • 280 mL',
-        ),
-        findsOneWidget,
-      );
+      expect(find.text('Ajuste manual: Seringa 20 mL • 3 un'), findsOneWidget);
       expect(find.text('Ajuste manual: TOT 7,5 1 un'), findsNothing);
     },
   );
@@ -1641,7 +1831,7 @@ void main() {
   });
 
   testWidgets(
-    'usage summary includes fresh gas consumption and manual oxygen therapy totals',
+    'usage summary includes manual oxygen therapy totals without fresh gas consumption',
     (WidgetTester tester) async {
       final record = buildRecord().copyWith(
         maintenanceAgents:
@@ -1664,28 +1854,13 @@ void main() {
       );
 
       await pumpScreen(tester, record);
-      await tester.ensureVisible(find.text('CONSOLIDADO DE USO'));
-      await tester.tap(find.text('CONSOLIDADO DE USO'));
+      await tester.ensureVisible(
+        find.text('CONSOLIDADO DE MEDICAMENTOS E MATERIAIS'),
+      );
+      await tester.tap(find.text('CONSOLIDADO DE MEDICAMENTOS E MATERIAIS'));
       await tester.pumpAndSettle();
 
-      expect(
-        find.text(
-          'Gases medicinais: Oxigênio (O₂) • 120 L • Sevoflurano (O₂) 2,0 L/min • 1,0 h',
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.text(
-          'Gases medicinais: Ar comprimido • 60 L • Sevoflurano (ar) 1,0 L/min • 1,0 h',
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.text(
-          'Gases medicinais: Óxido nitroso (N₂O) • 60 L • Sevoflurano (N₂O) 1,0 L/min • 1,0 h',
-        ),
-        findsOneWidget,
-      );
+      expect(find.textContaining('Gases medicinais:'), findsNothing);
       expect(
         find.text('Oxigenoterapia: Máscara de O₂ • 150 L • 5,0 L/min • 30 min'),
         findsOneWidget,
@@ -1773,8 +1948,10 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Salvar'));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('CONSOLIDADO DE USO'));
-    await tester.tap(find.text('CONSOLIDADO DE USO'));
+    await tester.ensureVisible(
+      find.text('CONSOLIDADO DE MEDICAMENTOS E MATERIAIS'),
+    );
+    await tester.tap(find.text('CONSOLIDADO DE MEDICAMENTOS E MATERIAIS'));
     await tester.pumpAndSettle();
 
     expect(

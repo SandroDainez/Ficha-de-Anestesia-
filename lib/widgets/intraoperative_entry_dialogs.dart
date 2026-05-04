@@ -1325,12 +1325,18 @@ class CatalogMedicationDialog extends StatefulWidget {
     required this.title,
     required this.catalogItems,
     required this.initialItems,
+    this.catalogRecommendations = const {},
+    this.freeChoiceLabel = 'Outros',
+    this.freeChoiceHint = 'Um item por linha',
     this.suggestions = const [],
   });
 
   final String title;
   final Map<String, String> catalogItems;
   final List<String> initialItems;
+  final Map<String, String> catalogRecommendations;
+  final String freeChoiceLabel;
+  final String freeChoiceHint;
   final List<MedicationCatalogSuggestion> suggestions;
 
   @override
@@ -1497,7 +1503,7 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
                       ),
                       SizedBox(height: 6),
                       Text(
-                        'O valor entre parênteses ao lado de cada medicação é apenas uma dose de referência usual. Preencha abaixo o que foi realmente administrado no caso, com horário da primeira dose, redoses/bolus adicionais, infusão contínua se houver e quantidade total utilizada.',
+                        'As doses e repiques abaixo são referências usuais para apoiar a escolha. Registre apenas o que foi decidido e administrado no caso; a escolha final da medicação, dose, redose, infusão e quantidade total permanece do usuário.',
                         style: TextStyle(
                           color: Color(0xFF5D7288),
                           fontWeight: FontWeight.w600,
@@ -1616,6 +1622,8 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
               ...widget.catalogItems.entries.map((entry) {
                 final name = entry.key;
                 final defaultDose = entry.value;
+                final recommendation =
+                    widget.catalogRecommendations[name]?.trim() ?? '';
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Column(
@@ -1628,6 +1636,17 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
+                      if (recommendation.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          recommendation,
+                          style: const TextStyle(
+                            color: Color(0xFF5D7288),
+                            fontWeight: FontWeight.w600,
+                            height: 1.25,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 8),
                       Row(
                         children: [
@@ -1666,7 +1685,8 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
                         controller: _repeatControllers[name],
                         decoration: const InputDecoration(
                           labelText: 'Redoses / bolus adicionais',
-                          hintText: 'Ex: 25 mcg às 09:10; 25 mcg às 09:30',
+                          hintText:
+                              'Ex: repique permitido conforme resposta clínica',
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -1697,9 +1717,9 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
                 key: const Key('catalog-other-items-field'),
                 controller: _otherItemsController,
                 maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: 'Outros',
-                  hintText: 'Um item por linha',
+                decoration: InputDecoration(
+                  labelText: widget.freeChoiceLabel,
+                  hintText: widget.freeChoiceHint,
                 ),
               ),
             ],
