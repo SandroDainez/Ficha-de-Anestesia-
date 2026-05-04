@@ -6075,68 +6075,21 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
           const SizedBox(height: 12),
           ..._monitoringOptions.asMap().entries.map(
             (entry) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: InkWell(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _buildPresetActionCard(
                 key: Key('monitoring-item-${entry.key + 1}'),
-                borderRadius: BorderRadius.circular(12),
+                title: entry.value,
+                badge: '${entry.key + 1}',
+                subtitle: 'Monitorização intraoperatória',
+                detail: _monitoringItems.contains(entry.value)
+                    ? 'Item registrado.'
+                    : recommended.contains(entry.value)
+                    ? 'Recomendado para este perfil.'
+                    : 'Toque em confirmar para registrar este item.',
+                selected: _monitoringItems.contains(entry.value),
+                accentColor: _accessRowColor,
+                onConfirm: () => _toggleMonitoringItem(entry.value),
                 onTap: () => _toggleMonitoringItem(entry.value),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _monitoringItems.contains(entry.value)
-                        ? const Color(0xFFEAF2FF)
-                        : const Color(0xFFF8FAFE),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _monitoringItems.contains(entry.value)
-                          ? const Color(0xFF2B76D2)
-                          : recommended.contains(entry.value)
-                          ? const Color(0xFF9CC0EC)
-                          : const Color(0xFFDCE7F3),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 26,
-                        height: 26,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: _monitoringItems.contains(entry.value)
-                              ? const Color(0xFF2B76D2)
-                              : const Color(0xFFEAF2FF),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          '${entry.key + 1}',
-                          style: TextStyle(
-                            color: _monitoringItems.contains(entry.value)
-                                ? Colors.white
-                                : const Color(0xFF2B76D2),
-                            fontWeight: FontWeight.w800,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          entry.value,
-                          style: TextStyle(
-                            color: recommended.contains(entry.value)
-                                ? const Color(0xFF315E8D)
-                                : const Color(0xFF17324D),
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ),
             ),
           ),
