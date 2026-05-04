@@ -791,9 +791,21 @@ class _FastingQuickEditDialogState extends State<_FastingQuickEditDialog> {
         ? 'Sólidos'
         : 'Fórmula / refeição';
     return AlertDialog(
-      title: const Text('Jejum'),
+      backgroundColor: const Color(0xFFF3F6FC),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+      title: const Text(
+        'Jejum',
+        style: TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1F2630),
+        ),
+      ),
       content: SizedBox(
-        width: 620,
+        width: 1120,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -837,10 +849,26 @@ class _FastingQuickEditDialogState extends State<_FastingQuickEditDialog> {
       ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(
             const _FastingQuickEditResult(
               solids: '',
@@ -852,6 +880,18 @@ class _FastingQuickEditDialogState extends State<_FastingQuickEditDialog> {
           child: const Text('Limpar'),
         ),
         FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF3C6C9C),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
           onPressed: () => Navigator.of(context).pop(
             _FastingQuickEditResult(
               solids: _selectedSolids,
@@ -3966,16 +4006,48 @@ class _AnesthesiaScreenState extends State<AnesthesiaScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Finalizar caso'),
+        backgroundColor: const Color(0xFFF3F6FC),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+        titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+        contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+        actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+        title: const Text(
+          'Finalizar caso',
+          style: TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.w400,
+            color: Color(0xFF1F2630),
+          ),
+        ),
         content: const Text(
           'A ficha será marcada como finalizada e ficará salva no banco de dados para reabertura posterior.',
         ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF3C6C9C),
+              textStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+            ),
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cancelar'),
           ),
           FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF3C6C9C),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+              textStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Confirmar'),
           ),
@@ -8132,13 +8204,23 @@ class _EmergenceDialogState extends State<_EmergenceDialog> {
         .toSet();
 
     return AlertDialog(
+      backgroundColor: const Color(0xFFF3F6FC),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
       title: Text(
         widget.isGeneralFlow
             ? 'Despertar / extubação'
             : 'Recuperação / encaminhamento',
+        style: const TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1F2630),
+        ),
       ),
       content: SizedBox(
-        width: 520,
+        width: 1120,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -8218,10 +8300,30 @@ class _EmergenceDialogState extends State<_EmergenceDialog> {
       ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF3C6C9C),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
           key: const Key('emergence-save-button'),
           onPressed: () => Navigator.of(context).pop(
             _EmergenceDialogResult(
@@ -8373,9 +8475,21 @@ class _MechanicalVentilationDialogState
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Ventilação mecânica'),
+      backgroundColor: const Color(0xFFF3F6FC),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+      title: const Text(
+        'Ventilação mecânica',
+        style: TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1F2630),
+        ),
+      ),
       content: SizedBox(
-        width: 640,
+        width: 1120,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -8597,16 +8711,44 @@ class _MechanicalVentilationDialogState
       ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(
             context,
           ).pop(const MechanicalVentilationSettings.empty()),
           child: const Text('Limpar'),
         ),
         FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF3C6C9C),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
           key: const Key('ventilation-save-button'),
           onPressed: () => Navigator.of(context).pop(_buildResult()),
           child: const Text('Salvar'),
@@ -8835,9 +8977,21 @@ class _HemodynamicDialogState extends State<HemodynamicDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Lançamentos hemodinâmicos'),
+      backgroundColor: const Color(0xFFF3F6FC),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+      title: const Text(
+        'Lançamentos hemodinâmicos',
+        style: TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1F2630),
+        ),
+      ),
       content: SizedBox(
-        width: 820,
+        width: 1120,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -8989,6 +9143,14 @@ class _HemodynamicDialogState extends State<HemodynamicDialog> {
       ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(
             context,
           ).pop(HemodynamicDialogResult(points: _points, markers: _markers)),
@@ -10379,11 +10541,21 @@ class _FluidBalanceDialogState extends State<FluidBalanceDialog> {
     );
 
     return AlertDialog(
-      backgroundColor: const Color(0xFFF9FBFE),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-      title: const Text('Editar Reposição volêmica, sangue e derivados'),
+      backgroundColor: const Color(0xFFF3F6FC),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+      title: const Text(
+        'Editar Reposição volêmica, sangue e derivados',
+        style: TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1F2630),
+        ),
+      ),
       content: SizedBox(
-        width: 420,
+        width: 1120,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -10893,11 +11065,21 @@ class _BalanceOnlyDialogState extends State<BalanceOnlyDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: const Color(0xFFF9FBFE),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-      title: const Text('Editar Balanço hídrico'),
+      backgroundColor: const Color(0xFFF3F6FC),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+      title: const Text(
+        'Editar Balanço hídrico',
+        style: TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1F2630),
+        ),
+      ),
       content: SizedBox(
-        width: 420,
+        width: 1120,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -11194,9 +11376,21 @@ class _ExportCaseDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Exportar ficha completa'),
+      backgroundColor: const Color(0xFFF3F6FC),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+      title: const Text(
+        'Exportar ficha completa',
+        style: TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1F2630),
+        ),
+      ),
       content: SizedBox(
-        width: 420,
+        width: 1120,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -11257,6 +11451,14 @@ class _ExportCaseDialog extends StatelessWidget {
       ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
@@ -11441,9 +11643,21 @@ class _AnesthesiaMaterialsDialogState
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Itens adicionais / ajuste manual'),
+      backgroundColor: const Color(0xFFF3F6FC),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      titlePadding: const EdgeInsets.fromLTRB(56, 40, 56, 0),
+      contentPadding: const EdgeInsets.fromLTRB(56, 28, 56, 24),
+      actionsPadding: const EdgeInsets.fromLTRB(40, 0, 40, 30),
+      title: const Text(
+        'Itens adicionais / ajuste manual',
+        style: TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1F2630),
+        ),
+      ),
       content: SizedBox(
-        width: 560,
+        width: 1120,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -11588,14 +11802,42 @@ class _AnesthesiaMaterialsDialogState
       ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF3C6C9C),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          ),
           onPressed: () => Navigator.of(context).pop(const <String>[]),
           child: const Text('Limpar'),
         ),
         FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF3C6C9C),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
           onPressed: () => Navigator.of(
             context,
           ).pop([..._manualEntries, ..._oxygenEntries, ..._draftManualItems()]),
