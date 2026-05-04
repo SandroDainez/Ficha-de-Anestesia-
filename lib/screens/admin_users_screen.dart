@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/app_user_profile.dart';
 import '../services/app_auth_service.dart';
+import '../widgets/app_card_style.dart';
 
 class AdminUsersScreen extends StatefulWidget {
   const AdminUsersScreen({super.key, required this.currentProfile});
@@ -163,8 +164,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: AppCardStyle.radius,
         border: Border.all(color: const Color(0xFFDCE6F2)),
+        boxShadow: const [AppCardStyle.shadow],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,8 +230,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: AppCardStyle.radius,
         border: Border.all(color: const Color(0xFFDCE6F2)),
+        boxShadow: const [AppCardStyle.shadow],
       ),
       child: const Text(
         'Nenhum usuário cadastrado ainda.',
@@ -255,8 +258,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: AppCardStyle.radius,
         border: Border.all(color: const Color(0xFFDCE6F2)),
+        boxShadow: const [AppCardStyle.shadow],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

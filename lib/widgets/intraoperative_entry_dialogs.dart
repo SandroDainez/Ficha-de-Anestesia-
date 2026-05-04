@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'app_card_style.dart';
 import 'anesthesia_basic_dialogs.dart';
 
 class MedicationCatalogSuggestion {
@@ -703,8 +704,9 @@ class _DrugInfusionsDialogState extends State<DrugInfusionsDialog> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFE),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: AppCardStyle.radius,
         border: Border.all(color: const Color(0xFFDCE7F3)),
+        boxShadow: const [AppCardStyle.shadow],
       ),
       child: child,
     );
@@ -1212,8 +1214,9 @@ class _AdjunctsDialogState extends State<AdjunctsDialog> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFE),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: AppCardStyle.radius,
         border: Border.all(color: const Color(0xFFDCE7F3)),
+        boxShadow: const [AppCardStyle.shadow],
       ),
       child: child,
     );
@@ -1510,8 +1513,9 @@ class _CatalogMedicationDialogState extends State<CatalogMedicationDialog> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFE),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: AppCardStyle.radius,
         border: Border.all(color: const Color(0xFFDCE7F3)),
+        boxShadow: const [AppCardStyle.shadow],
       ),
       child: child,
     );
@@ -1914,8 +1918,9 @@ class _VasoactiveDrugsDialogState extends State<VasoactiveDrugsDialog> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFE),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: AppCardStyle.radius,
         border: Border.all(color: const Color(0xFFDCE7F3)),
+        boxShadow: const [AppCardStyle.shadow],
       ),
       child: child,
     );

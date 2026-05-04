@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../models/patient.dart';
 import '../models/pre_anesthetic_assessment.dart';
+import '../widgets/app_card_style.dart';
 import '../widgets/anesthesia_basic_dialogs.dart';
 import '../widgets/surgery_info_dialog.dart';
 
@@ -4886,15 +4887,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: AppCardStyle.radius,
         border: Border.all(color: const Color(0xFFDCE6F2)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A17324D),
-            blurRadius: 18,
-            offset: Offset(0, 6),
-          ),
-        ],
+        boxShadow: const [AppCardStyle.shadow],
       ),
       child: Wrap(
         spacing: 12,
@@ -5612,10 +5607,12 @@ class _ExpandablePresetFieldCardState
             margin: EdgeInsets.zero,
             clipBehavior: Clip.antiAlias,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: AppCardStyle.radius,
               side: BorderSide(color: borderColor),
             ),
-            elevation: 0,
+            color: hasContent ? const Color(0xFFF4FBF6) : Colors.white,
+            shadowColor: const Color(0x0D17324D),
+            elevation: 3,
             child: ExpansionTile(
               controller: _controller,
               tilePadding: const EdgeInsets.symmetric(
@@ -5859,11 +5856,12 @@ class _SectionCardState extends State<_SectionCard> {
         margin: const EdgeInsets.only(bottom: 12),
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: AppCardStyle.radius,
           side: BorderSide(color: borderColor),
         ),
-        color: cardColor,
-        elevation: 0,
+        color: cardColor ?? Colors.white,
+        shadowColor: const Color(0x0D17324D),
+        elevation: 3,
         child: ExpansionTile(
           initiallyExpanded: widget.initiallyExpanded,
           controller: _effectiveController,

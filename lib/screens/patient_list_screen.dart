@@ -8,6 +8,7 @@ import '../models/patient.dart';
 import '../services/record_storage_service.dart';
 import '../services/report_export_service.dart';
 import '../services/supabase_service.dart';
+import '../widgets/app_card_style.dart';
 import '../widgets/json_export_dialog.dart';
 import 'anesthesia_screen.dart';
 import 'pre_anesthetic_screen.dart';
@@ -394,15 +395,9 @@ class _PatientListScreenState extends State<PatientListScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: AppCardStyle.radius,
         border: Border.all(color: const Color(0xFFDCE6F2)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x120B2540),
-            blurRadius: 16,
-            offset: Offset(0, 8),
-          ),
-        ],
+        boxShadow: const [AppCardStyle.shadow],
       ),
       child: Column(
         children: [
@@ -470,8 +465,9 @@ class _PatientListScreenState extends State<PatientListScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: AppCardStyle.radius,
         border: Border.all(color: const Color(0xFFDCE6F2)),
+        boxShadow: const [AppCardStyle.shadow],
       ),
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -498,13 +494,13 @@ class _PatientListScreenState extends State<PatientListScreen> {
   }
 
   Widget _buildSearchPanel() {
-    final supabaseOnline = SupabaseService.instance.isReady;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: AppCardStyle.radius,
         border: Border.all(color: const Color(0xFFDCE6F2)),
+        boxShadow: const [AppCardStyle.shadow],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -515,18 +511,6 @@ class _PatientListScreenState extends State<PatientListScreen> {
               color: Color(0xFF17324D),
               fontSize: 20,
               fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            supabaseOnline
-                ? 'Os pré-anestésicos e fichas salvos ficam visíveis para todos os usuários deste app conectados ao mesmo Supabase.'
-                : 'Sem Supabase configurado, os casos aparecem apenas neste dispositivo.',
-            style: TextStyle(
-              color: supabaseOnline
-                  ? const Color(0xFF169653)
-                  : const Color(0xFFB07A1E),
-              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 16),
@@ -565,8 +549,9 @@ class _PatientListScreenState extends State<PatientListScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: AppCardStyle.radius,
         border: Border.all(color: const Color(0xFFDCE6F2)),
+        boxShadow: const [AppCardStyle.shadow],
       ),
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -678,8 +663,9 @@ class _CaseTile extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: AppCardStyle.radius,
         border: Border.all(color: const Color(0xFFDCE6F2)),
+        boxShadow: const [AppCardStyle.shadow],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

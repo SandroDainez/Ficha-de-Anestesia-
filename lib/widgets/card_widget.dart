@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:pointer_interceptor/pointer_interceptor.dart';
 
+import 'app_card_style.dart';
 import '../models/hemodynamic_point.dart';
 
 class PanelCard extends StatefulWidget {
@@ -105,15 +106,9 @@ class _PanelCardState extends State<PanelCard> {
           : null,
       decoration: BoxDecoration(
         color: cardBackground,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: AppCardStyle.radius,
         border: Border.all(color: cardBorder),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0D17324D),
-            blurRadius: 14,
-            offset: Offset(0, 6),
-          ),
-        ],
+        boxShadow: const [AppCardStyle.shadow],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
