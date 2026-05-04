@@ -30,10 +30,27 @@ class _MedicationOptionGroup {
 }
 
 class _OrientationOptionGroup {
-  const _OrientationOptionGroup({required this.title, required this.options});
+  const _OrientationOptionGroup({
+    required this.title,
+    required this.options,
+    this.freeTextField,
+  });
 
   final String title;
   final List<String> options;
+  final _OrientationFreeTextField? freeTextField;
+}
+
+class _OrientationFreeTextField {
+  const _OrientationFreeTextField({
+    required this.label,
+    required this.hintText,
+    required this.prefix,
+  });
+
+  final String label;
+  final String hintText;
+  final String prefix;
 }
 
 class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
@@ -723,53 +740,32 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     'Monitorização de apneia/bradicardia',
   ];
   static const List<String> _preAnestheticOrientationOptions = [
-    'Manter betabloqueador no dia da cirurgia',
-    'Manter broncodilatadores e corticoides inalatórios',
-    'Manter anticonvulsivantes',
-    'Manter corticoide crônico e avaliar dose de estresse',
-    'Suspender IECA/ARB no dia da cirurgia se indicado',
-    'Avaliar suspender diurético no dia da cirurgia',
-    'Evitar AINEs conforme risco de sangramento',
+    'Manter medicações de uso contínuo; suspender somente as que foram orientadas',
     'Suspender clopidogrel 5-7 dias se liberado pela equipe assistente',
     'Manter AAS quando alto risco trombótico ou prevenção secundária',
     'Suspender varfarina 5 dias e checar INR conforme protocolo',
     'Suspender DOAC 24-72h conforme função renal e risco de sangramento',
     'Avaliar ponte anticoagulante em alto risco trombótico',
-    'Suspender metformina no dia do procedimento',
-    'Suspender sulfonilureia no dia do procedimento',
-    'Ajustar insulina basal na véspera/no dia conforme glicemia',
-    'Não aplicar insulina rápida se em jejum sem refeição',
-    'Suspender GLP-1 conforme protocolo institucional',
     'Trazer lista de medicações',
     'Trazer exames / laudos',
     'Cumprir jejum recomendado',
-    'Avisar alergias / febre / IVAS',
     'Confirmar acompanhante / contato',
-    'Outro - medicações a manter',
-    'Outro - medicações a suspender',
-    'Outro - anticoagulantes / antiagregantes',
-    'Outro - antidiabéticos / insulina / GLP-1',
-    'Outro - orientação pré-anestésica',
   ];
   static const List<_OrientationOptionGroup> _preAnestheticOrientationGroups = [
     _OrientationOptionGroup(
-      title: 'Medicações que geralmente manter',
+      title: 'Medicações a manter',
       options: [
-        'Manter betabloqueador no dia da cirurgia',
-        'Manter broncodilatadores e corticoides inalatórios',
-        'Manter anticonvulsivantes',
-        'Manter corticoide crônico e avaliar dose de estresse',
-        'Outro - medicações a manter',
+        'Manter medicações de uso contínuo; suspender somente as que foram orientadas',
       ],
     ),
     _OrientationOptionGroup(
-      title: 'Medicações que geralmente suspender ou avaliar',
-      options: [
-        'Suspender IECA/ARB no dia da cirurgia se indicado',
-        'Avaliar suspender diurético no dia da cirurgia',
-        'Evitar AINEs conforme risco de sangramento',
-        'Outro - medicações a suspender',
-      ],
+      title: 'Suspender',
+      options: [],
+      freeTextField: _OrientationFreeTextField(
+        label: 'Medicações a suspender',
+        hintText: 'Digite uma medicação por linha',
+        prefix: 'Suspender medicação: ',
+      ),
     ),
     _OrientationOptionGroup(
       title: 'Anticoagulantes / antiagregantes',
@@ -779,19 +775,12 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         'Suspender varfarina 5 dias e checar INR conforme protocolo',
         'Suspender DOAC 24-72h conforme função renal e risco de sangramento',
         'Avaliar ponte anticoagulante em alto risco trombótico',
-        'Outro - anticoagulantes / antiagregantes',
       ],
-    ),
-    _OrientationOptionGroup(
-      title: 'Antidiabéticos / insulina / GLP-1',
-      options: [
-        'Suspender metformina no dia do procedimento',
-        'Suspender sulfonilureia no dia do procedimento',
-        'Ajustar insulina basal na véspera/no dia conforme glicemia',
-        'Não aplicar insulina rápida se em jejum sem refeição',
-        'Suspender GLP-1 conforme protocolo institucional',
-        'Outro - antidiabéticos / insulina / GLP-1',
-      ],
+      freeTextField: _OrientationFreeTextField(
+        label: 'Outros anticoagulantes / antiagregantes',
+        hintText: 'Ex: dabigatrana, edoxabana, ticagrelor, prasugrel...',
+        prefix: 'Anticoagulante/antiagregante: ',
+      ),
     ),
     _OrientationOptionGroup(
       title: 'Documentos e exames',
@@ -805,11 +794,13 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       ],
     ),
     _OrientationOptionGroup(
-      title: 'Avisos e recontato',
-      options: [
-        'Avisar alergias / febre / IVAS',
-        'Outro - orientação pré-anestésica',
-      ],
+      title: 'Outras informações',
+      options: [],
+      freeTextField: _OrientationFreeTextField(
+        label: 'Informações adicionais',
+        hintText: 'Digite informações adicionais relevantes',
+        prefix: 'Informação adicional: ',
+      ),
     ),
   ];
   static const List<String> _pediatricPreAnestheticOrientationOptions = [
@@ -824,8 +815,6 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     'Avisar febre / IVAS / sintomas respiratórios',
     'Confirmar acompanhante / contato',
     'Orientar responsável / consentimento',
-    'Outro - medicações pediátricas',
-    'Outro - orientação pediátrica',
   ];
   static const List<_OrientationOptionGroup>
   _pediatricPreAnestheticOrientationGroups = [
@@ -837,8 +826,12 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         'Manter corticoide crônico e avaliar dose de estresse',
         'Suspender anticoagulantes / antiagregantes conforme equipe assistente',
         'Ajustar insulina conforme glicemia e jejum',
-        'Outro - medicações pediátricas',
       ],
+      freeTextField: _OrientationFreeTextField(
+        label: 'Outras medicações pediátricas',
+        hintText: 'Ex: medicação de uso contínuo, antibiótico em curso...',
+        prefix: 'Medicação pediátrica: ',
+      ),
     ),
     _OrientationOptionGroup(
       title: 'Documentos e exames',
@@ -854,10 +847,12 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     ),
     _OrientationOptionGroup(
       title: 'Avisos e recontato',
-      options: [
-        'Avisar febre / IVAS / sintomas respiratórios',
-        'Outro - orientação pediátrica',
-      ],
+      options: ['Avisar febre / IVAS / sintomas respiratórios'],
+      freeTextField: _OrientationFreeTextField(
+        label: 'Outras orientações pediátricas',
+        hintText: 'Ex: orientar responsável, reavaliar sintomas, logística...',
+        prefix: 'Orientação pediátrica: ',
+      ),
     ),
   ];
   static const List<String> _neonatalPreAnestheticOrientationOptions = [
@@ -873,8 +868,6 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     'Avisar infecção / instabilidade clínica',
     'Confirmar equipe / responsável',
     'Confirmar termorregulação / glicemia / suporte neonatal',
-    'Outro - medicações neonatais',
-    'Outro - orientação neonatal',
   ];
   static const List<_OrientationOptionGroup>
   _neonatalPreAnestheticOrientationGroups = [
@@ -885,8 +878,13 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         'Manter anticonvulsivantes conforme prescrição',
         'Confirmar antibióticos em uso com equipe assistente',
         'Confirmar vasoativos / infusões contínuas com UTI',
-        'Outro - medicações neonatais',
       ],
+      freeTextField: _OrientationFreeTextField(
+        label: 'Outras medicações neonatais',
+        hintText:
+            'Ex: prostaglandina, nutrição/parenteral, sedação contínua...',
+        prefix: 'Medicação neonatal: ',
+      ),
     ),
     _OrientationOptionGroup(
       title: 'Suporte e segurança neonatal',
@@ -907,10 +905,12 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     ),
     _OrientationOptionGroup(
       title: 'Avisos e recontato',
-      options: [
-        'Avisar infecção / instabilidade clínica',
-        'Outro - orientação neonatal',
-      ],
+      options: ['Avisar infecção / instabilidade clínica'],
+      freeTextField: _OrientationFreeTextField(
+        label: 'Outras orientações neonatais',
+        hintText: 'Ex: transporte aquecido, alinhamento com UTI, suporte...',
+        prefix: 'Orientação neonatal: ',
+      ),
     ),
   ];
   static const List<String> _anesthesiaTeamRequestOptions = [
@@ -985,6 +985,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   late final TextEditingController _otherAnestheticPlanController;
   late final TextEditingController _otherPostoperativePlanningController;
   late final TextEditingController _preAnestheticOrientationNotesController;
+  late final Map<String, TextEditingController> _orientationFreeTextControllers;
   late final TextEditingController _anesthesiaTeamRequestNotesController;
   late final TextEditingController _surgeryClearanceNotesController;
   late final TextEditingController _freeNotesController;
@@ -1018,6 +1019,22 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   String _selectedSurgeryPriority = '';
   String _selectedSurgeryClearanceStatus = '';
   String _selectedAsa = '';
+
+  List<_OrientationFreeTextField> get _allOrientationFreeTextFields {
+    final fields = <String, _OrientationFreeTextField>{};
+    for (final group in [
+      ..._preAnestheticOrientationGroups,
+      ..._pediatricPreAnestheticOrientationGroups,
+      ..._neonatalPreAnestheticOrientationGroups,
+    ]) {
+      final field = group.freeTextField;
+      if (field != null) {
+        fields[field.prefix] = field;
+      }
+    }
+    return fields.values.toList();
+  }
+
   late PatientPopulation _selectedPopulation;
   late final List<TextEditingController> _identificationControllers;
   late final Map<String, _ComplementaryExamEntry> _complementaryExamEntries;
@@ -2332,6 +2349,15 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     _preAnestheticOrientationNotesController = TextEditingController(
       text: assessment.preAnestheticOrientationNotes,
     );
+    _orientationFreeTextControllers = {
+      for (final field in _allOrientationFreeTextFields)
+        field.prefix: TextEditingController(
+          text: _orientationFreeTextValue(
+            items: assessment.preAnestheticOrientationItems,
+            prefix: field.prefix,
+          ),
+        ),
+    };
     _anesthesiaTeamRequestNotesController = TextEditingController(
       text: assessment.anesthesiaTeamRequestNotes,
     );
@@ -2532,6 +2558,9 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     _otherAnestheticPlanController.dispose();
     _otherPostoperativePlanningController.dispose();
     _preAnestheticOrientationNotesController.dispose();
+    for (final controller in _orientationFreeTextControllers.values) {
+      controller.dispose();
+    }
     _anesthesiaTeamRequestNotesController.dispose();
     _surgeryClearanceNotesController.dispose();
     _freeNotesController.dispose();
@@ -2550,6 +2579,29 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         .map((item) => item.trim())
         .where((item) => item.isNotEmpty)
         .toList();
+  }
+
+  String _orientationFreeTextValue({
+    required List<String> items,
+    required String prefix,
+  }) {
+    return items
+        .where((item) => item.trim().startsWith(prefix))
+        .map((item) => item.trim().substring(prefix.length).trim())
+        .where((item) => item.isNotEmpty)
+        .join('\n');
+  }
+
+  List<String> get _orientationFreeTextItems {
+    final items = <String>[];
+    for (final field in _allOrientationFreeTextFields) {
+      final controller = _orientationFreeTextControllers[field.prefix];
+      if (controller == null) continue;
+      for (final line in _lines(controller.text)) {
+        items.add('${field.prefix}$line');
+      }
+    }
+    return items;
   }
 
   Widget _sectionLabel(String label) {
@@ -2611,6 +2663,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
             child: _buildExpandableOptionGroup(
               title: group.title,
               options: group.options,
+              freeTextField: group.freeTextField,
               selectedValues: _selectedPreAnestheticOrientationItems,
               color: const Color(0xFF2B76D2),
               onToggle: (value) {
@@ -2631,13 +2684,20 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   Widget _buildExpandableOptionGroup({
     required String title,
     required List<String> options,
+    _OrientationFreeTextField? freeTextField,
     required Set<String> selectedValues,
     required ValueChanged<String> onToggle,
     required Color color,
   }) {
-    final selectedCount = options
+    final selectedOptionCount = options
         .where((option) => selectedValues.contains(option))
         .length;
+    final freeTextCount = freeTextField == null
+        ? 0
+        : _lines(
+            _orientationFreeTextControllers[freeTextField.prefix]?.text ?? '',
+          ).length;
+    final selectedCount = selectedOptionCount + freeTextCount;
     final subtitle = selectedCount == 0
         ? 'Toque para escolher opções'
         : '$selectedCount opção(ões) selecionada(s)';
@@ -2672,14 +2732,34 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
             ),
           ),
           children: [
-            _buildMultiSelectButtons(
-              options: options,
-              selectedValues: selectedValues,
-              onToggle: onToggle,
-              color: color,
-            ),
+            if (options.isNotEmpty)
+              _buildMultiSelectButtons(
+                options: options,
+                selectedValues: selectedValues,
+                onToggle: onToggle,
+                color: color,
+              ),
+            if (freeTextField != null) ...[
+              if (options.isNotEmpty) const SizedBox(height: 14),
+              _buildOrientationFreeTextField(freeTextField),
+            ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildOrientationFreeTextField(_OrientationFreeTextField field) {
+    final controller = _orientationFreeTextControllers[field.prefix];
+    if (controller == null) return const SizedBox.shrink();
+    return TextField(
+      controller: controller,
+      minLines: 2,
+      maxLines: 5,
+      onChanged: (_) => setState(() {}),
+      decoration: InputDecoration(
+        labelText: field.label,
+        hintText: field.hintText,
       ),
     );
   }
@@ -3022,8 +3102,10 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       otherPostoperativePlanning: _otherPostoperativePlanningController.text
           .trim(),
       planningNotes: _freeNotesController.text.trim(),
-      preAnestheticOrientationItems: _selectedPreAnestheticOrientationItems
-          .toList(),
+      preAnestheticOrientationItems: [
+        ..._selectedPreAnestheticOrientationItems,
+        ..._orientationFreeTextItems,
+      ],
       preAnestheticOrientationNotes: _preAnestheticOrientationNotesController
           .text
           .trim(),
@@ -4687,6 +4769,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
             title: _preAnestheticOrientationSectionTitle,
             isCompleted:
                 _selectedPreAnestheticOrientationItems.isNotEmpty ||
+                _orientationFreeTextItems.isNotEmpty ||
                 _preAnestheticOrientationNotesController.text.trim().isNotEmpty,
             summary: _preAnestheticOrientationSummary(),
             child: Column(
@@ -5372,6 +5455,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   String _preAnestheticOrientationSummary() {
     final parts = [
       _joinSummaryParts(_selectedPreAnestheticOrientationItems),
+      _joinSummaryParts(_orientationFreeTextItems),
       _joinSummaryParts(_lines(_preAnestheticOrientationNotesController.text)),
     ];
     final summary = _joinSummaryParts(parts);

@@ -227,24 +227,61 @@ void main() {
     await tester.tap(find.text('Orientações de pré-anestésico'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Medicações que geralmente manter'), findsOneWidget);
-    expect(
-      find.text('Medicações que geralmente suspender ou avaliar'),
-      findsOneWidget,
-    );
+    expect(find.text('Medicações a manter'), findsOneWidget);
+    expect(find.text('Suspender'), findsOneWidget);
     expect(find.text('Anticoagulantes / antiagregantes'), findsOneWidget);
+    expect(find.text('Antidiabéticos / insulina / GLP-1'), findsNothing);
 
-    await tester.tap(find.text('Antidiabéticos / insulina / GLP-1'));
+    await tester.tap(find.text('Medicações a manter'));
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Suspender metformina no dia do procedimento'),
+      find.text(
+        'Manter medicações de uso contínuo; suspender somente as que foram orientadas',
+      ),
       findsOneWidget,
     );
+    expect(find.text('Outro - medicações a manter'), findsNothing);
+
+    await tester.tap(
+      find.text(
+        'Manter medicações de uso contínuo; suspender somente as que foram orientadas',
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 opção(ões) selecionada(s)'), findsOneWidget);
+
+    await tester.tap(find.text('Medicações a manter'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Suspender'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Medicações a suspender'), findsOneWidget);
     expect(
-      find.text('Ajustar insulina basal na véspera/no dia conforme glicemia'),
-      findsOneWidget,
+      find.text('Suspender IECA/ARB no dia da cirurgia se indicado'),
+      findsNothing,
     );
+
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Medicações a suspender'),
+      'Semaglutida\nEmpagliflozina',
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('2 opção(ões) selecionada(s)'), findsOneWidget);
+
+    await tester.tap(find.text('Suspender'));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Outras informações'),
+      800,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    expect(find.text('Avisar alergias / febre / IVAS'), findsNothing);
   });
 
   testWidgets(
