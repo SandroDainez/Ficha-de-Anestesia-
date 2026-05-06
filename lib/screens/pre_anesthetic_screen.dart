@@ -1166,6 +1166,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   String _alcoholStatus = '';
   String _selectedMets = '';
   String _selectedMallampati = '';
+  bool _noKnownAllergiesSelected = true;
   String _selectedMouthOpening = '';
   String _selectedNeckMobility = '';
   String _selectedDentition = '';
@@ -2695,6 +2696,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     _allergyController = TextEditingController(
       text: assessment.allergyDescription,
     );
+    _noKnownAllergiesSelected = _allergyController.text.trim().isEmpty;
     _metsNotesController = TextEditingController();
     _acController = TextEditingController(
       text: _physicalExamField(['AC'], assessment.physicalExam),
@@ -4145,11 +4147,15 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
           ),
           _SectionCard(
             title: 'Alergias',
-            isCompleted: true,
+            isCompleted:
+                _noKnownAllergiesSelected ||
+                _allergyController.text.trim().isNotEmpty,
             summary: _allergySummary(),
-            tone: _allergyController.text.trim().isEmpty
+            tone: _noKnownAllergiesSelected
                 ? _SectionCardTone.completed
-                : _SectionCardTone.alert,
+                : (_allergyController.text.trim().isNotEmpty
+                      ? _SectionCardTone.alert
+                      : _SectionCardTone.neutral),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -4159,11 +4165,15 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   children: [
                     _buildQuickActionChip(
                       label: 'Sem alergias',
-                      selected: _allergyController.text.trim().isEmpty,
+                      selected: _noKnownAllergiesSelected,
                       color: const Color(0xFF169653),
                       onPressed: () {
                         setState(() {
-                          _allergyController.text = '';
+                          _noKnownAllergiesSelected =
+                              !_noKnownAllergiesSelected;
+                          if (_noKnownAllergiesSelected) {
+                            _allergyController.clear();
+                          }
                         });
                       },
                     ),
@@ -4183,7 +4193,13 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                         color: const Color(0xFFCC7A00),
                         onPressed: () {
                           setState(() {
-                            _allergyController.text = item;
+                            final current = _allergyController.text.trim();
+                            if (current.toLowerCase() == item.toLowerCase()) {
+                              _allergyController.clear();
+                            } else {
+                              _allergyController.text = item;
+                            }
+                            _noKnownAllergiesSelected = false;
                           });
                         },
                       ),
@@ -4865,7 +4881,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   options: _solidFastingOptions,
                   selectedValue: _selectedSolidFasting,
                   onSelected: (value) {
-                    setState(() => _selectedSolidFasting = '8 horas');
+                    setState(() => _selectedSolidFasting = value);
                   },
                   color: const Color(0xFFCC7A00),
                 ),
@@ -4876,7 +4892,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
                   options: _liquidFastingOptions,
                   selectedValue: _selectedLiquidFasting,
                   onSelected: (value) {
-                    setState(() => _selectedLiquidFasting = '2 horas');
+                    setState(() => _selectedLiquidFasting = value);
                   },
                 ),
                 if (_showBreastMilkFastingSection) ...[
@@ -6047,7 +6063,12 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
 
   String _allergySummary() {
     final summary = _allergyController.text.trim();
-    return summary.isEmpty ? 'Sem alergias' : summary;
+    if (_noKnownAllergiesSelected && summary.isEmpty) {
+      return 'Sem alergias';
+    }
+    return summary.isEmpty
+        ? 'Descreva alergias ou marque "Sem alergias"'
+        : summary;
   }
 
   String _habitsSummary() {
