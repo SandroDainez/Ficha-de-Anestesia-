@@ -1194,7 +1194,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
   late PatientPopulation _selectedPopulation;
   late final List<TextEditingController> _identificationControllers;
   late final Map<String, _ComplementaryExamEntry> _complementaryExamEntries;
-  late final Map<String, String> _selectedPreAnestheticOrientationByGroup;
+  late final Map<String, Set<String>> _selectedPreAnestheticOrientationByGroup;
 
   String _normalizePreAnestheticOrientationItem(String item) {
     return switch (item.trim()) {
@@ -1225,9 +1225,11 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     final lines = <String>[];
     for (final group in _adultMedicationOrientationGroups) {
       final selected =
-          _selectedPreAnestheticOrientationByGroup[group.title]?.trim() ?? '';
-      if (selected.isNotEmpty) {
-        lines.add('${group.title}: $selected');
+          _selectedPreAnestheticOrientationByGroup[group.title] ?? {};
+      for (final option in group.options) {
+        if (selected.contains(option)) {
+          lines.add('${group.title}: $option');
+        }
       }
       final other =
           _preAnestheticOrientationOtherControllers[group.title]?.text.trim() ??
@@ -1247,14 +1249,15 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       if (parts.length < 2) {
         switch (_normalizePreAnestheticOrientationItem(normalized)) {
           case 'Manter demais medicações':
-            _selectedPreAnestheticOrientationByGroup['Anti-hipertensivos'] =
-                'Reforçar protocolo: não suspender anti-hipertensivos';
+            _selectedPreAnestheticOrientationByGroup['Anti-hipertensivos']?.add(
+              'Reforçar protocolo: não suspender anti-hipertensivos',
+            );
           case 'Suspender ou ajustar anticoagulantes / antiagregantes conforme orientação':
-            _selectedPreAnestheticOrientationByGroup['Anticoagulantes orais'] =
-                'DOAC: suspender 24-72 h conforme risco';
+            _selectedPreAnestheticOrientationByGroup['Anticoagulantes orais']
+                ?.add('DOAC: suspender 24-72 h conforme risco');
           case 'Suspender ou ajustar antidiabéticos / insulina / GLP-1 conforme orientação':
-            _selectedPreAnestheticOrientationByGroup['Antidiabéticos orais'] =
-                'Metformina: suspender 24-48 h antes';
+            _selectedPreAnestheticOrientationByGroup['Antidiabéticos orais']
+                ?.add('Metformina: suspender 24-48 h antes');
           default:
             unmatchedItemLines.add(normalized);
         }
@@ -1265,10 +1268,10 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         unmatchedItemLines.add(normalized);
         continue;
       }
-      _selectedPreAnestheticOrientationByGroup[title] = parts
-          .sublist(1)
-          .join(':')
-          .trim();
+      final selectedOption = parts.sublist(1).join(':').trim();
+      if (selectedOption.isNotEmpty) {
+        _selectedPreAnestheticOrientationByGroup[title]?.add(selectedOption);
+      }
     }
 
     final unmatchedNoteLines = <String>[...unmatchedItemLines];
@@ -1314,15 +1317,13 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       return _selectedPreAnestheticOrientationItems.toList();
     }
 
-    return _adultMedicationOrientationGroups
-        .map((group) {
-          final selected =
-              _selectedPreAnestheticOrientationByGroup[group.title]?.trim() ??
-              '';
-          return selected.isEmpty ? '' : '${group.title}: $selected';
-        })
-        .where((item) => item.isNotEmpty)
-        .toList();
+    return _adultMedicationOrientationGroups.expand((group) {
+      final selected =
+          _selectedPreAnestheticOrientationByGroup[group.title] ?? {};
+      return group.options
+          .where(selected.contains)
+          .map((option) => '${group.title}: $option');
+    }).toList();
   }
 
   String _buildPreAnestheticOrientationNotesForSave() {
@@ -1351,7 +1352,7 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     _MedicationOrientationGroupDefinition group,
   ) {
     final selected =
-        _selectedPreAnestheticOrientationByGroup[group.title]?.trim() ?? '';
+        _selectedPreAnestheticOrientationByGroup[group.title] ?? {};
     final controller = _preAnestheticOrientationOtherControllers[group.title]!;
     return Card(
       margin: EdgeInsets.zero,
@@ -1373,17 +1374,24 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            _buildSingleSelectButtons(
+            _buildMultiSelectButtons(
               options: group.options,
-              selectedValue: selected,
+              selectedValues: selected,
               color: _completedSelectionColor,
               selectedColorBuilder: (option) =>
                   _isAlertMedicationOrientationOption(option)
                   ? _suspendedSelectionColor
                   : _completedSelectionColor,
-              onSelected: (value) {
+              onToggle: (value) {
                 setState(() {
-                  _selectedPreAnestheticOrientationByGroup[group.title] = value;
+                  final selectedSet =
+                      _selectedPreAnestheticOrientationByGroup[group.title];
+                  if (selectedSet == null) return;
+                  if (selectedSet.contains(value)) {
+                    selectedSet.remove(value);
+                  } else {
+                    selectedSet.add(value);
+                  }
                 });
               },
             ),
@@ -2816,7 +2824,8 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
         .where(_profilePreAnestheticOrientationOptions.contains)
         .toSet();
     _selectedPreAnestheticOrientationByGroup = {
-      for (final group in _adultMedicationOrientationGroups) group.title: '',
+      for (final group in _adultMedicationOrientationGroups)
+        group.title: <String>{},
     };
     if (_selectedPopulation == PatientPopulation.adult) {
       _restoreAdultMedicationOrientation(assessment);

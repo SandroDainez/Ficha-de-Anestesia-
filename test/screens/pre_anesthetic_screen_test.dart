@@ -240,6 +240,20 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Outros'), findsWidgets);
+
+    await tester.tap(find.text('Manter todos, inclusive no dia da cirurgia'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Manter com atenção à PA e volemia'));
+    await tester.pumpAndSettle();
+
+    final manterTodosText = tester.widget<Text>(
+      find.text('Manter todos, inclusive no dia da cirurgia'),
+    );
+    final manterAtencaoText = tester.widget<Text>(
+      find.text('Manter com atenção à PA e volemia'),
+    );
+    expect(manterTodosText.style?.color, isNot(const Color(0xFF26384A)));
+    expect(manterAtencaoText.style?.color, isNot(const Color(0xFF26384A)));
   });
 
   testWidgets(
@@ -303,55 +317,56 @@ void main() {
     },
   );
 
-  testWidgets('shows fixed fasting guidance in neonatal pre-anesthetic screen', (
-    WidgetTester tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(1200, 2200));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.pumpWidget(
-      MaterialApp(
-        home: PreAnestheticScreen(
-          patient: const Patient(
-            name: 'RN',
-            age: 0,
-            weightKg: 3.1,
-            heightMeters: 0.49,
-            asa: 'III',
-            allergies: [],
-            restrictions: [],
-            medications: [],
-            population: PatientPopulation.neonatal,
-            postnatalAgeDays: 4,
-            gestationalAgeWeeks: 36,
-            birthWeightKg: 2.5,
+  testWidgets(
+    'shows fixed fasting guidance in neonatal pre-anesthetic screen',
+    (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 2200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PreAnestheticScreen(
+            patient: const Patient(
+              name: 'RN',
+              age: 0,
+              weightKg: 3.1,
+              heightMeters: 0.49,
+              asa: 'III',
+              allergies: [],
+              restrictions: [],
+              medications: [],
+              population: PatientPopulation.neonatal,
+              postnatalAgeDays: 4,
+              gestationalAgeWeeks: 36,
+              birthWeightKg: 2.5,
+            ),
+            initialAssessment: const PreAnestheticAssessment.empty(),
+            initialConsultationDate: '',
           ),
-          initialAssessment: const PreAnestheticAssessment.empty(),
-          initialConsultationDate: '',
         ),
-      ),
-    );
+      );
 
-    await tester.scrollUntilVisible(
-      find.text('Jejum recomendado'),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(find.text('Jejum recomendado'));
-    await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Jejum recomendado'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Jejum recomendado'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Padronizar 8 horas para alimentos.'), findsOneWidget);
-    expect(
-      find.text('Padronizar 2 horas para líquido claro (água).'),
-      findsOneWidget,
-    );
-    expect(
-      find.text(
-        'Use o campo Outros quando precisar individualizar a orientação.',
-      ),
-      findsOneWidget,
-    );
-    expect(find.text('Leite materno'), findsNothing);
-  });
+      expect(find.text('Padronizar 8 horas para alimentos.'), findsOneWidget);
+      expect(
+        find.text('Padronizar 2 horas para líquido claro (água).'),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Use o campo Outros quando precisar individualizar a orientação.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Leite materno'), findsNothing);
+    },
+  );
 
   testWidgets('uses fixed fasting fields for pediatric screen', (
     WidgetTester tester,
