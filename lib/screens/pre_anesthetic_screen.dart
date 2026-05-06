@@ -1376,7 +1376,11 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
             _buildSingleSelectButtons(
               options: group.options,
               selectedValue: selected,
-              color: const Color(0xFF2B76D2),
+              color: _completedSelectionColor,
+              selectedColorBuilder: (option) =>
+                  _isAlertMedicationOrientationOption(option)
+                  ? _suspendedSelectionColor
+                  : _completedSelectionColor,
               onSelected: (value) {
                 setState(() {
                   _selectedPreAnestheticOrientationByGroup[group.title] = value;
@@ -3204,6 +3208,17 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     return field.prefix.trim().toLowerCase().startsWith('suspender');
   }
 
+  bool _isAlertMedicationOrientationOption(String option) {
+    final normalized = option.trim().toLowerCase();
+    return normalized.contains('suspender') ||
+        normalized.contains('não tomar') ||
+        normalized.contains('nao tomar') ||
+        normalized.contains('atenção') ||
+        normalized.contains('atencao') ||
+        normalized.contains('avaliar ponte') ||
+        normalized.contains('discutir com cardio');
+  }
+
   Widget _buildOrientationFreeTextField(_OrientationFreeTextField field) {
     final controller = _orientationFreeTextControllers[field.prefix];
     if (controller == null) return const SizedBox.shrink();
@@ -3260,12 +3275,14 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
     required String selectedValue,
     required ValueChanged<String> onSelected,
     Color color = const Color(0xFF169653),
+    Color Function(String option)? selectedColorBuilder,
   }) {
     return _buildOptionCardGrid(
       options: options,
       isSelected: (option) => selectedValue == option,
       onTap: (option) => onSelected(selectedValue == option ? '' : option),
       color: color,
+      selectedColorBuilder: selectedColorBuilder,
     );
   }
 
@@ -3575,12 +3592,13 @@ class _PreAnestheticScreenState extends State<PreAnestheticScreen> {
       otherPostoperativePlanning: _otherPostoperativePlanningController.text
           .trim(),
       planningNotes: _freeNotesController.text.trim(),
-      preAnestheticOrientationItems:
-          _usesMedicationOrientationCards
+      preAnestheticOrientationItems: _usesMedicationOrientationCards
           ? _buildPreAnestheticOrientationItemsForSave()
-          : [..._selectedPreAnestheticOrientationItems, ..._orientationFreeTextItems],
-      preAnestheticOrientationNotes:
-          _usesMedicationOrientationCards
+          : [
+              ..._selectedPreAnestheticOrientationItems,
+              ..._orientationFreeTextItems,
+            ],
+      preAnestheticOrientationNotes: _usesMedicationOrientationCards
           ? _buildPreAnestheticOrientationNotesForSave()
           : _preAnestheticOrientationNotesController.text.trim(),
       restrictionItems: _selectedRestrictions.toList(),
